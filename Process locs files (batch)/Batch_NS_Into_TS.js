@@ -106,7 +106,7 @@ if (gd.wasOKed() || called == true) {
 
 	// Get the translate function path and load
 	var translateJS = "F-NStxtTranslate.js";
-	var translatePath = rountinePath + translateJS;
+	var translatePath = routinePath + translateJS;
 	IJ.log("\nTranslator path:" + routinePath + translateJS);
 	load(translatePath);
 
