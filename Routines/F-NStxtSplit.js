@@ -14,7 +14,7 @@ function NStxtSplit(inPath, outDir) {
 	// idex of the column containing the channels
 	var splitIndex = 0;
 	// How many lines are sampled to get the channels
-	var SampleMax = 1000000;
+	var SampleMax = 5000000;
 
 	// Get name, path and open buffered reader
 	var inFile = new File(inPath);

@@ -41,7 +41,7 @@ macro "Batch Process Localizations" {
 	CORR_DRIFT_DEF = false;
 	BIN_DEF = 12; // number of frames per sub-reconstruction used for autocorrelation
 	MAG_DEF = 5; //  pixel size of sub-reconstructions used for autocorrelation
-	SM_DEF = 0.2; // smoothing factor for autocorrelation
+	SM_DEF = 0.6; // smoothing factor for autocorrelation
 
 	// Merging
 	MERGE_DEF = false;

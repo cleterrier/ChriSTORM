@@ -7,7 +7,7 @@
 	USE_DRIFT_DEF = true;
 	BATCH_PROC_DEF = true;
 	EXC_STRING_DEF = "_ZR_";
-	CORR_DRIFT_DEF = false;
+	CORR_DRIFT_DEF = true;
 	EXP_STRING_DEF = "intensity>700 & intensity<30000 & detections<5";
 	REC_2D_DEF = true;
 	REC_3D_DEF = true;
@@ -63,7 +63,7 @@
 		BATCH_PROC = true;
 		EXC = true;
 		EXC_STRING = "_ZR_";
-		CORR_DRIFT = false;
+		CORR_DRIFT = true;
 		EXP_FILT = true;
 		EXP_STRING = "intensity>700 & intensity<30000 & detections<5";	
 		
@@ -79,9 +79,9 @@
 		BATCH_PROC = true;
 		EXC = true;
 		EXC_STRING = "_ZR_";
-		CORR_DRIFT = false;
+		CORR_DRIFT = true;
 		EXP_FILT = true;
-		EXP_STRING = "intensity>1500 & intensity<500000 & detections<500";	
+		EXP_STRING = "intensity>1500 & intensity<1000000 & detections<100";	
 		
 		REC_2D = true;
 		REC_3D = true;
