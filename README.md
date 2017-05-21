@@ -42,16 +42,13 @@ This scripts chains the “Batch NS Split” with the “Batch NS Translate” s
 - *Use drift-corrected Z coordinates*: extracts the drift-corrected Z coordinates from the NSTORM localization file, rather than the uncorrected coordinates. Checked by default.
 - *Z uncertainty factor*: The NSTORM software does not compute a value for the Z localization uncertainty. To approximate the loss in precision for the Z localization compared to the XY precision, the Z uncertainty is calculated as a multiple of the XY uncertainty. The Z uncertainty factor is the multiplicative factor applied : ∆Z = Zuf * ∆XY. Default value: 2 (corresponds to the experimentally-determined relation betwen ∆Z and ∆XY on our microscope, should be approximatively the same elsewhere).
 
-#### 1b. “Batch NS Reverse Drift” script
-This script temporally reverses the XY drift in an NSTORM localization file, so that the correction is applied from the last frame to the first. Can be useful when two channels have been acquired sequentially: by reversing the drift of the first channel, it is easier to align it to the second channel (that is corrected from its first frame, taken just after the last frame of the first channel). The dialog asks for “Process files containing:”, with a text box allowing to enter a string contained in the name of the files you want to process (in order to select the right channel). The script outputs reversed drift files into a “Locs revDrift” folder.
-
-#### 1c. “Batch NS Split” script
+#### 1b. “Batch NS Split” script
 This script splits multi-channel NSTORM localization files from a folder named “Locs” into several NSTORM localization files (one per channel) in a folder named “Locs Split”. In addition, the total number of localizations contained in the file is added to the names of the output files (i.e. 144K = 144,000 localizations). It is identical to the first part of the “Batch NS into TS” script. There are no options.
 
-#### 1d. “Batch NS Translate” script
+#### 1c. “Batch NS Translate” script
 This scripts translates a single-channel NSTORM localization file (.txt) into a single-channel ThunderSTORM localization file (.csv). It is identical to the second part of the “Batch NS into TS” script, and the options are the same (see above).
 
-####1e. “Batch Process Locs” macro
+#### 1d. “Batch Process Locs” macro
 Once localization files have been converted into the ThunderSTORM format, this macro processes ThunderSTORM localization files as a batch. The input localization files (usually in the “Locs TS” folder) are filtered and new localization files are saved in a “Locs TS proc” folder. Several processing features of the ThunderSTORM plugin are available in the macro dialog:
 - *Choose files based on name*: allows to restrict processing to localization files chosen by name. Can be useful to only process files from a certain channel for example. Check this box and enter the string used to identify files to be processed in the *Name contains* box. 
 - *Correct drift*: check this box to apply ThunderSTORM drift correction by autocorrelation to each localization file. The drift correction parameters *Number of bins for sub-images* and *Magnification for cross-correlation* correspond to the respective options in the ThunderSTORM plugin interface.
@@ -60,7 +57,7 @@ Once localization files have been converted into the ThunderSTORM format, this m
 - *Filter by density*: check this box to filter localization file based on local density (remove all localizations that don't have a minimum number of localizations at a given radius). The parameters correspond to the respective options in the ThunderSTORM plugin: interface: *Filter radius*, *Min loc number*, *Filter dimension* (to calculate density in 2D or 3D).
 - *Export as .tsf*: Instead of saving a .csv files, it is possible to export localization file as .tsf, a format that is read by RapidSTORM for example.
 
-#### 1f. “Batch TS to VISP” script
+#### 1e. “Batch TS to VISP” script
 This script translates single-channel ThunderSTORM localization files into files readable by the [VISP visualization program](http://dx.doi.org/10.1038/nmeth.2566). The .2dlp and .3dlp VISP localization files obtained contain localization coordinates and their associated uncertainties. The script outputs files into the “Locs VISP” folder. There are no options.
 
 ### 2. “Process Locs files (single)” folder
