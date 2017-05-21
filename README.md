@@ -11,14 +11,16 @@ ChriSTORM is a series of ImageJ scripts and macros that aim to complement the Th
 Installing ThundersTORM
 - ChriSTORM is used under OSX and Windows 7 inside a [Fiji install](http://fiji.sc/Downloads)) or using an updated [ImageJ install](http://rsbweb.nih.gov/ij/download.html). Due to the current work around javascript compatibility for Java 8, the scripts will only run using Java 6.
 - To use ChriSTORM, you first have to [download the ThunderSTORM plugin](https://github.com/zitmen/thunderstorm/releases). ChriSTORM 1.0 has been tested with the latest dev-2016-09-10-b1.jar daily build. Install ThunderSTORM by renaming the .jar file into “Thunder_STORM.jar” and placing it in the ImageJ/Fiji “plugins” folder.
+
 You can directly use ChriSTORM by manually donwloading and installing it
 - Download the latest ChriSTORM folder as a [zip file from the releases section](https://github.com/cleterrier/ChriSTORM/releases).
 - Unzip the folder, rename it “ChriSTORM” and place it into ImageJ/Fiji “plugins” folder.
 - Move the “ThunderSTORM.lut” file from the ChriSTORM folder to the ImageJ/Fiji “luts” folder.
 - Restart ImageJ/Fiji.
+
 Alternatively, you can use the NeuroCyto Lab [Fiji update site](https://www.evernote.com/l/AAIk_1e-n91KsplwdjvrCj3ighQUDYYAVD8) that includes ChriSTORM.
 
-##References
+## References
 If you use ChriSTORM in a publication, please cite:  
 Leterrier C, Potier J, Caillol G, Debarnot C, Rueda Boroni F, Dargent B.  
 Nanoscale Architecture of the Axon Initial Segment Reveals an Organized and Robust Scaffold.  
