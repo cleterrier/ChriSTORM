@@ -33,12 +33,11 @@ macro "Batch Process Localizations" {
 	CHOOSE_DEF = false;
 	CHOOSE_STRING_DEF = "";
 
-	EXC_DEF = false;
+	EXC_DEF = true;
 	EXC_STRING_DEF = "_ZR_";
-	
 
 	// Drift correction
-	CORR_DRIFT_DEF = false;
+	CORR_DRIFT_DEF = true;
 	BIN_DEF = 12; // number of frames per sub-reconstruction used for autocorrelation
 	MAG_DEF = 5; //  pixel size of sub-reconstructions used for autocorrelation
 	SM_DEF = 0.6; // smoothing factor for autocorrelation
@@ -55,9 +54,10 @@ macro "Batch Process Localizations" {
 	PHOT_MAX_DEF = 10000;
 
 	// Expression-based filter
-	EXP_FILT_DEF = false;
+	EXP_FILT_DEF = true;
 //	EXP_STRING_DEF = "intensity>700 & intensity<15000 & sigma>80 & uncertainty_xy<80"; for TS-processed or DOM-processed files
-	EXP_STRING_DEF = "intensity>700 & intensity<30000 & detections<5"; // for STORM
+//	EXP_STRING_DEF = "intensity>700 & intensity<20000 & detections<5"; // for STORM
+	EXP_STRING_DEF = "intensity>700 & intensity<100000 & detections<50"; // for STORM+PAINT
 //	EXP_STRING_DEF = "intensity>1500 & intensity<500000 & detections<500"; // for PAINT
 
 	// Density filter
@@ -205,7 +205,7 @@ macro "Batch Process Localizations" {
 	FileTotal = 0;
 	for (n = 0; n < ALL_NAMES.length; n++) {
 		if (endsWith(ALL_NAMES[n], LOC_SUFFIX) == true) {
-			if (CHOOSE == false || indexOf(ALL_NAMES[n], CHOOSE_STRING) > -1) {
+			if ((CHOOSE == false || indexOf(ALL_NAMES[n], CHOOSE_STRING) > -1) && (EXC == false || indexOf(ALL_NAMES[n], EXC_STRING) == -1)) {
 				FileTotal++;
 			}
 		}
@@ -215,91 +215,89 @@ macro "Batch Process Localizations" {
 	FileCount = 0;
 	for (n = 0; n < ALL_NAMES.length; n++) {
 		if (endsWith(ALL_NAMES[n], LOC_SUFFIX) == true) {
-			if (CHOOSE == false || indexOf(ALL_NAMES[n], CHOOSE_STRING) > -1) {	
-				if (EXC == false || indexOf(ALL_NAMES[n], EXC_STRING) == -1) {
-		
-					// Image counter
-					FileCount++;
-					
-					// Get the file path
-					FILE_PATH = INPUT_DIR + ALL_NAMES[n];
-					
-					// Store components of the file name
-					FILE_NAME = File.getName(FILE_PATH);
-					
-					print("    Input file #" + FileCount + "/" + FileTotal + ": " + FILE_NAME);
-		
-					OUT_TITLE = FILE_NAME;
-					
-					// Open the loc file	
-					run("Import results", "append=false startingframe=1 rawimagestack= filepath=[" + FILE_PATH + "] livepreview=false fileformat=[CSV (comma separated)]");
-		
-					
-					if (CORR_DRIFT == true) {
-						// Obtain the number of locs (# of lines in the loc file) and the number of steps for autocorrelation
-						// ROWS = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); rows = rt.getRowCount();");
-						// FRAMES = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); var rows = rt.getRowCount(); var colf = rt.findColumn(\"frame\"); var minf = parseInt(rt.getValue(0, colf)); var maxf = minf; for (var row = 1; row < rows; row++) {var val = parseInt(rt.getValue(row, colf)); if (val > maxf) maxf = val} frames = maxf;");
-						// FRAMES = parseInt(FRAMES);
-						
-						// STEPS = floor(FRAMES / PACKET_SIZE);
-						// if (STEPS < 2) STEPS = 2;
-						// MAGNIF = CAM_SIZE / XCORR_SIZE;
-			
-						// print("      Drift correction: found " + FRAMES + " frames, " + STEPS + " sub-images");
-			
-						// run("Show results table", "action=drift magnification=" + MAGNIF + " save=false showcorrelations=false method=[Cross correlation] steps=" + STEPS);
-						run("Show results table", "action=drift magnification=" + MAG + " ccsmoothingbandwidth=" + SM + " save=false showcorrelations=false method=[Cross correlation] steps=" + BIN);
-					}
+			if ((CHOOSE == false || indexOf(ALL_NAMES[n], CHOOSE_STRING) > -1) && (EXC == false || indexOf(ALL_NAMES[n], EXC_STRING) == -1)) {
+				// Image counter
+				FileCount++;
+				
+				// Get the file path
+				FILE_PATH = INPUT_DIR + ALL_NAMES[n];
+				
+				// Store components of the file name
+				FILE_NAME = File.getName(FILE_PATH);
+				
+				print("    Input file #" + FileCount + "/" + FileTotal + ": " + FILE_NAME);
 	
-					if (MERGE == true) {
-						run("Show results table", "action=merge zcoordweight=0.1 offframes=" + OFF + " dist=" + DIST + " framespermolecule=" + MAXF);
-					}
+				OUT_TITLE = FILE_NAME;
+				
+				// Open the loc file	
+				run("Import results", "append=false startingframe=1 rawimagestack= filepath=[" + FILE_PATH + "] livepreview=false fileformat=[CSV (comma separated)]");
 	
-					if (PHOT_FILT == true){
-						run("Show results table", "action=filter formula=[intensity>" + PHOT_MIN + " & intensity<" + PHOT_MAX + "]");
-					}
-	
-					if (EXP_FILT == true){
-						run("Show results table", "action=filter formula=[" + EXP_STRING + "]");
-					}
+				
+				if (CORR_DRIFT == true) {
+					// Obtain the number of locs (# of lines in the loc file) and the number of steps for autocorrelation
+					// ROWS = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); rows = rt.getRowCount();");
+					// FRAMES = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); var rows = rt.getRowCount(); var colf = rt.findColumn(\"frame\"); var minf = parseInt(rt.getValue(0, colf)); var maxf = minf; for (var row = 1; row < rows; row++) {var val = parseInt(rt.getValue(row, colf)); if (val > maxf) maxf = val} frames = maxf;");
+					// FRAMES = parseInt(FRAMES);
+					
+					// STEPS = floor(FRAMES / PACKET_SIZE);
+					// if (STEPS < 2) STEPS = 2;
+					// MAGNIF = CAM_SIZE / XCORR_SIZE;
 		
-					if (DENS_FILT == true){
-						colZ = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); var colZ = rt.findColumn(\"z [nm]\");");
-						if (colZ < 0) DENS_DIM = "2D";
-						run("Show results table", "action=density neighbors=" + DENS_NUMB + " dimensions=" + DENS_DIM + " radius=" + DENS_RAD);
-					}
-					
-					// Export the corrected locs into an output file
-	
-					// Count the new Loc number
-					nLocs = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); rows = rt.getRowCount();");
-					nLocK = round(nLocs / 1000);
-					// OUT_TITLE = replace(OUT_TITLE, "([0-9])+K_", nLocK + "K_");
-					OUT_TITLE = replace(OUT_TITLE, "_TS", "_" + nLocK + "K_TS");
-					if (CORR_DRIFT == true) {
-						OUT_TITLE = replace(OUT_TITLE, "_TS", "_DC_TS");	
-					}
-					
-					if (TSF == false) {
-						OUT_PATH = OUTPUT_DIR + OUT_TITLE;
-						run("Export results", "filepath=[" + OUT_PATH + "] fileformat=[CSV (comma separated)] chi2=false saveprotocol=false");
-						// remove chi2 that causes an error on 27-07-2017 version (see bug on GitHub)
-					}
-					else {
-						OUT_TITLE = replace(OUT_TITLE, ".csv", ".tsf");
-						OUT_PATH = OUTPUT_DIR + OUT_TITLE;
-						run("Export results", "filepath=[" + OUT_PATH + "] fileformat=[Tagged spot file] saveprotocol=false");
-					}
-					
-					print("      Output file:" + OUT_TITLE);
+					// print("      Drift correction: found " + FRAMES + " frames, " + STEPS + " sub-images");
 		
-					// Rename the drift image
-					if (CORR_DRIFT == true) {
-						selectWindow("Drift");
-						rename(OUT_TITLE);
-					}					
+					// run("Show results table", "action=drift magnification=" + MAGNIF + " save=false showcorrelations=false method=[Cross correlation] steps=" + STEPS);
+					run("Show results table", "action=drift magnification=" + MAG + " ccsmoothingbandwidth=" + SM + " save=false showcorrelations=false method=[Cross correlation] steps=" + BIN);
 				}
-			}	
+
+				if (MERGE == true) {
+					run("Show results table", "action=merge zcoordweight=0.1 offframes=" + OFF + " dist=" + DIST + " framespermolecule=" + MAXF);
+				}
+
+				if (PHOT_FILT == true){
+					run("Show results table", "action=filter formula=[intensity>" + PHOT_MIN + " & intensity<" + PHOT_MAX + "]");
+				}
+
+				if (EXP_FILT == true){
+					run("Show results table", "action=filter formula=[" + EXP_STRING + "]");
+				}
+	
+				if (DENS_FILT == true){
+					colZ = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); var colZ = rt.findColumn(\"z [nm]\");");
+					if (colZ < 0) DENS_DIM = "2D";
+					run("Show results table", "action=density neighbors=" + DENS_NUMB + " dimensions=" + DENS_DIM + " radius=" + DENS_RAD);
+				}
+				
+				// Export the corrected locs into an output file
+
+				// Count the new Loc number
+				nLocs = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); rows = rt.getRowCount();");
+				nLocK = round(nLocs / 1000);
+				// OUT_TITLE = replace(OUT_TITLE, "([0-9])+K_", nLocK + "K_");
+				OUT_TITLE = replace(OUT_TITLE, "_TS", "_" + nLocK + "K_TS");
+				if (CORR_DRIFT == true) {
+					OUT_TITLE = replace(OUT_TITLE, "_TS", "_DC_TS");	
+				}
+				
+				if (TSF == false) {
+					OUT_PATH = OUTPUT_DIR + OUT_TITLE;
+					run("Export results", "filepath=[" + OUT_PATH + "] fileformat=[CSV (comma separated)] chi2=false saveprotocol=false");
+					// remove chi2 that causes an error on 27-07-2017 version (see bug on GitHub)
+				}
+				else {
+					OUT_TITLE = replace(OUT_TITLE, ".csv", ".tsf");
+					OUT_PATH = OUTPUT_DIR + OUT_TITLE;
+					run("Export results", "filepath=[" + OUT_PATH + "] fileformat=[Tagged spot file] saveprotocol=false");
+				}
+				
+				print("      Output file:" + OUT_TITLE);
+	
+				// Rename the drift image
+				if (CORR_DRIFT == true) {
+					selectWindow("Drift");
+					rename(OUT_TITLE);
+				}
+				
+			} // end of IF loop on include/exclude names	
 		}	// end of IF loop on extensions
 	}	// end of FOR loop on n extensions
 

@@ -6,9 +6,9 @@
 	MODE_DEF = "Custom";
 	USE_DRIFT_DEF = true;
 	BATCH_PROC_DEF = true;
-	EXC_STRING_DEF = "_ZR_";
+	EXCL_STRING_DEF = "_ZR_";
 	CORR_DRIFT_DEF = true;
-	EXP_STRING_DEF = "intensity>700 & intensity<30000 & detections<5";
+	EXP_STRING_DEF = "intensity>700 & intensity<100000 & detections<50";
 	REC_2D_DEF = true;
 	REC_3D_DEF = true;
 	SR_SIZE_DEF = 16;
@@ -28,7 +28,7 @@
 	Dialog.addCheckbox("Use drift-corrected coordinates", USE_DRIFT_DEF);
 	Dialog.addMessage("Process localizations options");
 	Dialog.addCheckbox("Batch process localizations", BATCH_PROC_DEF);
-	Dialog.addString("Exclude name containing", EXC_STRING_DEF);
+	Dialog.addString("Exclude name containing", EXCL_STRING_DEF);
 	Dialog.addCheckbox("Additional drift correction", CORR_DRIFT_DEF);
 	Dialog.addString("Use filter string", EXP_STRING_DEF, 30);
 	Dialog.addMessage("Reconstructions options");
@@ -45,9 +45,9 @@
 	MODE = Dialog.getChoice();
 	USE_DRIFT = Dialog.getCheckbox();
 	BATCH_PROC = Dialog.getCheckbox();
-	EXC_STRING = Dialog.getString();
-	if (lengthOf(EXC_STRING)>0) EXC = true;
-	else EXC = false;
+	EXCL_STRING = Dialog.getString();
+	if (lengthOf(EXCL_STRING)>0) EXCL = true;
+	else EXCL = false;
 	CORR_DRIFT = Dialog.getCheckbox();
 	EXP_STRING = Dialog.getString();
 	if (lengthOf(EXP_STRING)>0) EXP_FILT = true; 
@@ -61,8 +61,8 @@
 	if (MODE == "STORM") {	
 		USE_DRIFT = true;
 		BATCH_PROC = true;
-		EXC = true;
-		EXC_STRING = "_ZR_";
+		EXCL = true;
+		EXCL_STRING = "_ZR_";
 		CORR_DRIFT = true;
 		EXP_FILT = true;
 		EXP_STRING = "intensity>700 & intensity<30000 & detections<5";	
@@ -77,8 +77,8 @@
 	if (MODE == "PAINT") {	
 		USE_DRIFT = true;
 		BATCH_PROC = true;
-		EXC = true;
-		EXC_STRING = "_ZR_";
+		EXCL = true;
+		EXCL_STRING = "_ZR_";
 		CORR_DRIFT = true;
 		EXP_FILT = true;
 		EXP_STRING = "intensity>1500 & intensity<1000000 & detections<100";	
@@ -92,8 +92,8 @@
 	if (MODE == "to RCC") {	
 		USE_DRIFT = false;
 		BATCH_PROC = true;
-		EXC = true;
-		EXC_STRING = "_ZR_";
+		EXCL = true;
+		EXCL_STRING = "_ZR_";
 		CORR_DRIFT = true;
 		EXP_FILT = true;
 		EXP_STRING = "intensity>700 & intensity<30000 & detections<5";	
@@ -118,8 +118,8 @@
 	// File chooser
 	CHOOSE = false;
 	CHOOSE_STRING = "";
-//	EXC = true;
-//	EXC_STRING = "_ZR_";
+//	EXCL = true;
+//	EXCL_STRING = "_ZR_";
 	// Drift correction
 //	CORR_DRIFT = true;
 	BIN = 12; // number of frames per sub-reconstruction used for autocorrelation
@@ -177,7 +177,7 @@
 	// Optional Batch Proc
 	if (BATCH_PROC == true) {
 		BatchProc_path = plugin_path + File.separator + "NeuroCyto Lab" + File.separator + "ChriSTORM" + File.separator + "Process locs files (batch)" + File.separator+ "Batch_Process_Locs.ijm";
-		BatchProc_args = out_path + "," + CHOOSE + "," + CHOOSE_STRING + "," + EXC + "," + EXC_STRING + "," + CORR_DRIFT + "," + BIN + "," + MAG + "," + SM + "," + MERGE + "," + DIST + "," + MAXF + "," + OFF + "," + PHOT_FILT + "," + PHOT_MIN + "," + PHOT_MAX + "," + EXP_FILT + "," + EXP_STRING + "," + DENS_FILT + "," + DENS_RAD + "," + DENS_NUMB + "," + DENS_DIM + "," + TSF;
+		BatchProc_args = out_path + "," + CHOOSE + "," + CHOOSE_STRING + "," + EXCL + "," + EXCL_STRING + "," + CORR_DRIFT + "," + BIN + "," + MAG + "," + SM + "," + MERGE + "," + DIST + "," + MAXF + "," + OFF + "," + PHOT_FILT + "," + PHOT_MIN + "," + PHOT_MAX + "," + EXP_FILT + "," + EXP_STRING + "," + DENS_FILT + "," + DENS_RAD + "," + DENS_NUMB + "," + DENS_DIM + "," + TSF;
 		out_path = runMacro(BatchProc_path, BatchProc_args);
 	}
 
