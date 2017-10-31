@@ -9,15 +9,16 @@ importClass(Packages.ij.IJ);
 importClass(Packages.ij.gui.GenericDialog);
 
 // Output format
-outFormat = "TS";
-extFormat = "txt";
+var outFormat = "TS";
+var extFormat = "txt";
 
 // Default options
-xydrift_def = true;
-warp_def = true;
-zdrift_def = true;
-zfactor_def = 2;
-ppc_def = 0.1248;
+var xydrift_def = true;
+var warp_def = true;
+var zdrift_def = true;
+var zfactor_def = 2;
+var ppc_def = 0.1248;
+var xcorr_def = true;
 
 // Dialog
 var dc = new DirectoryChooser("Choose a folder");
@@ -32,12 +33,14 @@ gd.addCheckbox("Use warp-corrected coordinates", warp_def);
 gd.addCheckbox("Use drift-corrected Z coordinates", zdrift_def);
 gd.addNumericField("Z uncertainty factor", zfactor_def, 1, 3, "* XY uncertainty");
 gd.addNumericField("Photons per count", ppc_def, 4, 6, "ph/ADU");
+gd.addCheckbox("Correct astigmatism compression", xcorr_def);
 gd.showDialog();
 var xydrift = gd.getNextBoolean();
 var warp = gd.getNextBoolean();
 var zdrift = gd.getNextBoolean();
 var zfactor = gd.getNextNumber();
 var ppc = gd.getNextNumber();
+var xcorr = gd.getNextBoolean();
 
 if (gd.wasOKed()) {
 
@@ -74,7 +77,7 @@ if (gd.wasOKed()) {
 	var fileQueueT = getExtFiles(inDirTranslate, "txt");
 	for (var f = 0; f < fileQueueT.length; f++) {
 		inPath = fileQueueT[f];
-		NStxtTranslate(inPath, outDirTranslate, outFormat, xydrift, warp, zdrift, zfactor, ppc);
+		NStxtTranslate(inPath, outDirTranslate, outFormat, xydrift, warp, zdrift, zfactor, ppc, xcorr);
 	}
 
 	// End

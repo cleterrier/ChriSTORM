@@ -113,6 +113,7 @@
 	NStoTS_zfactor = 2;
 	NStoTS_ppc = 0.1248; // case for Andor EMCCD
 //	NStoTS_ppc = 0.49; // case for Hamamatsu sCMOS
+	NStoTS_xcorr = true;
 
 	// Batch_Process_Locs macro arguments
 	// File chooser
@@ -170,7 +171,7 @@
 
 	// NS to TS
 	NStoTS_path = plugin_path + File.separator + "NeuroCyto Lab" + File.separator + "ChriSTORM" + File.separator + "Process locs files (batch)" + File.separator+ "Batch_NS_Into_TS.js";
-	NStoTS_args = "" + inputDirF + "," + NStoTS_xydrift + "," + NStoTS_warp + "," + NStoTS_zdrift + "," + NStoTS_zfactor + "," + NStoTS_ppc;
+	NStoTS_args = "" + inputDirF + "," + NStoTS_xydrift + "," + NStoTS_warp + "," + NStoTS_zdrift + "," + NStoTS_zfactor + "," + NStoTS_ppc + "," + NStoTS_xcorr;
 	out_path = runMacro(NStoTS_path, NStoTS_args);
 
 

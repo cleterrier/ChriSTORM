@@ -286,7 +286,7 @@ for (z = 1; z < iCount + 1; z++) {
 			if (MULTI_ROI == true) {
 				selectImage(imID);
 				// get previous ROI header (to check if necessary to re-open localization file)
-				if (r > 0 && stackType == "2C") {					
+				if (r > 0) {					
 					roiManager("select", r-1);
 					if (ALL_CHAN == true) {				
 						if (stackType == "2C")
@@ -366,7 +366,7 @@ for (z = 1; z < iCount + 1; z++) {
 			print("        Loc file: " + LocFile);
 	
 			// Open the loc file
-			if (r == 0 && (USE_OPEN == false || ALL_CHAN == true))
+			if (r == 0 && (USE_OPEN == false))
 				run("Import results", "append=false startingframe=1 rawimagestack= filepath=[" + LocFile + "] livepreview=false fileformat=[CSV (comma separated)]");
 			
 			// print(imHeader);
@@ -426,11 +426,12 @@ for (z = 1; z < iCount + 1; z++) {
 				selectImage(outIm);			
 			}
 			
+			// optional filtering
+			if (GAUSS > 0) {
+				run("Gaussian Blur...", "sigma=" + GAUSS/SR_SIZE + " stack");;
+			}
+			
 			if (P3D == true) {
-				// optional filtering
-				if (GAUSS > 0) {
-					run("Gaussian Blur...", "sigma=" + GAUSS/SR_SIZE + " stack");;
-				}
 				if (Z_PROJ == true) {
 					run("Z Project...", "projection=[Sum Slices]");
 					projID = getImageID();

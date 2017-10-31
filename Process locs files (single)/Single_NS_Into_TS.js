@@ -8,14 +8,18 @@ importClass(Packages.java.io.File)
 importClass(Packages.ij.IJ);
 importClass(Packages.ij.gui.GenericDialog);
 
-// Default options
-xydrift_def = true;
-warp_def = true;
-zdrift_def = true;
-zfactor_def = 2;
-// ppc_def = 0.1248;
+// Output format
+var outFormat = "TS";
 
-var od = new OpenDialog("Choose an N-STORM txt file", "");
+// Default options
+var xydrift_def = true;
+var warp_def = true;
+var zdrift_def = true;
+var zfactor_def = 2;
+var ppc_def = 0.1248;
+var xcorr_def = true;
+
+var od = new OpenDialog("Choose a single-channel N-STORM txt file", "");
 var directory = od.getDirectory();
 var name = od.getFileName();
 var path = directory + name;
@@ -27,13 +31,15 @@ gd.addCheckbox("Use drift-corrected XY coordinates", xydrift_def);
 gd.addCheckbox("Use warp-corrected coordinates", warp_def);
 gd.addCheckbox("Use drift-corrected Z coordinates", zdrift_def);
 gd.addNumericField("Z uncertainty factor", zfactor_def, 1, 3, "* XY uncertainty");
-// gd.addNumericField("Photons per count", ppc_def, 4, 6, "ph/ADU");
+gd.addNumericField("Photons per count", ppc_def, 4, 6, "ph/ADU");
+gd.addCheckbox("Correct astigmatism compression", xcorr_def);
 gd.showDialog();
 var xydrift = gd.getNextBoolean();
 var warp = gd.getNextBoolean();
 var zdrift = gd.getNextBoolean();
 var zfactor = gd.getNextNumber();
-// var ppc = gd.getNextNumber();
+var ppc = gd.getNextNumber();
+var xcorr = gd.getNextBoolean();
 
 if (gd.wasOKed()) {
 	var plugDir = IJ.getDirectory("plugins"); 
@@ -43,6 +49,6 @@ if (gd.wasOKed()) {
 	IJ.log("Translator path:" + plugDir + translateJS);
 	load(translatePath);
 	
-	NStxtTranslate(path, directory, "TS", xydrift, warp, zdrift, zfactor);
+	NStxtTranslate(path, directory, outFormat, xydrift, warp, zdrift, zfactor, ppc, xcorr);
 	IJ.log("Single NS to TS end");
 }

@@ -10,7 +10,7 @@ importClass(Packages.java.io.BufferedWriter);
 importClass(Packages.ij.IJ);
 importClass(Packages.java.lang.Double);
 
-function NStxtTranslate(inPath, outDir, outFormat, UseXYDriftCor, UseWarped, UseZDriftCor, factZ, PpC) {
+function NStxtTranslate(inPath, outDir, outFormat, UseXYDriftCor, UseWarped, UseZDriftCor, factZ, PpC, XCorr) {
 	
 	// Factor to convert sigma into FWHM
 	var FWHM = 2.355;	
@@ -27,6 +27,8 @@ function NStxtTranslate(inPath, outDir, outFormat, UseXYDriftCor, UseWarped, Use
 	var fixZ = 20;
 	var SampleMax = 100;
 
+	var XFactor = 1.01615;
+	
 //	var PixelPitch = 160;
 //	var ExposTime = 0.016;
 //	var CpP = 1 / PpC;
@@ -179,13 +181,28 @@ function NStxtTranslate(inPath, outDir, outFormat, UseXYDriftCor, UseWarped, Use
 					outLine += intens + sep + offset + sep +  BgdPhot + sep + uncXY + sep + inCells[iL];
 				}
 				else { // 3D case
+					
+					// Compensate for deformation induced by astigmatic lens.
+					// Hardcoded is 2% compression, real is 3.7% compression
+					// Compensated by setting X pixel size to 163.3 nm instead of 160 nm by N-STORM software
+					// Measured compensation is 165.9 i.e. a difference of 165.9/163.3 of 1.01615
+
+					if (XCorr == true) {
+						var corrX = inCells[iX] * XFactor;
+					}
+
+					else {
+						corrX = inCells[iX];
+					}
+					
 					// peak width: TS has Wx and Wy (astigmatism-deformed PSF), but N-STORM has only one width W and an axial ratio Ax
 					// so we calculate Wx and Wy from W and Ax
+					
 					var ax = parseFloat(inCells[iAx]);			
 					var sigmaX = (sigma / Math.sqrt(1 + ax * ax)).toFixed(1);
 					var sigmaY = (sigma / Math.sqrt(1 + 1 / (ax * ax))).toFixed(1);
 				
-					outLine = inCells[iF] + sep + inCells[iX] + sep + inCells[iY] + sep + inCells[iZ] + sep + sigmaX + sep + sigmaY + sep;
+					outLine = inCells[iF] + sep + corrX + sep + inCells[iY] + sep + inCells[iZ] + sep + sigmaX + sep + sigmaY + sep;
 
 					// localization uncertainty for Z (sigma)
 					if (FixUncZ == true) 
