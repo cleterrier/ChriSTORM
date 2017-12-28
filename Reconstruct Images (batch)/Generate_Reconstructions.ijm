@@ -39,8 +39,8 @@ macro "Generate Reconstructions" {
 	YWIDTH_DEF = 256;	
 	P3D_DEF = false;
 	Z_SPACE_DEF = 30;
-	Z_MIN_DEF = -400;
-	Z_MAX_DEF = 800;
+	Z_MIN_DEF = -450;
+	Z_MAX_DEF = 450;
 	Z_AUTO_DEF = true;
 	Z_SAT_DEF = 30; // restriction of 3D span on top and bottom (in nm)
 	Z_UN_DEF = 0;

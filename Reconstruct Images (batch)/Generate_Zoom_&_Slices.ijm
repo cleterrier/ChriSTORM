@@ -46,14 +46,14 @@ macro "Generate Zooms & Slices" {
 	
 	P3D_DEF = false;
 	Z_SPACE_DEF = 4; // 4 nm for 3D
-	Z_MIN_DEF = -500; // -500 nm
-	Z_MAX_DEF = 500; // +500 nm
+	Z_MIN_DEF = -450; // -500 nm
+	Z_MAX_DEF = 450; // +500 nm
 	Z_AUTO_DEF = false;
 	Z_SAT_DEF = 10; // restriction of 3D span on top and bottom (in nm)
 	Z_UN_DEF = 0; // usually 0
 	Z_PROJ_DEF = true; // true
 	Z_COLOR_DEF = false;
-	Z_LUT_DEF = "Jet"; // LUT for color-coded 3D
+	Z_LUT_DEF = "Rainbow RGB"; // LUT for color-coded 3D
 	SLICES_DEF = false;
 	SLICE_THICK_DEF = 400; // 800 nm
 	SLICE_PROJ_DEF = true; // true
