@@ -78,10 +78,13 @@ This is the single-file equivalent to the “Batch NS into TS” script: it spli
 #### 2b. "Single NS Split” script
 This is the single-file equivalent to the “Single NS Split” script: it splits a multi-channel NSTORM .txt localization file into several NSTORM .txt localization files. There are no options.
 
-#### 2c. "Single TS rotate” script
+#### 2b. "Single Phasor to TS” script
+This script takes a csv localization file obtained with the pSMLM-3D (phasor) option of ThunderSTORM fitting. Please see ThunderSTORM version [here](https://github.com/kjamartens/thunderstorm/tree/master/Compiled%20plugin)) and the article describing the pSMLM-3D [here](http://aip.scitation.org/doi/full/10.1063/1.5005899). It adds uncertainties for xy and z localization using the Mortensen MLE formula (which is not valid for phasor but used to estimate the uncertainty) and a proportional factor for the Z uncertainty. It also corrects for the distortion induced by the cylindrical lens.
+
+#### 2d. "Single TS rotate” script
 This script is used to rotate the coordinates of localizations in a ThunderSTORM .csv localization file. It generates a new ThunderSTORM localization file with the rotated coordinates. The parameters are the *Rotation angle* (in degrees, positive is clockwise), and checkboxes to transform localizations in order to *Flip horizontally* or *Flip vertically* the resulting image. The name of the output localization file is modified by appending the angle of the rotation (“rot30)” and “H” or “V” if flipping has been performed.
 
-#### 2d. "Single TS to VISP” script
+#### 2e. "Single TS to VISP” script
 This is the single-file equivalent to the “Batch TS to VISP” script: it translates a ThunderSTORM .csv localization file into a VISP .2dlp or .3dlp localization file. There are no options.
 
 ### 3. “Reconstruct images (batch)” folder
