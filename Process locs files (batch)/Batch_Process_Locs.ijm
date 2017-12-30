@@ -186,6 +186,7 @@ macro "Batch Process Localizations" {
 	
 	// Get all file names
 	ALL_NAMES = getFileList(INPUT_DIR);
+	Array.sort(ALL_NAMES);
 	
 	OUTPUT_DIR = File.getParent(INPUT_DIR);
 	OUTPUT_NAME = File.getName(INPUT_DIR);

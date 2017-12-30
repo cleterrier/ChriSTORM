@@ -153,6 +153,7 @@ macro "Generate Reconstructions" {
 	
 	// Get all file names
 	ALL_NAMES = getFileList(INPUT_DIR);
+	Array.sort(ALL_NAMES);
 
 	//Create the output folder name
 	if (P3D == false) {	
