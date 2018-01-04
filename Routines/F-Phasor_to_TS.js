@@ -41,8 +41,8 @@ function PhasorTS(inPath, outDir, pxSize, sigma, xFactor, zFactor) {
 	IJ.log("    inName: " + inName);
 
 	// Get the header line and find index of Z, intensity, background and x coordinate columns
-	var inLine = br.readLine();	
-	var inHeader = inLine.split(inSep);	
+	var inHLine = br.readLine();	
+	var inHeader = inHLine.split(inSep);	
 	
 	var zIndex = arrayFind(inHeader, zHeader);
 	var iIndex = arrayFind(inHeader, iHeader);
@@ -65,7 +65,7 @@ function PhasorTS(inPath, outDir, pxSize, sigma, xFactor, zFactor) {
 	// New header
 	var xyUncHeader = "uncertainty_xy [nm]";
 	var zUncHeader = "uncertainty_z [nm]";
-	var outHeader = inHeader + sep + xyUncHeader + sep + zUncHeader;	
+	var outHLine = inHLine + sep + xyUncHeader + sep + zUncHeader;	
 	
 	bw.write(outHeader);
 		bw.newLine();
