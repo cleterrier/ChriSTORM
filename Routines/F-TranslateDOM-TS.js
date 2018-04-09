@@ -21,7 +21,7 @@ function TranslateDOMTS(inPath, outDir, ppc){
 	var sep = ","; // output separator 
 
 	// Fields of the input header
-	var inHeaderList = ["X_(px)","Y_(px)","Frame Number","X_(nm)","X_loc_error(nm)","Y_(nm)","Y_loc_error(nm)","Z_(nm)","Z_loc_error(nm)","Amplitude_fit","Amp_error","BGfit","BGfit_error","SD_X_(nm)","SD_X_error(nm)","SD_Y_(nm)","SD_Y_error(nm)","False positive","IntegratedInt","SNR","R2_fit","Iterations_fit"];
+	var inHeaderList = ["X_(px)","Y_(px)","Frame_Number","X_(nm)","X_loc_error(nm)","Y_(nm)","Y_loc_error(nm)","Z_(nm)","Z_loc_error(nm)","Amplitude_fit","Amp_error","BGfit","BGfit_error","SD_X_(nm)","SD_X_error(nm)","SD_Y_(nm)","SD_Y_error(nm)","False positive","IntegratedInt","SNR","R2_fit","Iterations_fit"];
 	var outHeader2DList = ["\"frame\"","\"x [nm]\"","\"y [nm]\"","\"sigma [nm]\"","\"intensity [photon]\"","\"offset [photon]\"","\"bkgstd [photon]\"","\"uncertainty_xy [nm]\"", "\"chi2\"", "\"detections\""];
 	var outHeader3DList = ["\"frame\"","\"x [nm]\"","\"y [nm]\"","\"z [nm]\"","\"sigma1 [nm]\"","\"sigma2 [nm]\"","\"intensity [photon]\"","\"offset [photon]\"","\"bkgstd [photon]\"","\"uncertainty_xy [nm]\"","\"uncertainty_z [nm]\"", "\"chi2\"", "\"detections\""];
 
