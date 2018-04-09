@@ -46,14 +46,14 @@ macro "Generate Zooms & Slices" {
 	
 	P3D_DEF = false;
 	Z_SPACE_DEF = 4; // 4 nm for 3D
-	Z_MIN_DEF = -450; // -500 nm
-	Z_MAX_DEF = 450; // +500 nm
+	Z_MIN_DEF = -500; // -500 nm
+	Z_MAX_DEF = 500; // +500 nm
 	Z_AUTO_DEF = false;
 	Z_SAT_DEF = 10; // restriction of 3D span on top and bottom (in nm)
 	Z_UN_DEF = 0; // usually 0
 	Z_PROJ_DEF = true; // true
 	Z_COLOR_DEF = false;
-	Z_LUT_DEF = "Rainbow RGB"; // LUT for color-coded 3D
+	Z_LUT_DEF = "Jet"; // LUT for color-coded 3D
 	SLICES_DEF = false;
 	SLICE_THICK_DEF = 400; // 800 nm
 	SLICE_PROJ_DEF = true; // true
@@ -300,13 +300,15 @@ for (z = 1; z < iCount + 1; z++) {
 				roiManager("select", r);		
 			}
 
-			//Get the bounding box ROI if ROI is line and slices are asked
-			if (Roi.getType == "line" && SLICES == true) {
+			//Get the bounding box ROI if ROI is line
+			if (Roi.getType == "line") {
+				ROILINE = true;
 				// get Line ROI coordinates
 				getLine(lineX1, lineY1, lineX2, lineY2, lineWidth);  
 				SMALL_LINEIN = newArray(lineX1, lineY1, lineX2, lineY2);
 				// Make box around line
-				SMALL_LINEOUT = generateBox(SLICE_THICK/RECON_PX, 0);
+				if (SLICES == true) SMALL_LINEOUT = generateBox(SLICE_THICK/RECON_PX, 0);
+					else SMALL_LINEOUT = generateBox(lineWidth, 0);
 				getSelectionBounds(boxX, boxY, boxW, boxH);
 				roiX = boxX;
 				roiY = boxY;
@@ -332,6 +334,7 @@ for (z = 1; z < iCount + 1; z++) {
 			}
 			//If not, just get the bounding box
 			else {
+				ROILINE = false;
 				getSelectionBounds(roiX, roiY, roiW, roiH);
 			}	
 			// print("roiX=" + roiX + ", roiY=" + roiY + ", roiW=" + roiW + ", roiH=" + roiH);
@@ -412,17 +415,19 @@ for (z = 1; z < iCount + 1; z++) {
 			outIm = outProcess(OUT_TITLE);
 			zoomTitle = getTitle();
 		
-			if (SLICES == true) {			
+			if (ROILINE == true) {			
 				SCALE = RECON_PX / SR_SIZE;
 				BIG_LINEOUT = getBigCoor(SMALL_LINEOUT, SCALE, roiX, roiY);
-				makeLine(BIG_LINEOUT[0], BIG_LINEOUT[1], BIG_LINEOUT[2], BIG_LINEOUT[3]);
-				generateSlice(SLICE_THICK/1000, SR_SIZE/1000);
-				sliceTitle = getTitle();
-				optimizeContrast();
-				SaveSlicePath = SliceFolder + File.separator + sliceTitle + ".tif";
-				print("        Slice image:" + SaveSlicePath);
-				save(SaveSlicePath);
-				if (CLOSE == true) close();			
+				makeLine(BIG_LINEOUT[0], BIG_LINEOUT[1], BIG_LINEOUT[2], BIG_LINEOUT[3]);		
+				if (SLICES == true) {
+					generateSlice(SLICE_THICK/1000, SR_SIZE/1000);
+					sliceTitle = getTitle();
+					optimizeContrast();
+					SaveSlicePath = SliceFolder + File.separator + sliceTitle + ".tif";
+					print("        Slice image:" + SaveSlicePath);
+					save(SaveSlicePath);
+					if (CLOSE == true) close();		
+				}	
 				selectImage(outIm);			
 			}
 			
@@ -447,10 +452,11 @@ for (z = 1; z < iCount + 1; z++) {
 				}
 			}
 			
-			if (SLICES == true) {
+			if (ROILINE == true) {
 				BIG_LINEIN = getBigCoor(SMALL_LINEIN, SCALE, roiX, roiY);
 				makeLine(BIG_LINEIN[0], BIG_LINEIN[1], BIG_LINEIN[2], BIG_LINEIN[3]);
-				generateBox(SLICE_THICK/SR_SIZE, 1);
+				if (SLICES == true) generateBox(SLICE_THICK/SR_SIZE, 1);
+					else generateBox(lineWidth*RECON_PX/SR_SIZE, 1);
 				run("Select None");
 			}
 			

@@ -36,7 +36,8 @@ macro "Generate Reconstructions" {
 	XMIN_DEF = 0;
 	YMIN_DEF = 0;
 	XWIDTH_DEF = 256;
-	YWIDTH_DEF = 256;	
+	YWIDTH_DEF = 256;
+	XY_UN_DEF = 0;	
 	P3D_DEF = false;
 	Z_SPACE_DEF = 30;
 	Z_MIN_DEF = -450;
@@ -81,6 +82,7 @@ macro "Generate Reconstructions" {
 		Dialog.addNumber("Start reconstruction at Y=", YMIN_DEF, 0, 4, "pixels");
 		Dialog.addNumber("Width of reconstruction", XWIDTH_DEF, 0, 4, "pixels");
 		Dialog.addNumber("Height of reconstruction", YWIDTH_DEF, 0, 4, "pixels");
+		Dialog.addNumber("Force XY uncertainty (0 to keep)", XY_UN_DEF, 0, 3, "nm");
 		Dialog.addMessage(" ");
 		Dialog.addCheckbox("3D (will just process 3D files)", P3D_DEF);
 		Dialog.addNumber("Z spacing", Z_SPACE_DEF, 0, 3, "nm");
@@ -107,6 +109,7 @@ macro "Generate Reconstructions" {
 		YMIN = Dialog.getNumber();
 		XWIDTH = Dialog.getNumber();
 		YWIDTH = Dialog.getNumber();
+		XY_UN = Dialog.getNumber();
 		P3D = Dialog.getCheckbox();
 		Z_SPACE = Dialog.getNumber();
 		Z_MIN = Dialog.getNumber();
@@ -123,7 +126,7 @@ macro "Generate Reconstructions" {
 	}
 	
  	// called from macro:
-	// arguments (INPUT_DIR, CAM_SIZE, SR_SIZE, XMIN, YMIN, XWIDTH, YWIDTH, P3D, Z_SPACE, Z_MIN, Z_MAX, Z_AUTO, Z_SAT, Z_UN, Z_COLOR, Z_LUT, GAUSS, to16, AD_CONT, SAT_LEV)
+	// arguments (INPUT_DIR, CAM_SIZE, SR_SIZE, XMIN, YMIN, XWIDTH, YWIDTH, XY_UN, P3D, Z_SPACE, Z_MIN, Z_MAX, Z_AUTO, Z_SAT, Z_UN, Z_COLOR, Z_LUT, GAUSS, to16, AD_CONT, SAT_LEV)
 	else {
 		CAM_SIZE = parseInt(argarray[1]);
 		SR_SIZE = parseInt(argarray[2]);
@@ -131,19 +134,20 @@ macro "Generate Reconstructions" {
 		YMIN = parseInt(argarray[4]);
 		XWIDTH = parseInt(argarray[5]);
 		YWIDTH = parseInt(argarray[6]);
-		P3D = argarray[7];
-		Z_SPACE = parseInt(argarray[8]);
-		Z_MIN = parseInt(argarray[9]);
-		Z_MAX = parseInt(argarray[10]);
-		Z_AUTO = argarray[11];
-		Z_SAT = parseInt(argarray[12]);
-		Z_UN = parseInt(argarray[13]);
-		Z_COLOR = argarray[14];
-		Z_LUT = argarray[15];
-		GAUSS = parseInt(argarray[16]);
-		to16 = argarray[17];
-		AD_CONT = argarray[18];
-		SAT_LEV = argarray[19];	
+		XY_UN = parseInt(argarray[7]);
+		P3D = argarray[8];
+		Z_SPACE = parseInt(argarray[9]);
+		Z_MIN = parseInt(argarray[10]);
+		Z_MAX = parseInt(argarray[11]);
+		Z_AUTO = argarray[12];
+		Z_SAT = parseInt(argarray[13]);
+		Z_UN = parseInt(argarray[14]);
+		Z_COLOR = argarray[15];
+		Z_LUT = argarray[16];
+		GAUSS = parseInt(argarray[17]);
+		to16 = argarray[18];
+		AD_CONT = argarray[19];
+		SAT_LEV = argarray[20];	
 	}
 
 //*************** Prepare Processing (get names, open images, make output folder) ***************	
@@ -180,7 +184,11 @@ macro "Generate Reconstructions" {
 
 	// Prepare the visualization arguments(Visu string)
 	Magnif = CAM_SIZE / SR_SIZE;
-	VISU_STRING_XY = "imleft=" + XMIN + " imtop=" + YMIN + " imwidth=" + XWIDTH + " imheight=" + YWIDTH + " renderer=[Normalized Gaussian] magnification=" + Magnif + " dxforce=false dx=20.0 ";
+
+	if (XY_UN == 0) FORCE_STRING = "dxforce=false dx=20.0";
+	else FORCE_STRING = "dxforce=true dx=" + XY_UN; 
+	
+	VISU_STRING_XY = "imleft=" + XMIN + " imtop=" + YMIN + " imwidth=" + XWIDTH + " imheight=" + YWIDTH + " renderer=[Normalized Gaussian] magnification=" + Magnif + " " + FORCE_STRING + " ";
 
 	// Prepare the Z part of the Visu string
 	// Case of a 2D image

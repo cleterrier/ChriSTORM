@@ -90,7 +90,7 @@ function NStxtTranslate(inPath, outDir, outFormat, UseXYDriftCor, UseWarped, Use
 	var br = new BufferedReader(new FileReader(inFile));
 
 	// Taste the first line to detect if 2D (all Z =0) or 3D
-	inLine = br.readLine();
+	inLine = br.readLine();	
 	var inCells = inLine.split(inSep);	
 	var zAccu = 0;
 	var i = 0;	
