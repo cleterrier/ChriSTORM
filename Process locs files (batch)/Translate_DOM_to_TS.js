@@ -17,7 +17,7 @@ procName = "Translate DOM to TS";
 inputExt = "txt";
 
 // Where to find the routine JS in the plugins folder
-var routineFolder =  "NeuroCyto Lab" + File.separator + "ChriSTORM" + File.separator + "Routines" + File.separator;
+var routineFolder =  "NeuroCyto" + File.separator + "ChriSTORM" + File.separator + "Routines" + File.separator;
 
 // Name of the routine JS that will be called
 var routineJS = "F-TranslateDOM-TS.js";

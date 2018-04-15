@@ -14,7 +14,7 @@ var path = directory + name;
 IJ.log("\nTranslator input file path:" + path);
 
 var plugDir = IJ.getDirectory("imagej");
-plugDir = plugDir + "scripts" + File.separator + "NeuroCyto Lab" + File.separator + "ChriSTORM" + File.separator + "Routines" + File.separator;
+plugDir = plugDir + "scripts" + File.separator + "NeuroCyto" + File.separator + "ChriSTORM" + File.separator + "Routines" + File.separator;
 var translateJS = "F-TSTranslate.js";
 var translatePath = plugDir + translateJS;
 IJ.log("Translator path:" + plugDir + translateJS);

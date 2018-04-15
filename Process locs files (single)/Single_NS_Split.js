@@ -14,7 +14,7 @@ var path = directory + name;
 IJ.log("\nSplitter input file path:" + path);
 
 var plugDir = IJ.getDirectory("imagej");
-plugDir = plugDir + "scripts" + File.separator + "NeuroCyto Lab" + File.separator + "ChriSTORM" + File.separator + "Routines" + File.separator;
+plugDir = plugDir + "scripts" + File.separator + "NeuroCyto" + File.separator + "ChriSTORM" + File.separator + "Routines" + File.separator;
 var splitJS = "F-NStxtSplit.js";
 var splitPath = plugDir + splitJS;
 IJ.log("Splitter path:" + plugDir + splitJS);

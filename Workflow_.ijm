@@ -171,14 +171,14 @@
 
 
 	// NS to TS
-	NStoTS_path = plugin_path + File.separator + "NeuroCyto Lab" + File.separator + "ChriSTORM" + File.separator + "Process locs files (batch)" + File.separator+ "Batch_NS_Into_TS.js";
+	NStoTS_path = plugin_path + File.separator + "NeuroCyto" + File.separator + "ChriSTORM" + File.separator + "Process locs files (batch)" + File.separator+ "Batch_NS_Into_TS.js";
 	NStoTS_args = "" + inputDirF + "," + NStoTS_xydrift + "," + NStoTS_warp + "," + NStoTS_zdrift + "," + NStoTS_zfactor + "," + NStoTS_ppc + "," + NStoTS_xcorr;
 	out_path = runMacro(NStoTS_path, NStoTS_args);
 
 
 	// Optional Batch Proc
 	if (BATCH_PROC == true) {
-		BatchProc_path = plugin_path + File.separator + "NeuroCyto Lab" + File.separator + "ChriSTORM" + File.separator + "Process locs files (batch)" + File.separator+ "Batch_Process_Locs.ijm";
+		BatchProc_path = plugin_path + File.separator + "NeuroCyto" + File.separator + "ChriSTORM" + File.separator + "Process locs files (batch)" + File.separator+ "Batch_Process_Locs.ijm";
 		BatchProc_args = out_path + "," + CHOOSE + "," + CHOOSE_STRING + "," + EXCL + "," + EXCL_STRING + "," + CORR_DRIFT + "," + BIN + "," + MAG + "," + SM + "," + MERGE + "," + DIST + "," + MAXF + "," + OFF + "," + PHOT_FILT + "," + PHOT_MIN + "," + PHOT_MAX + "," + EXP_FILT + "," + EXP_STRING + "," + DENS_FILT + "," + DENS_RAD + "," + DENS_NUMB + "," + DENS_DIM + "," + TSF;
 		out_path = runMacro(BatchProc_path, BatchProc_args);
 	}
@@ -186,7 +186,7 @@
 
 	// Generate Recs (2D)
 	if (REC_2D == true) {
-		Gen_Recon_path = plugin_path + File.separator + "NeuroCyto Lab" + File.separator + "ChriSTORM" + File.separator + "Reconstruct Images (batch)" + File.separator+ "Generate_Reconstructions.ijm";
+		Gen_Recon_path = plugin_path + File.separator + "NeuroCyto" + File.separator + "ChriSTORM" + File.separator + "Reconstruct Images (batch)" + File.separator+ "Generate_Reconstructions.ijm";
 		Gen_Recon_args = out_path + "," + CAM_SIZE + "," + SR_SIZE + "," + XMIN + "," + YMIN + "," + XWIDTH + "," + YWIDTH + "," + XY_UN + "," + P3D + "," + Z_SPACE + "," + Z_MIN + "," + Z_MAX + "," + Z_AUTO + "," + Z_SAT + "," + Z_UN + "," + Z_COLOR + "," + Z_LUT + "," + GAUSS + "," + to16 + "," + AD_CONT + "," + SAT_LEV;
 		out_path2 = runMacro(Gen_Recon_path, Gen_Recon_args);
 	}

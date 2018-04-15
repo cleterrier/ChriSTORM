@@ -31,7 +31,7 @@ var zFac = gd.getNextNumber();
 
 if (gd.wasOKed()) {
 	var plugDir = IJ.getDirectory("imagej");
-	plugDir = plugDir + "scripts" + File.separator + "NeuroCyto Lab" + File.separator + "ChriSTORM" + File.separator + "Routines" + File.separator;
+	plugDir = plugDir + "scripts" + File.separator + "NeuroCyto" + File.separator + "ChriSTORM" + File.separator + "Routines" + File.separator;
 	var PtTJS = "F-TranslatePhasor-TS.js";
 	var PtTPath = plugDir + PtTJS;
 	IJ.log("Phasor to TS path:" + plugDir + PtTJS);
