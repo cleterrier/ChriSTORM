@@ -15,11 +15,11 @@
 	GAUSS_DEF = 8;
 	LUTS = newArray("Rainbow RGB", "Jet", "ametrine", "ThunderSTORM");
 	LUT_DEF = "Rainbow RGB";
-	
+
 	// Get input directory (Locs text files from N-STORM)
 	inputDir = getDirectory("Choose a Locs directory");
 	inputDirF = escapePath(inputDir); // Windows case, necessary to escape paths input to scripts
-	plugin_path = getDirectory("plugins");
+	plugin_path = getDirectory("imagej") + "scripts";
 
 	//Creation of the dialog box
 	Dialog.create("Workflow options");
@@ -37,10 +37,10 @@
 	Dialog.addNumber("SR pixel size", SR_SIZE_DEF, 0, 3, "nm");
 	Dialog.addNumber("Gaussian filter", GAUSS_DEF, 0, 3, "nm");
 	Dialog.addChoice("3D LUT", LUTS, LUT_DEF);
-	
+
 
 	Dialog.show();
-	
+
 	// Feeding variables from dialog choices
 	MODE = Dialog.getChoice();
 	USE_DRIFT = Dialog.getCheckbox();
@@ -50,59 +50,59 @@
 	else EXCL = false;
 	CORR_DRIFT = Dialog.getCheckbox();
 	EXP_STRING = Dialog.getString();
-	if (lengthOf(EXP_STRING)>0) EXP_FILT = true; 
+	if (lengthOf(EXP_STRING)>0) EXP_FILT = true;
 	else EXP_FILT = false;
 	REC_2D = Dialog.getCheckbox();
 	REC_3D = Dialog.getCheckbox();
 	SR_SIZE = Dialog.getNumber();
 	GAUSS = Dialog.getNumber();
 	Z_LUT = Dialog.getChoice();
-	
-	if (MODE == "STORM") {	
+
+	if (MODE == "STORM") {
 		USE_DRIFT = true;
 		BATCH_PROC = true;
 		EXCL = true;
 		EXCL_STRING = "_ZR_";
 		CORR_DRIFT = true;
 		EXP_FILT = true;
-		EXP_STRING = "intensity>700 & intensity<30000 & detections<5";	
-		
+		EXP_STRING = "intensity>700 & intensity<30000 & detections<5";
+
 		REC_2D = true;
 		REC_3D = true;
 		SR_SIZE = 16;
 		GAUSS = 8;
 	}
 
-	
-	if (MODE == "PAINT") {	
+
+	if (MODE == "PAINT") {
 		USE_DRIFT = true;
 		BATCH_PROC = true;
 		EXCL = true;
 		EXCL_STRING = "_ZR_";
 		CORR_DRIFT = true;
 		EXP_FILT = true;
-		EXP_STRING = "intensity>1500 & intensity<1000000 & detections<100";	
-		
+		EXP_STRING = "intensity>1500 & intensity<1000000 & detections<100";
+
 		REC_2D = true;
 		REC_3D = true;
 		SR_SIZE = 16;
 		GAUSS = 8;
-	} 
+	}
 
-	if (MODE == "to RCC") {	
+	if (MODE == "to RCC") {
 		USE_DRIFT = false;
 		BATCH_PROC = true;
 		EXCL = true;
 		EXCL_STRING = "_ZR_";
 		CORR_DRIFT = true;
 		EXP_FILT = true;
-		EXP_STRING = "intensity>700 & intensity<30000 & detections<5";	
-				
+		EXP_STRING = "intensity>700 & intensity<30000 & detections<5";
+
 		REC_2D = false;
 		REC_3D = false;
 		SR_SIZE = 16;
 		GAUSS = 8;
-	}  
+	}
 
 
 
@@ -147,9 +147,9 @@
 	// TSF Export
 	TSF = false;
 
-	// Generate_Reconstructions macro arguments	
+	// Generate_Reconstructions macro arguments
 	CAM_SIZE = 160;
-//	SR_SIZE = 16;	
+//	SR_SIZE = 16;
 	XMIN = 0;
 	YMIN = 0;
 	XWIDTH = 256;
@@ -168,7 +168,7 @@
 	AD_CONT = false;
 	SAT_LEV = 0.1;
 //	GAUSS = 8;
-	
+
 
 	// NS to TS
 	NStoTS_path = plugin_path + File.separator + "NeuroCyto Lab" + File.separator + "ChriSTORM" + File.separator + "Process locs files (batch)" + File.separator+ "Batch_NS_Into_TS.js";
@@ -183,21 +183,21 @@
 		out_path = runMacro(BatchProc_path, BatchProc_args);
 	}
 
-	
+
 	// Generate Recs (2D)
 	if (REC_2D == true) {
 		Gen_Recon_path = plugin_path + File.separator + "NeuroCyto Lab" + File.separator + "ChriSTORM" + File.separator + "Reconstruct Images (batch)" + File.separator+ "Generate_Reconstructions.ijm";
 		Gen_Recon_args = out_path + "," + CAM_SIZE + "," + SR_SIZE + "," + XMIN + "," + YMIN + "," + XWIDTH + "," + YWIDTH + "," + XY_UN + "," + P3D + "," + Z_SPACE + "," + Z_MIN + "," + Z_MAX + "," + Z_AUTO + "," + Z_SAT + "," + Z_UN + "," + Z_COLOR + "," + Z_LUT + "," + GAUSS + "," + to16 + "," + AD_CONT + "," + SAT_LEV;
-		out_path2 = runMacro(Gen_Recon_path, Gen_Recon_args);	
+		out_path2 = runMacro(Gen_Recon_path, Gen_Recon_args);
 	}
 
 	// Optional Generate Recs (Zc)
 	if (REC_3D == true) {
 		P3D = true;
-		Gen_Recon_args = out_path + "," + CAM_SIZE + "," + SR_SIZE + "," + XMIN + "," + YMIN + "," + XWIDTH + "," + YWIDTH + ","+ XY_UN + ","  + P3D + "," + Z_SPACE + "," + Z_MIN + "," + Z_MAX + "," + Z_AUTO + "," + Z_SAT + "," + Z_UN + "," + Z_COLOR + "," + Z_LUT + "," + GAUSS + "," + to16 + "," + AD_CONT + "," + SAT_LEV;		
+		Gen_Recon_args = out_path + "," + CAM_SIZE + "," + SR_SIZE + "," + XMIN + "," + YMIN + "," + XWIDTH + "," + YWIDTH + ","+ XY_UN + ","  + P3D + "," + Z_SPACE + "," + Z_MIN + "," + Z_MAX + "," + Z_AUTO + "," + Z_SAT + "," + Z_UN + "," + Z_COLOR + "," + Z_LUT + "," + GAUSS + "," + to16 + "," + AD_CONT + "," + SAT_LEV;
 		out_path2 = runMacro(Gen_Recon_path, Gen_Recon_args);
-	}	
-	
+	}
+
 	function escapePath(p) {
 		if (indexOf(p, "\\") > 0) {
 			pE = split(p, "\\");
@@ -212,7 +212,3 @@
 		print(pF);
 		return pF;
 	}
-
-	
-
- 

@@ -66,13 +66,15 @@ function TransformLocs(inPath, outDir, xTrans, yTrans, zTrans, xFactor, yFactor,
 
 	// New header
 	// Add Z uncertainty column only if not already existing
-	if (uzIndex == -1) {
-		IJ.log("      adding Z uncertainty");
-		var outHLine = inHLine + sep + uzHeader;
-	}
-	else {
-		IJ.log("      replacing Z uncertainty");
-		var outHLine = inHLine;
+	if (zUnc != 0) {
+		if (uzIndex == -1) {
+			IJ.log("      adding Z uncertainty");
+			var outHLine = inHLine + sep + uzHeader;
+		}
+		else {
+			IJ.log("      replacing Z uncertainty");
+			var outHLine = inHLine;
+		}
 	}
 	
 	bw.write(outHLine);	

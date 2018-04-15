@@ -25,8 +25,8 @@ IJ.log("\n\n*** Batch ThunderSTORM to VISP started ***");
 IJ.log("Input folder: " + inDir);
 
 // Localize the SR folder to get the path to script functions
-var plugDir = IJ.getDirectory("plugins");
-plugDir = plugDir + "NeuroCyto Lab" + File.separator + "ChriSTORM" + File.separator + "Routines" + File.separator;
+var plugDir = IJ.getDirectory("imagej");
+var plugDir = plugDir + "scripts" + File.separator + "NeuroCyto" + File.separator + "ChriSTORM" + File.separator + "Routines" + File.separator;
 
 // Get the translate function path and load
 var translateJS = "F-TSTranslate.js";

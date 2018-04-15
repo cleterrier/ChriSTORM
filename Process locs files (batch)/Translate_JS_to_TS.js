@@ -1,5 +1,5 @@
-// Translate DOM to TS script by Christophe Leterrier
-// Calls F-TranslateDOM-TS.js to translate a DOM localization file into a ThunderSTORM file
+// Translate Jonas Ries Spline csv to TS script by Christophe Leterrier
+// Calls F-TranslateJS-TS.js to translate a JSpline localization file into a ThunderSTORM file
 
 importClass(Packages.ij.io.OpenDialog)
 importClass(Packages.java.io.File)
@@ -8,7 +8,6 @@ importClass(Packages.ij.gui.GenericDialog);
 
 // Default values
 var isBatchdef = 0;
-var ppcdef = 0.1248; //photons per count to trasnlate camera ADU to photons (for intensity)
 
 // Name of the processing
 procName = "Translate DOM to TS";
@@ -20,13 +19,13 @@ inputExt = "txt";
 var routineFolder =  "NeuroCyto Lab" + File.separator + "ChriSTORM" + File.separator + "Routines" + File.separator;
 
 // Name of the routine JS that will be called
-var routineJS = "F-TranslateDOM-TS.js";
+var routineJS = "F-TranslateJS-TS.js";
 
 // Name of the output folder (added to the name of the input folder)
 var addFolder = "TS";
 
 // Choose file or folder dialog
-var od = new OpenDialog("Choose a DOM results file", "");
+var od = new OpenDialog("Choose a JSpline results file", "");
 var path = od.getPath(); // path of selected file
 var directory = od.getDirectory(); // path of containing folder
 var name = od.getFileName(); // name of delected file
@@ -44,10 +43,8 @@ IJ.log("Input name:" + name);
 // Options dialog
 var gd = new GenericDialog(procName + ": options");
 gd.addCheckbox("Batch mode", isBatchdef);
-gd.addNumericField("Photons per ADU:", ppcdef, 4, 6, "");
 gd.showDialog();
 var isBatch = gd.getNextBoolean();
-var ppc = gd.getNextNumber();
 
 if (isBatch == 0) IJ.log("Processing a single file, path:" + path);
 else IJ.log("Batch processing a folder, path:" + directory);
@@ -66,7 +63,7 @@ if (gd.wasOKed()) {
 
 	if (isBatch == 0) {
 		// Process the single file
-		TranslateDOMTS(path, directory, ppc);
+		TranslateJSTS(path, directory);
 	}
 	else {
 		// Define input folder, define and create output folder
@@ -84,7 +81,7 @@ if (gd.wasOKed()) {
 		for (var f = 0; f < fileQueue.length; f++) {
 			inPath = fileQueue[f];
 			IJ.log("\n");
-			TranslateDOMTS(inPath, outDir, ppc);
+			TranslateJSTS(inPath, outDir);
 		}
 	}
 

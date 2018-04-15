@@ -42,13 +42,13 @@ var ppc = gd.getNextNumber();
 var xcorr = gd.getNextBoolean();
 
 if (gd.wasOKed()) {
-	var plugDir = IJ.getDirectory("plugins"); 
-	plugDir = plugDir + "NeuroCyto Lab" + File.separator + "ChriSTORM" + File.separator + "Routines" + File.separator;
+	var plugDir = IJ.getDirectory("imagej");
+	plugDir = plugDir + "scripts" + File.separator + "NeuroCyto Lab" + File.separator + "ChriSTORM" + File.separator + "Routines" + File.separator;
 	var translateJS = "F-NStxtTranslate.js";
 	var translatePath = plugDir + translateJS;
 	IJ.log("Translator path:" + plugDir + translateJS);
 	load(translatePath);
-	
+
 	NStxtTranslate(path, directory, outFormat, xydrift, warp, zdrift, zfactor, ppc, xcorr);
 	IJ.log("Single NS to TS end");
 }

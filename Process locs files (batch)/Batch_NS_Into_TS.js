@@ -22,8 +22,8 @@ var outFormat = "TS";
 var extFormat = "txt";
 
 // Path to ChriSTORM folder
-var plugDir = IJ.getDirectory("plugins");
-var csPath = plugDir + "NeuroCyto Lab" + File.separator + "ChriSTORM" + File.separator;
+var plugDir = IJ.getDirectory("imagej");
+var csPath = plugDir + "scripts" + File.separator + "NeuroCyto" + File.separator + "ChriSTORM" + File.separator;
 var routinePath = csPath + "Routines" + File.separator;
 
 // Default options
@@ -48,7 +48,7 @@ var parDir = inDirFile.getParent() + File.separator;
 
 // Options (dialog or arguments)
 var gd = new GenericDialog("Translator Options");
-if (called == false) {	
+if (called == false) {
 	gd.addCheckbox("Use drift-corrected XY coordinates", xydrift_def);
 	gd.addCheckbox("Use warp-corrected coordinates", warp_def);
 	gd.addCheckbox("Use drift-corrected Z coordinates", zdrift_def);
@@ -71,7 +71,7 @@ else {
 	ppc = argarray[5];
 	xcorr = argarray[6];
 }
- 
+
 if (gd.wasOKed() || called == true) {
 
 	// Start

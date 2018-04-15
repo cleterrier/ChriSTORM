@@ -27,13 +27,13 @@ var fh = gd.getNextBoolean();
 var fv = gd.getNextBoolean();
 
 if (gd.wasOKed()) {
-	var plugDir = IJ.getDirectory("plugins"); 
-	plugDir = plugDir + "NeuroCyto Lab" + File.separator + "ChriSTORM" + File.separator + "Routines" + File.separator;
+	var plugDir = IJ.getDirectory("imagej");
+	plugDir = plugDir + "scripts" + File.separator + "NeuroCyto Lab" + File.separator + "ChriSTORM" + File.separator + "Routines" + File.separator;
 	var rotateJS = "F-TSRotate.js";
 	var rotatePath = plugDir + rotateJS;
 	IJ.log("Rotator path:" + plugDir + rotateJS);
 	load(rotatePath);
-	
+
 	TSRotate(path, directory, rotAngle, fh, fv);
 	IJ.log("Single Rotate Locs end");
 }

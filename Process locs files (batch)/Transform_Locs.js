@@ -25,7 +25,8 @@ var zUdef = 2; // scaling factor to calculate Z uncertainty from XY uncertainty 
 procName = "Transform Locs";
 
 // Where to find the routine JS in the plugins folder
-var routineFolder =  "NeuroCyto Lab" + File.separator + "ChriSTORM" + File.separator + "Routines" + File.separator;
+var plugDir = IJ.getDirectory("imagej");
+var routineFolder = "NeuroCyto" + File.separator + "ChriSTORM" + File.separator + "Routines"+ File.separator;
 
 // Name of the routine JS that will be called
 var routineJS = "F-TransformLocs.js";
@@ -92,8 +93,8 @@ if (gd.wasOKed()) {
 	var startTime = new Date().getTime();
 
 	// Get routine path and load the routine JS
-	var plugDir = IJ.getDirectory("plugins"); 
-	plugDir = plugDir + routineFolder;
+	var plugDir = IJ.getDirectory("imagej");
+	plugDir = plugDir + "scripts" + File.separator + routineFolder;
 	var routinePath = plugDir + routineJS;
 	IJ.log("Routine path:" + routinePath);
 	load(routinePath);
@@ -112,7 +113,7 @@ if (gd.wasOKed()) {
 		if (!outDirFile.exists()) {
 				outDirFile.mkdir();
 			}
-	
+
 		// Get the file list from the input folder, batch process them using the translate function
 		var fileQueue = getExtFiles(directory, "csv");
 		for (var f = 0; f < fileQueue.length; f++) {
@@ -121,7 +122,7 @@ if (gd.wasOKed()) {
 			TransformLocs(inPath, outDir, xT, yT, zT, xF, yF, zF, xC, yC, rotA, fh, fv, zU);
 		}
 	}
-	
+
 	// Stops timer
 	var stopTime = new Date().getTime();
 	var Time = stopTime - startTime;

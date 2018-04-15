@@ -13,12 +13,12 @@ var name = od.getFileName();
 var path = directory + name;
 IJ.log("\nTranslator input file path:" + path);
 
-var plugDir = IJ.getDirectory("plugins"); 
-plugDir = plugDir + "NeuroCyto Lab" + File.separator + "ChriSTORM" + File.separator + "Routines" + File.separator;
+var plugDir = IJ.getDirectory("imagej");
+plugDir = plugDir + "scripts" + File.separator + "NeuroCyto Lab" + File.separator + "ChriSTORM" + File.separator + "Routines" + File.separator;
 var translateJS = "F-TSTranslate.js";
 var translatePath = plugDir + translateJS;
 IJ.log("Translator path:" + plugDir + translateJS);
 load(translatePath);
-	
+
 TSTranslate(path, directory, "VISP");
 IJ.log("Single NS to TS end");
