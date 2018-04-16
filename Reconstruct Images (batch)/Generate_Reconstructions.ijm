@@ -4,11 +4,11 @@
 
 macro "Generate Reconstructions" {
 
-//*************** Initialization *************** 
+//*************** Initialization ***************
 
 // Save Settings
 	saveSettings();
-// Necessary for 32-bit to 16-bit conversion	
+// Necessary for 32-bit to 16-bit conversion
 	run("Conversions...", "scale");
 
 // Detect if run from macro
@@ -24,7 +24,7 @@ macro "Generate Reconstructions" {
 	RECON_TITLE = "Normalized Gaussian";
 	// Index of column containing Z coordinates in TS3D files
 	colZ = 3;
-	LUT_ARRAY = getList("LUTs");
+	LUT_ARRAY = newArray("Rainbow RGB", "Jet", "ametrine", "ThunderSTORM");
 
 // Default values for the Options Panel
 	CAM_SIZE_DEF = 160;
@@ -37,7 +37,7 @@ macro "Generate Reconstructions" {
 	YMIN_DEF = 0;
 	XWIDTH_DEF = 256;
 	YWIDTH_DEF = 256;
-	XY_UN_DEF = 0;	
+	XY_UN_DEF = 0;
 	P3D_DEF = false;
 	Z_SPACE_DEF = 30;
 	Z_MIN_DEF = -450;
@@ -45,7 +45,7 @@ macro "Generate Reconstructions" {
 	Z_AUTO_DEF = true;
 	Z_SAT_DEF = 30; // restriction of 3D span on top and bottom (in nm)
 	Z_UN_DEF = 0;
-	Z_COLOR_ARRAY = newArray("No color", "Colorized 2D", "Colorized 3D");  
+	Z_COLOR_ARRAY = newArray("No color", "Colorized 2D", "Colorized 3D");
 	Z_COLOR_DEF = "Colorized 2D";
 	Z_LUT_DEF = "Rainbow RGB"; // LUT for color-coded 3D, other good ones: Jet, ametrine, ThunderSTORM
 	to16_DEF = false;
@@ -53,7 +53,7 @@ macro "Generate Reconstructions" {
 	SAT_LEV_DEF = 0.1;
 	GAUSS_DEF = 8;
 
-//*************** Dialog 1 : get the input images folder path *************** 
+//*************** Dialog 1 : get the input images folder path ***************
 
 	// Get input directory (dialog or argument)
 	if (called == false) {
@@ -62,12 +62,12 @@ macro "Generate Reconstructions" {
 	else {
 		INPUT_DIR = argarray[0];
 	}
-	
+
 	print("\n\n\n*** Generate Reconstructions Log ***");
 	print("");
 	print("Input folder: " + INPUT_DIR);
 
-	
+
 //*************** Dialog 2 : options ***************
 
 	if (called == false) {
@@ -99,7 +99,7 @@ macro "Generate Reconstructions" {
 		Dialog.addCheckbox("Adjust contrast", AD_CONT_DEF);
 		Dialog.addNumber("Saturated pixels", SAT_LEV_DEF, 2, 3, "%");
 		Dialog.show();
-		
+
 		// Feeding variables from dialog choices
 		CAM_SIZE = Dialog.getNumber();
 	//	CG = Dialog.getNumber();
@@ -124,7 +124,7 @@ macro "Generate Reconstructions" {
 		AD_CONT = Dialog.getCheckbox();
 		SAT_LEV = Dialog.getNumber();
 	}
-	
+
  	// called from macro:
 	// arguments (INPUT_DIR, CAM_SIZE, SR_SIZE, XMIN, YMIN, XWIDTH, YWIDTH, XY_UN, P3D, Z_SPACE, Z_MIN, Z_MAX, Z_AUTO, Z_SAT, Z_UN, Z_COLOR, Z_LUT, GAUSS, to16, AD_CONT, SAT_LEV)
 	else {
@@ -147,20 +147,20 @@ macro "Generate Reconstructions" {
 		GAUSS = parseInt(argarray[17]);
 		to16 = argarray[18];
 		AD_CONT = argarray[19];
-		SAT_LEV = argarray[20];	
+		SAT_LEV = argarray[20];
 	}
 
-//*************** Prepare Processing (get names, open images, make output folder) ***************	
-	
+//*************** Prepare Processing (get names, open images, make output folder) ***************
+
 	//Time counter
 	startTime = getTime();
-	
+
 	// Get all file names
 	ALL_NAMES = getFileList(INPUT_DIR);
 	Array.sort(ALL_NAMES);
 
 	//Create the output folder name
-	if (P3D == false) {	
+	if (P3D == false) {
 		OUT_PARAM = "xy" + SR_SIZE;
 	}
 	else if (Z_COLOR == "Colorized 2D"){
@@ -168,7 +168,7 @@ macro "Generate Reconstructions" {
 	}
 	else if (Z_COLOR == "Colorized 3D"){
 		OUT_PARAM = "xy" + SR_SIZE + "z" + Z_SPACE + "c";
-	}	
+	}
 	else {
 		OUT_PARAM = "xy" + SR_SIZE + "z" + Z_SPACE;
 	}
@@ -186,8 +186,8 @@ macro "Generate Reconstructions" {
 	Magnif = CAM_SIZE / SR_SIZE;
 
 	if (XY_UN == 0) FORCE_STRING = "dxforce=false dx=20.0";
-	else FORCE_STRING = "dxforce=true dx=" + XY_UN; 
-	
+	else FORCE_STRING = "dxforce=true dx=" + XY_UN;
+
 	VISU_STRING_XY = "imleft=" + XMIN + " imtop=" + YMIN + " imwidth=" + XWIDTH + " imheight=" + YWIDTH + " renderer=[Normalized Gaussian] magnification=" + Magnif + " " + FORCE_STRING + " ";
 
 	// Prepare the Z part of the Visu string
@@ -226,15 +226,15 @@ macro "Generate Reconstructions" {
 		// Finally build the Z part of the Visu string
 		VISU_STRING_Z = COLOR_STRING + DZF_STRING + " dz=" + ZUS;
 		VISU_STRING_RANGE = " zrange=" + Z_MIN + ":" + Z_SPACE + ":" + Z_MAX;
-	
+
 	}
 
 	// Initialize the camera setup
 	run("Camera setup", "isemgain=true pixelsize=" + CAM_SIZE + " photons2adu=" + CG_DEF +" quantumefficiency=0.89 offset=100 gainem=" + EM_DEF);
-	
-	
+
+
 //*************** Process Images ***************
-	
+
 	// Detect number of files
 	FileTotal = 0;
 	for (n = 0; n < ALL_NAMES.length; n++) {
@@ -243,21 +243,21 @@ macro "Generate Reconstructions" {
 		}
 	}
 
-	// Loop on all TS loc files	
+	// Loop on all TS loc files
 	FileCount = 0;
 	for (n = 0; n < ALL_NAMES.length; n++) {
-		if (endsWith(ALL_NAMES[n], ".csv") == true || endsWith(ALL_NAMES[n], ".tsf") == true) {	
+		if (endsWith(ALL_NAMES[n], ".csv") == true || endsWith(ALL_NAMES[n], ".tsf") == true) {
 
-			FileCount++; 
+			FileCount++;
 			// Get the file path
 			FILE_PATH = INPUT_DIR + ALL_NAMES[n];
-			
+
 			// Store components of the file name
 			FILE_NAME = File.getName(FILE_PATH);
 			FILE_EXT = substring(FILE_NAME, lastIndexOf(FILE_NAME, "."), lengthOf(FILE_NAME));
-	
+
 			//print("INPUT_PATH: " + FILE_PATH);
-			print("    Input file #" + FileCount + "/" + FileTotal + ": " + FILE_NAME + " (" + FILE_EXT + " file)");	
+			print("    Input file #" + FileCount + "/" + FileTotal + ": " + FILE_NAME + " (" + FILE_EXT + " file)");
 
 			// Test if 3D
 			if (FILE_EXT == ".csv") {
@@ -278,14 +278,14 @@ macro "Generate Reconstructions" {
 				LAST_DOT = lastIndexOf(FILE_NAME, ".");
 				OUT_TITLE = substring(FILE_NAME, 0, LAST_DOT);
 				OUT_PATH = OUTPUT_DIR + OUT_TITLE + ".tif";
-				
+
 				// Open the loc file
-				if (FILE_EXT == ".csv")	
+				if (FILE_EXT == ".csv")
 					run("Import results", "append=false startingframe=1 rawimagestack= filepath=[" + FILE_PATH + "] livepreview=false fileformat=[CSV (comma separated)]");
-				if (FILE_EXT == ".tsf")	
+				if (FILE_EXT == ".tsf")
 					run("Import results", "append=false startingframe=1 rawimagestack= filepath=[" + FILE_PATH + "] livepreview=false fileformat=[Tagged spot file]");
-				
-				//Detect Z range if auto-range (necessarily after CSV opening)		
+
+				//Detect Z range if auto-range (necessarily after CSV opening)
 				if (P3D == true && Z_AUTO == true) {
 					ZMinMaxString = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); var rows = rt.getRowCount(); var colz = rt.findColumn(\"z\"); var minz = rt.getValue(0, colz); var maxz = minz; for (var row = 1; row < rows; row++) {var val = rt.getValue(row, colz); if (val > maxz) maxz = val; else if (val < minz) minz = val;} ZMinMaxString = \"\" + minz + \",\" +  maxz;");
 					ZMinMax = split(ZMinMaxString, ",");
@@ -301,25 +301,25 @@ macro "Generate Reconstructions" {
 						Z_MAX = round(Zmaxi - Z_SAT);
 						Z_N = round((Z_MAX - Z_MIN) / Z_SPACE);
 						Z_SPACE = round((Z_MAX - Z_MIN)  / Z_N); // Here we modify Z_SPACE!
-					
+
 					}
 
-						
+
 					VISU_STRING_RANGE = " zrange=" + Z_MIN + ":" + Z_SPACE + ":" + Z_MAX;
 					print("      auto Z range: " + Zmini + " to " + Zmaxi + " nm, slices " + Z_MIN + " to " + Z_MAX + " nm (" + Z_SPACE + " nm spacing)" );
 				}
 
-			
-	
+
+
 				// Finalize the Visualization arguments string
 				VISU_STRING = VISU_STRING_XY + VISU_STRING_Z + VISU_STRING_RANGE;
 				// print("VISU_STRING: " + VISU_STRING);
-				
+
 				// Generate the ouput
 				selectWindow(RESULTS_TITLE);
 				run("Visualization", VISU_STRING);
 				setVoxelSize(SR_SIZE/1000, SR_SIZE/1000, Z_SPACE/1000, "um");
-	
+
 				// optional filtering
 				if (GAUSS > 0) {
 					run("Gaussian Blur...", "sigma=" + GAUSS/SR_SIZE + " stack");;
@@ -342,7 +342,7 @@ macro "Generate Reconstructions" {
 						rename(OUT_TITLE);
 						selectWindow(RECON_TITLE);
 						close();
-					}	
+					}
 				}
 
 				// Grayscale output
@@ -352,17 +352,17 @@ macro "Generate Reconstructions" {
 					else getStatistics(OutArea, OutMean, OutMin, OutMax);
 					setMinAndMax(0, OutMax);
 					ScaleMax = 1;
-					
+
 					if (to16 == true) {
 						run("16-bit");
 						ScaleMax = 65535;
-						setMinAndMax(0, ScaleMax);						
+						setMinAndMax(0, ScaleMax);
 						if (AD_CONT == true) {
 							run("Enhance Contrast...", "saturated=" + SAT_LEV + " normalize process_all use");
 							setMinAndMax(0, ScaleMax);
-						}	
+						}
 					}
-					
+
 					outID = getImageID();
 					rename(OUT_TITLE);
 				}
@@ -379,12 +379,12 @@ macro "Generate Reconstructions" {
 //*************** Cleanup and end ***************
 
 	// Restore settings
-	restoreSettings();	
+	restoreSettings();
 
 	//Time counter
 	stopTime = getTime();
 	Time = stopTime - startTime;
-	
+
 	print("");
 	print("*** Generate Reconstructions end after " + Time / 1000 + " s  ***\n\n\n");
 	showStatus("Generate Recon finished");
@@ -396,21 +396,21 @@ function test3D(path, ind){
 	// Get the first 5000 bytes of the csv file
 	dipString = File.openAsRawString(path, 5000);
 	dipLines = split(dipString, "\n");
-	
+
 	dipSum = 0;
 	// Test if z column exists
-	if (indexOf(dipLines[0], "z [nm]") < 0){ 
+	if (indexOf(dipLines[0], "z [nm]") < 0){
 		return 0;
 	}
 	// If not, tests if first values are not all 0
 	else {
-		// Sum the first 10 Z coordinates to test if 3D	
+		// Sum the first 10 Z coordinates to test if 3D
 		for (i = 1; i < 11; i++) {
 			dipZ = split(dipLines[i], ",");
 			dipSum += parseInt(dipZ[ind]);
 		}
 	}
-	
+
 	// Return O for 2D, 1 for 3D
 	if (dipSum == 0)
 		return 0;
