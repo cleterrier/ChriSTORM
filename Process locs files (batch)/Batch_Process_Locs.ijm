@@ -274,19 +274,26 @@ macro "Batch Process Localizations" {
 				nLocs = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); rows = rt.getRowCount();");
 				nLocK = round(nLocs / 1000);
 				// OUT_TITLE = replace(OUT_TITLE, "([0-9])+K_", nLocK + "K_");
-				OUT_TITLE = replace(OUT_TITLE, "_TS", "_" + nLocK + "K_TS");
+
+				ADD_TITLE = "_" + nLock + "K";
 				if (CORR_DRIFT == true) {
-					OUT_TITLE = replace(OUT_TITLE, "_TS", "_DC_TS");	
+					ADD_TITLE = ADD_TITLE + "_DC";
+				}			
+				
+				NEW_TITLE = replace(OUT_TITLE, "_TS", ADD_TITLE + "_TS");
+				if (NEW_TITLE == OUT_TITLE) {
+					NEW_TITLE = replace(OUT_TITLE, LOC_SUFFIX, ADD_TITLE + LOC_SUFFIX);
 				}
+
 				
 				if (TSF == false) {
-					OUT_PATH = OUTPUT_DIR + OUT_TITLE;
+					OUT_PATH = OUTPUT_DIR + NEW_TITLE;
 					run("Export results", "filepath=[" + OUT_PATH + "] fileformat=[CSV (comma separated)] chi2=false saveprotocol=false");
 					// remove chi2 that causes an error on 27-07-2017 version (see bug on GitHub)
 				}
 				else {
-					OUT_TITLE = replace(OUT_TITLE, ".csv", ".tsf");
-					OUT_PATH = OUTPUT_DIR + OUT_TITLE;
+					NEW_TITLE = replace(NEW_TITLE, ".csv", ".tsf");
+					OUT_PATH = OUTPUT_DIR + NEW_TITLE;
 					run("Export results", "filepath=[" + OUT_PATH + "] fileformat=[Tagged spot file] saveprotocol=false");
 				}
 				

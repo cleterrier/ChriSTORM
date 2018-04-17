@@ -14,7 +14,7 @@ macro "Generate Zooms & Slices" {
 	// Titles of the Thunderstorm windows for catching them
 	RESULTS_TITLE = "ThunderSTORM: results";
 	RECON_TITLE = "ROIoutput";
-	newArray("Rainbow RGB", "Jet", "ametrine", "ThunderSTORM");
+	LUT_ARRAY = newArray("Rainbow RGB", "Jet", "ametrine", "ThunderSTORM");
 
 	// log
 	print("\n\n***** Generate Zooms & Slices started *****");
@@ -23,16 +23,16 @@ macro "Generate Zooms & Slices" {
 	// Paths for opening the loc files
 	LocFolder = "Locs TS";
 	LocSuffix1 = ".csv";
-	LocSuffix2 = ".tsf";
 	StackFolder = getDirectory("image");
-	SaveFolderZooms = "Recs TS Box";
-	SaveFolderSlices = "Recs TS Slice";
+	SaveFolderLocROI = "Locs TS ROIs"; 
+	SaveFolderZooms = "Recs TS Tiles";
+	SaveFolderSlices = "Recs TS Slices";
 	HomeFolder = getHomeFolder(StackFolder);
 	print("  Home folder:" + HomeFolder);
 
 	// Default values for the Options Panel
 	MULTI_ROI_DEF = true;
-	ALL_CHAN_DEF = false;
+	ALL_CHAN_DEF = true;
 	PRO_DEF = true;
 	SPEC_DEF = false;
 	USE_OPEN_DEF = false;
@@ -43,11 +43,12 @@ macro "Generate Zooms & Slices" {
 	// EM_DEF = 300; // EM gain old images
 	EM_DEF = 100; // EM gain new images
 	SR_SIZE_DEF = 4; // 4 nm
+	LOCROI_DEF = false; // generate loc file for the ROIs
 
 	P3D_DEF = false;
 	Z_SPACE_DEF = 4; // 4 nm for 3D
-	Z_MIN_DEF = -500; // -500 nm
-	Z_MAX_DEF = 500; // +500 nm
+	Z_MIN_DEF = -450; // -500 nm
+	Z_MAX_DEF = 450; // +500 nm
 	Z_AUTO_DEF = false;
 	Z_SAT_DEF = 10; // restriction of 3D span on top and bottom (in nm)
 	Z_UN_DEF = 0; // usually 0
@@ -65,7 +66,7 @@ macro "Generate Zooms & Slices" {
 	CLOSE_DEF = true;
 
 	// Get the values of the default reconstruction coordinates (256, 1 to 257 in X and Y)
-	RECON_PX_DEF = 16; // 20 or 16
+	RECON_PX_DEF = 16; // 16
 	RECON_LTX_DEF = 0; // 0
 	RECON_LTY_DEF = 0; // 0
 
@@ -105,6 +106,7 @@ macro "Generate Zooms & Slices" {
 	Dialog.addNumber("Input reconstruction origin X", RECON_LTX_DEF, 0, 3, "px");
 	Dialog.addNumber("Input reconstruction origin Y", RECON_LTY_DEF, 0, 3, "px");
 	Dialog.addNumber("Final pixel size", SR_SIZE_DEF, 0, 3, "nm");
+	Dialog.addCheckbox("Generate Locs files", LOCROI_DEF);
 	Dialog.addMessage("");
 	Dialog.addCheckbox("3D", P3D_DEF);
 	Dialog.addNumber("Z spacing", Z_SPACE_DEF, 0, 3, "nm");
@@ -148,6 +150,7 @@ macro "Generate Zooms & Slices" {
 	RECON_LTX = Dialog.getNumber();
 	RECON_LTY = Dialog.getNumber();
 	SR_SIZE = Dialog.getNumber();
+	LOCROI = Dialog.getCheckbox();
 
 	P3D = Dialog.getCheckbox();
 	Z_SPACE = Dialog.getNumber();
@@ -180,10 +183,12 @@ macro "Generate Zooms & Slices" {
 	OUT_PARAM = "";
 	if (PRO == true){
 		LocFolder = "Locs TS proc";
-		OUT_PARAM = "p";
 	}
 	LocFolderPath = HomeFolder + File.separator + LocFolder;
-	if (SPEC == true){
+
+	print("  Loc folder candidate:" + LocFolderPath);
+	
+	if (SPEC == true || File.exists(LocFolderPath) != 1){
 		LocFolderPath = getDirectory("Select the localizations folder");
 	}
 	print("  Loc folder:" + LocFolderPath);
@@ -197,25 +202,37 @@ macro "Generate Zooms & Slices" {
 	}
 	else if (Z_COLOR == true){
 		OUT_PARAM += "_xy" + SR_SIZE + "z" + Z_SPACE + "c";
+		if (Z_PROJ == true) OUT_PARAM += "p"
 	}
 	else {
 		OUT_PARAM += "_xy" + SR_SIZE + "z" + Z_SPACE;
+		if (Z_PROJ == true) OUT_PARAM += "p"
 	}
-
 	if (SLICES == true) {
-		OUT_PARAM += "_s" + SLICE_THICK;
+		OUT_PARAM += "_s" + SLICE_THICK; 
+		if (SLICE_PROJ == true) OUT_PARAM += "p"
 	}
 
 	print("  Output parameters: " + OUT_PARAM);
 
 	// Make the output directories
-	ZoomFolder = HomeFolder + File.separator + SaveFolderZooms  + " " + OUT_PARAM;
-	File.makeDirectory(ZoomFolder);
-	print("  Boxes folder:" + ZoomFolder);
 
+	// Directory containing the localizations files for each ROI
+	if (LOCROI == true) {
+		LocROIFolder = HomeFolder + File.separator + SaveFolderLocROI;
+		if (File.exists(LocROIFolder) != 1) File.makeDirectory(LocROIFolder);
+		print("  ROI locs folder:" + LocROIFolder);
+	}
+
+	// Directory containing the XY reconstructions
+	ZoomFolder = HomeFolder + File.separator + SaveFolderZooms  + " " + OUT_PARAM;
+	if (File.exists(ZoomFolder) != 1) File.makeDirectory(ZoomFolder);
+	print("  Tiles folder:" + ZoomFolder);
+
+	// Directory containing the XZ reconstructions
 	if (SLICES == true) {
 		SliceFolder = HomeFolder + File.separator + SaveFolderSlices + " " + OUT_PARAM;
-		File.makeDirectory(SliceFolder);
+		if (File.exists(SliceFolder) != 1) File.makeDirectory(SliceFolder);
 		print("  Slices folder:" + SliceFolder);
 	}
 
@@ -451,7 +468,7 @@ for (z = 1; z < iCount + 1; z++) {
 					rename(zoomTitle);
 				}
 			}
-
+			
 			if (ROILINE == true) {
 				BIG_LINEIN = getBigCoor(SMALL_LINEIN, SCALE, roiX, roiY);
 				makeLine(BIG_LINEIN[0], BIG_LINEIN[1], BIG_LINEIN[2], BIG_LINEIN[3]);
@@ -460,14 +477,35 @@ for (z = 1; z < iCount + 1; z++) {
 				run("Select None");
 			}
 
+			// Adjust image size so that all have same size (does not work very well)
 			if (XY_VIEW > 0) {
 				magS = floor(XY_VIEW / SR_SIZE);
 				run("Canvas Size...", "width=" + magS + " height=" + magS + " position=Center zero");
 			}
+			
+			// Save zoomed image
 			SaveZoomPath = ZoomFolder + File.separator + zoomTitle + ".tif";
 			print("        Box image:" + SaveZoomPath);
 			save(SaveZoomPath);
 			if (CLOSE == true) close();
+
+			// Save localizations for each ROI 
+			if (LOCROI == true) {
+				// Coordinates of the ROI in nm
+				XMIN = roiX + (RECON_LTX * roiZoom);
+				XMAX = XMIN + roiW;
+				YMIN = roiY + (RECON_LTY * roiZoom);
+				YMAX = YMIN + roiH;
+				XY_RANGE = "x>" + XMIN + " & x<" + XMAX + " & y>" + YMIN + " & y<" + YMAX;  
+				// Filter coordinates within the ROI
+				run("Show results table", "action=filter formula=[" + XY_RANGE + "]");
+				// Export localizations within ROI in a csv file
+				LocROIPath = LocROIFolder + File.separator + zoomTitle + ".csv";
+				run("Export results", "filepath=[" + LocROIPath + "] fileformat=[CSV (comma separated)] chi2=false saveprotocol=false");
+				// Reset the Results Table
+				run("Show results table", "action=reset");
+			}	
+			
 		}
 	}
 
@@ -510,12 +548,6 @@ function getLocs(idstring, LocFolderPath) {
 	else shortName = idstring;
 	LocPath = LocFolderPath + File.separator + shortName + LocSuffix1;
 	print(LocPath);
-	if (File.exists(LocPath) == true) {
-		return LocPath;
-	}
-	else {
-		LocPath = LocFolderPath + File.separator + shortName + LocSuffix2;
-	}
 	if (File.exists(LocPath) == true) {
 		return LocPath;
 	}
