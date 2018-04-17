@@ -37,6 +37,7 @@ macro "Generate Reconstructions" {
 	YMIN_DEF = 0;
 	XWIDTH_DEF = 256;
 	YWIDTH_DEF = 256;
+	XY_AUTO_DEF = false;
 	XY_UN_DEF = 0;
 	P3D_DEF = false;
 	Z_SPACE_DEF = 30;
@@ -82,6 +83,7 @@ macro "Generate Reconstructions" {
 		Dialog.addNumber("Start reconstruction at Y=", YMIN_DEF, 0, 4, "pixels");
 		Dialog.addNumber("Width of reconstruction", XWIDTH_DEF, 0, 4, "pixels");
 		Dialog.addNumber("Height of reconstruction", YWIDTH_DEF, 0, 4, "pixels");
+		Dialog.addCheckbox("Auto XY-range", XY_AUTO_DEF);
 		Dialog.addNumber("Force XY uncertainty (0 to keep)", XY_UN_DEF, 0, 3, "nm");
 		Dialog.addMessage(" ");
 		Dialog.addCheckbox("3D (will just process 3D files)", P3D_DEF);
@@ -109,6 +111,7 @@ macro "Generate Reconstructions" {
 		YMIN = Dialog.getNumber();
 		XWIDTH = Dialog.getNumber();
 		YWIDTH = Dialog.getNumber();
+		XY_AUTO = Dialog.getCheckbox();
 		XY_UN = Dialog.getNumber();
 		P3D = Dialog.getCheckbox();
 		Z_SPACE = Dialog.getNumber();
@@ -285,6 +288,31 @@ macro "Generate Reconstructions" {
 				if (FILE_EXT == ".tsf")
 					run("Import results", "append=false startingframe=1 rawimagestack= filepath=[" + FILE_PATH + "] livepreview=false fileformat=[Tagged spot file]");
 
+				// Detect XY range if auto-range (necessarily after CSV opening)
+				if (XY_AUTO == true){
+					XMinMaxString = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); var rows = rt.getRowCount(); var colz = rt.findColumn(\"x\"); var minz = rt.getValue(0, colz); var maxz = minz; for (var row = 1; row < rows; row++) {var val = rt.getValue(row, colz); if (val > maxz) maxz = val; else if (val < minz) minz = val;} ZMinMaxString = \"\" + minz + \",\" +  maxz;");
+					XMinMax = split(XMinMaxString, ",");
+					Xmini = parseFloat(XMinMax[0]);
+					Xmaxi = parseFloat(XMinMax[1]);
+					YMinMaxString = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); var rows = rt.getRowCount(); var colz = rt.findColumn(\"y\"); var minz = rt.getValue(0, colz); var maxz = minz; for (var row = 1; row < rows; row++) {var val = rt.getValue(row, colz); if (val > maxz) maxz = val; else if (val < minz) minz = val;} ZMinMaxString = \"\" + minz + \",\" +  maxz;");
+					YMinMax = split(YMinMaxString, ",");
+					Ymini = parseFloat(YMinMax[0]);
+					Ymaxi = parseFloat(YMinMax[1]);
+
+					Xw = Xmaxi - Xmini;
+					Yh = Ymaxi - Ymini;
+
+					XminiPX = floor(Xmini / CAM_SIZE);
+					YminiPX = floor(Ymini / CAM_SIZE);
+					XwPX = floor(Xw / CAM_SIZE) + 1;
+					YhPX = floor(Yh / CAM_SIZE) + 1;
+					
+
+					VISU_STRING_XY = "imleft=" + XminiPX + " imtop=" + YminiPX + " imwidth=" + XwPX + " imheight=" + YhPX + " renderer=[Normalized Gaussian] magnification=" + Magnif + " " + FORCE_STRING + " ";
+					print("      auto XY range (nm): X: " + Xmini + " to " + Xmaxi + " nm (width " + Xw + " nm), Y: " + Ymini + " to " + Ymaxi + " nm (height " + Yh + " nm)");
+					print("      auto XY range (px): X: " + XminiPX + " to " + (XminiPX + XwPX) + " px (width " + XwPX + " px), Y: " + YminiPX + " to " + (YminiPX + YhPX) + " px (height " + YhPX + " px)");
+				}
+				
 				//Detect Z range if auto-range (necessarily after CSV opening)
 				if (P3D == true && Z_AUTO == true) {
 					ZMinMaxString = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); var rows = rt.getRowCount(); var colz = rt.findColumn(\"z\"); var minz = rt.getValue(0, colz); var maxz = minz; for (var row = 1; row < rows; row++) {var val = rt.getValue(row, colz); if (val > maxz) maxz = val; else if (val < minz) minz = val;} ZMinMaxString = \"\" + minz + \",\" +  maxz;");

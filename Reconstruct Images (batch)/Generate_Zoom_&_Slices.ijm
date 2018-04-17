@@ -491,11 +491,11 @@ for (z = 1; z < iCount + 1; z++) {
 
 			// Save localizations for each ROI 
 			if (LOCROI == true) {
-				// Coordinates of the ROI in nm
-				XMIN = roiX + (RECON_LTX * roiZoom);
-				XMAX = XMIN + roiW;
-				YMIN = roiY + (RECON_LTY * roiZoom);
-				YMAX = YMIN + roiH;
+				// Coordinates of the ROI in nm				
+				XMIN = reconX * CAM_SIZE;
+				XMAX = XMIN + (reconW * CAM_SIZE);
+				YMIN = reconY * CAM_SIZE;
+				YMAX = YMIN + (reconH * CAM_SIZE);
 				XY_RANGE = "x>" + XMIN + " & x<" + XMAX + " & y>" + YMIN + " & y<" + YMAX;  
 				// Filter coordinates within the ROI
 				run("Show results table", "action=filter formula=[" + XY_RANGE + "]");
