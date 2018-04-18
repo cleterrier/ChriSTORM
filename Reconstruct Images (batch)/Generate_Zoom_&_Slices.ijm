@@ -198,20 +198,21 @@ macro "Generate Zooms & Slices" {
 
 	// Store the output parameters
 	if (P3D == false) {
-		OUT_PARAM += "_xy" + SR_SIZE;
+		OUT_PARAM += "(xy" + SR_SIZE;
 	}
 	else if (Z_COLOR == true){
-		OUT_PARAM += "_xy" + SR_SIZE + "z" + Z_SPACE + "c";
-		if (Z_PROJ == true) OUT_PARAM += "p"
+		OUT_PARAM += "(xy" + SR_SIZE + "z" + Z_SPACE + "c";
+		if (Z_PROJ == true) OUT_PARAM += "p";
 	}
 	else {
-		OUT_PARAM += "_xy" + SR_SIZE + "z" + Z_SPACE;
-		if (Z_PROJ == true) OUT_PARAM += "p"
+		OUT_PARAM += "(xy" + SR_SIZE + "z" + Z_SPACE;
+		if (Z_PROJ == true) OUT_PARAM += "p";
 	}
 	if (SLICES == true) {
 		OUT_PARAM += "_s" + SLICE_THICK; 
-		if (SLICE_PROJ == true) OUT_PARAM += "p"
+		if (SLICE_PROJ == true) OUT_PARAM += "p";
 	}
+	OUT_PARAM += ")";
 
 	print("  Output parameters: " + OUT_PARAM);
 
@@ -440,7 +441,7 @@ for (z = 1; z < iCount + 1; z++) {
 					generateSlice(SLICE_THICK/1000, SR_SIZE/1000);
 					sliceTitle = getTitle();
 					optimizeContrast();
-					SaveSlicePath = SliceFolder + File.separator + sliceTitle + ".tif";
+					SaveSlicePath = SliceFolder + File.separator + sliceTitle + "_C=" + (z-1) + ".tif";
 					print("        Slice image:" + SaveSlicePath);
 					save(SaveSlicePath);
 					if (CLOSE == true) close();
@@ -484,7 +485,7 @@ for (z = 1; z < iCount + 1; z++) {
 			}
 			
 			// Save zoomed image
-			SaveZoomPath = ZoomFolder + File.separator + zoomTitle + ".tif";
+			SaveZoomPath = ZoomFolder + File.separator + zoomTitle + "_C=" + (z-1) + ".tif";
 			print("        Box image:" + SaveZoomPath);
 			save(SaveZoomPath);
 			if (CLOSE == true) close();
@@ -500,7 +501,7 @@ for (z = 1; z < iCount + 1; z++) {
 				// Filter coordinates within the ROI
 				run("Show results table", "action=filter formula=[" + XY_RANGE + "]");
 				// Export localizations within ROI in a csv file
-				LocROIPath = LocROIFolder + File.separator + zoomTitle + ".csv";
+				LocROIPath = LocROIFolder + File.separator + zoomTitle + "_C=" + (z-1) + ".csv";
 				run("Export results", "filepath=[" + LocROIPath + "] fileformat=[CSV (comma separated)] chi2=false saveprotocol=false");
 				// Reset the Results Table
 				run("Show results table", "action=reset");

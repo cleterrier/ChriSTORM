@@ -275,13 +275,16 @@ macro "Batch Process Localizations" {
 				nLocK = round(nLocs / 1000);
 				// OUT_TITLE = replace(OUT_TITLE, "([0-9])+K_", nLocK + "K_");
 
-				ADD_TITLE = "_" + nLock + "K";
-				if (CORR_DRIFT == true) {
-					ADD_TITLE = ADD_TITLE + "_DC";
-				}			
+				ADD_TITLE = "";
+				//if (CORR_DRIFT == true) {
+				//	ADD_TITLE = ADD_TITLE + "DC";
+				//}		
 				
-				NEW_TITLE = replace(OUT_TITLE, "_TS", ADD_TITLE + "_TS");
-				if (NEW_TITLE == OUT_TITLE) {
+				ADD_TITLE = ADD_TITLE + nLocK + "K";
+				if (indexOf(OUT_TITLE, "_TS") > 0) {
+					NEW_TITLE = replace(OUT_TITLE, "([0-9])+K_TS", ADD_TITLE + "_TS");
+				}
+				else {
 					NEW_TITLE = replace(OUT_TITLE, LOC_SUFFIX, ADD_TITLE + LOC_SUFFIX);
 				}
 
