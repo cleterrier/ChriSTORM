@@ -168,6 +168,7 @@
 	AD_CONT = false;
 	SAT_LEV = 0.1;
 //	GAUSS = 8;
+	XY_AUTO = false;
 
 
 	// NS to TS
@@ -187,14 +188,14 @@
 	// Generate Recs (2D)
 	if (REC_2D == true) {
 		Gen_Recon_path = plugin_path + File.separator + "NeuroCyto" + File.separator + "ChriSTORM" + File.separator + "Reconstruct Images (batch)" + File.separator+ "Generate_Reconstructions.ijm";
-		Gen_Recon_args = out_path + "," + CAM_SIZE + "," + SR_SIZE + "," + XMIN + "," + YMIN + "," + XWIDTH + "," + YWIDTH + "," + XY_UN + "," + P3D + "," + Z_SPACE + "," + Z_MIN + "," + Z_MAX + "," + Z_AUTO + "," + Z_SAT + "," + Z_UN + "," + Z_COLOR + "," + Z_LUT + "," + GAUSS + "," + to16 + "," + AD_CONT + "," + SAT_LEV;
+		Gen_Recon_args = out_path + "," + CAM_SIZE + "," + SR_SIZE + "," + XMIN + "," + YMIN + "," + XWIDTH + "," + YWIDTH + "," + XY_UN + "," + P3D + "," + Z_SPACE + "," + Z_MIN + "," + Z_MAX + "," + Z_AUTO + "," + Z_SAT + "," + Z_UN + "," + Z_COLOR + "," + Z_LUT + "," + GAUSS + "," + to16 + "," + AD_CONT + "," + SAT_LEV + "," + XY_AUTO;
 		out_path2 = runMacro(Gen_Recon_path, Gen_Recon_args);
 	}
 
 	// Optional Generate Recs (Zc)
 	if (REC_3D == true) {
 		P3D = true;
-		Gen_Recon_args = out_path + "," + CAM_SIZE + "," + SR_SIZE + "," + XMIN + "," + YMIN + "," + XWIDTH + "," + YWIDTH + ","+ XY_UN + ","  + P3D + "," + Z_SPACE + "," + Z_MIN + "," + Z_MAX + "," + Z_AUTO + "," + Z_SAT + "," + Z_UN + "," + Z_COLOR + "," + Z_LUT + "," + GAUSS + "," + to16 + "," + AD_CONT + "," + SAT_LEV;
+		Gen_Recon_args = out_path + "," + CAM_SIZE + "," + SR_SIZE + "," + XMIN + "," + YMIN + "," + XWIDTH + "," + YWIDTH + ","+ XY_UN + ","  + P3D + "," + Z_SPACE + "," + Z_MIN + "," + Z_MAX + "," + Z_AUTO + "," + Z_SAT + "," + Z_UN + "," + Z_COLOR + "," + Z_LUT + "," + GAUSS + "," + to16 + "," + AD_CONT + "," + SAT_LEV + "," + XY_AUTO;
 		out_path2 = runMacro(Gen_Recon_path, Gen_Recon_args);
 	}
 

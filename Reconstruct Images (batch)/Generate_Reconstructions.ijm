@@ -151,6 +151,7 @@ macro "Generate Reconstructions" {
 		to16 = argarray[18];
 		AD_CONT = argarray[19];
 		SAT_LEV = argarray[20];
+		XY_AUTO = argarray[21];
 	}
 
 //*************** Prepare Processing (get names, open images, make output folder) ***************
