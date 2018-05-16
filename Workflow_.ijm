@@ -1,14 +1,17 @@
+macro "Workflow" {
 	// Save Settings
+
 	saveSettings();
 
 	// Initialize variables
 	MODES = newArray("STORM", "PAINT", "to RCC", "Custom");
 	MODE_DEF = "Custom";
+	SEQ_DEF = false;
 	USE_DRIFT_DEF = true;
 	BATCH_PROC_DEF = true;
 	EXCL_STRING_DEF = "_ZR_";
 	CORR_DRIFT_DEF = true;
-	EXP_STRING_DEF = "intensity>700 & intensity<100000 & detections<50";
+	EXP_STRING_DEF = "intensity>800 & intensity<200000 & detections<50";
 	REC_2D_DEF = true;
 	REC_3D_DEF = true;
 	SR_SIZE_DEF = 16;
@@ -25,6 +28,7 @@
 	Dialog.create("Workflow options");
 	Dialog.addChoice("Workflow mode", MODES, MODE_DEF);
 	Dialog.addMessage("Translate localizations options");
+	Dialog.addCheckbox("Sequential acquisition channels", SEQ_DEF);
 	Dialog.addCheckbox("Use drift-corrected coordinates", USE_DRIFT_DEF);
 	Dialog.addMessage("Process localizations options");
 	Dialog.addCheckbox("Batch process localizations", BATCH_PROC_DEF);
@@ -43,6 +47,7 @@
 
 	// Feeding variables from dialog choices
 	MODE = Dialog.getChoice();
+	SEQ = Dialog.getCheckbox();
 	USE_DRIFT = Dialog.getCheckbox();
 	BATCH_PROC = Dialog.getCheckbox();
 	EXCL_STRING = Dialog.getString();
@@ -81,7 +86,7 @@
 		EXCL_STRING = "_ZR_";
 		CORR_DRIFT = true;
 		EXP_FILT = true;
-		EXP_STRING = "intensity>1500 & intensity<1000000 & detections<100";
+		EXP_STRING = "intensity>1000 & intensity<1000000 & detections<50";
 
 		REC_2D = true;
 		REC_3D = true;
@@ -107,6 +112,7 @@
 
 
 	// Batch_NS_Into_TS script arguments
+	NStoTS_seq = SEQ;
 	NStoTS_xydrift = USE_DRIFT;
 	NStoTS_warp = true;
 	NStoTS_zdrift = true;
@@ -173,7 +179,7 @@
 
 	// NS to TS
 	NStoTS_path = plugin_path + File.separator + "NeuroCyto" + File.separator + "ChriSTORM" + File.separator + "Process locs files (batch)" + File.separator+ "Batch_NS_Into_TS.js";
-	NStoTS_args = "" + inputDirF + "," + NStoTS_xydrift + "," + NStoTS_warp + "," + NStoTS_zdrift + "," + NStoTS_zfactor + "," + NStoTS_ppc + "," + NStoTS_xcorr;
+	NStoTS_args = "" + inputDirF + "," + NStoTS_seq  + "," + NStoTS_xydrift + "," + NStoTS_warp + "," + NStoTS_zdrift + "," + NStoTS_zfactor + "," + NStoTS_ppc + "," + NStoTS_xcorr;
 	out_path = runMacro(NStoTS_path, NStoTS_args);
 
 
@@ -199,17 +205,19 @@
 		out_path2 = runMacro(Gen_Recon_path, Gen_Recon_args);
 	}
 
-	function escapePath(p) {
-		if (indexOf(p, "\\") > 0) {
-			pE = split(p, "\\");
-			pF = ""+ pE[0] + "\\" + "\\";
-			for (i = 1; i < pE.length; i++) {
-				pF = pF + pE[i] + "\\" + "\\";
-			}
+}
+
+function escapePath(p) {
+	if (indexOf(p, "\\") > 0) {
+		pE = split(p, "\\");
+		pF = ""+ pE[0] + "\\" + "\\";
+		for (i = 1; i < pE.length; i++) {
+			pF = pF + pE[i] + "\\" + "\\";
 		}
-		else {
-			pF = p;
-		}
-		print(pF);
-		return pF;
 	}
+	else {
+		pF = p;
+	}
+	print(pF);
+	return pF;
+}

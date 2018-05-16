@@ -27,6 +27,7 @@ var csPath = plugDir + "scripts" + File.separator + "NeuroCyto" + File.separator
 var routinePath = csPath + "Routines" + File.separator;
 
 // Default options
+var seq_def = false;
 var xydrift_def = true;
 var warp_def = true;
 var zdrift_def = true;
@@ -49,6 +50,7 @@ var parDir = inDirFile.getParent() + File.separator;
 // Options (dialog or arguments)
 var gd = new GenericDialog("Translator Options");
 if (called == false) {
+	gd.addCheckbox("Sequential acquisition channels", seq_def);
 	gd.addCheckbox("Use drift-corrected XY coordinates", xydrift_def);
 	gd.addCheckbox("Use warp-corrected coordinates", warp_def);
 	gd.addCheckbox("Use drift-corrected Z coordinates", zdrift_def);
@@ -56,6 +58,7 @@ if (called == false) {
 	gd.addNumericField("Photons per count", ppc_def, 4, 6, "ph/ADU");
 	gd.addCheckbox("Correct astigmatism compression", xcorr_def);
 	gd.showDialog();
+	var seq = gd.getNextBoolean();
 	var xydrift = gd.getNextBoolean();
 	var warp = gd.getNextBoolean();
 	var zdrift = gd.getNextBoolean();
@@ -64,12 +67,13 @@ if (called == false) {
 	var xcorr = gd.getNextBoolean();
 }
 else {
-	xydrift = argarray[1];
-	warp = argarray[2];
-	zdrift = argarray[3];
-	zfactor = argarray[4];
-	ppc = argarray[5];
-	xcorr = argarray[6];
+	seq = argarray[1];
+	xydrift = argarray[2];
+	warp = argarray[3];
+	zdrift = argarray[4];
+	zfactor = argarray[5];
+	ppc = argarray[6];
+	xcorr = argarray[7];
 }
 
 if (gd.wasOKed() || called == true) {
@@ -84,7 +88,12 @@ if (gd.wasOKed() || called == true) {
 	// Batch Split
 
 	// Get the split function path and load
-	var splitterJS = "F-NStxtSplit.js";
+	if (seq == false) {
+		var splitterJS = "F-NStxtSplit.js";
+	}
+	else {
+		var splitterJS = "F-NSseqSplit.js";
+	}
 	var splitterPath = routinePath + splitterJS;
 	IJ.log("\nSplitter path:" + routinePath + splitterJS);
 	load(splitterPath);
@@ -103,7 +112,12 @@ if (gd.wasOKed() || called == true) {
 	var fileQueueS = getExtFiles(inDirSplit, extFormat);
 	for (var f = 0; f < fileQueueS.length; f++) {
 		inPath = fileQueueS[f];
-		NStxtSplit(inPath, outDirSplit);
+		if (seq == false) {
+			NStxtSplit(inPath, outDirSplit);
+		}
+		else {
+			NSseqSplit(inPath, outDirSplit);
+		}
 	}
 
 
