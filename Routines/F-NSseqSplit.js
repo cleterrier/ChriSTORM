@@ -1,5 +1,5 @@
 // F-NSseqSplit.js script function by Christophe Leterrier
-// Split channels in txt localization files from Nikon N-STORM sesuential aquisition
+// Split channels in txt localization files from Nikon N-STORM sequential aquisition
 
 importClass(Packages.java.io.FileReader);
 importClass(Packages.java.io.BufferedReader);
@@ -13,9 +13,6 @@ function NSseqSplit(inPath, outDir) {
 	// idex of the column containing the channels
 	var splitIndex = 0;
 	var frameIndex = 12;
-	
-	// How many lines are sampled to get the channels
-	// var SampleMax = 5000000;
 
 	// Get name, path and open buffered reader
 	var inFile = new File(inPath);
@@ -28,56 +25,55 @@ function NSseqSplit(inPath, outDir) {
 	// Pass the header
 	var inLine = br.readLine();
 	var inHeader = inLine;
-	
+
 	// Line counter
 	var i = 0;
-	
+
 	// Channels array
-	var Channels = [];
+	// var Channels = [];
 
 	// Channel counter
 	var j = 0;
-	
+
 	while ((inLine = br.readLine()) != null) {
 
 		// Increment line counter
 		i++;
-		
+
 		// Assign previous frame
 		if (i > 1) var prevFrame = currFrame;
-		else prevFrame = 5000;	// for first line, will trigger new Channel condition
-		
+		else prevFrame = 20000;	// for first line, will trigger new Channel condition
+
 		// Get current frame
 		var inCells = inLine.split("\t");
 		var currFrame = parseInt(inCells[frameIndex]);
 
 		// Test if frame number jumps back to a small value
-		if (currFrame - prevFrame < -1000) {
+		if (currFrame - prevFrame < -10000 && (br.readLine()) != null) {
 			// Get channel name
-			var rawChan = "" + inCells[splitIndex]; // force string format!
-			var currChan = sanitizeString(rawChan);
+			// var rawChan = "" + inCells[splitIndex]; // force string format!
+			// var currChan = sanitizeString(rawChan);
 
 			// Close previous file and rename it with its line count (only if not first channel)
 			if (i > 1) {
 				currBW.close();
-				var countK = Math.round(currCount / 1000);
-				var outName2 = inNameExt[0] + "_ch" + j + "_" + Channels[j-1] + "_" + countK + "K." + inNameExt[1];
+				// var countK = Math.round(currCount / 1000);
+				var outName2 = inNameExt[0] + "_ch" + j + "." + inNameExt[1];
 				var outPath2 = outDir + outName2;
 				var newFile = new File(currFile.getParent(), outName2);
 				currFile.renameTo(newFile);
 			}
 
 			// Add channel name to Channels array and log it
-			Channels.push(currChan);
+			// Channels.push(currChan);
 			// Increment channel count
 			j++;
-			IJ.log("	   at line " + i + " added " + Channels[j-1] + ", Channel number =" + Channels.length);
-			
+			IJ.log("	   at line " + i + " added Channel number " + j);
 
 
-			var outName = inNameExt[0] + "_ch" + j + "_" + Channels[j-1] + "." + inNameExt[1];
+			var outName = inNameExt[0] + "_ch" + j + "." + inNameExt[1];
 			var outPath = outDir + outName;
-			IJ.log("      outName #" + (j+1) + ": " + outName);
+			IJ.log("      outName #" + j + ": " + outName);
 
 			// Create new file and buffered writer, write header, initialize loc count
 			var currFile = new File(outPath);
@@ -91,13 +87,13 @@ function NSseqSplit(inPath, outDir) {
 		currBW.write(inLine);
 		currBW.newLine();
 		currCount++;
-		
+
 	}
 
 	// CLose last file
 	currBW.close();
-	var countK = Math.round(currCount / 1000);
-	var outName2 = inNameExt[0] + "_ch" + j + "_" + Channels[j-1] + "_" + countK + "K." + inNameExt[1];
+	// var countK = Math.round(currCount / 1000);
+	var outName2 = inNameExt[0] + "_ch" + j + "." + inNameExt[1];
 	var outPath2 = outDir + outName2;
 	var newFile = new File(currFile.getParent(), outName2);
 	currFile.renameTo(newFile);
@@ -115,6 +111,7 @@ function getExt(filestring){
 	return [shortname, namearray[namearray.length - 1]];
 }
 
+/*
 
 function sanitizeString(si) {
 	so = si.replace("/", "-"); // careful with character "/" in some channels names from localization files (see N-STORM format)
@@ -122,3 +119,5 @@ function sanitizeString(si) {
 	if (so == "Z Rejected") so = "ZR"; // shorten the Z Rejected chanel
 	return so;
 }
+
+*/

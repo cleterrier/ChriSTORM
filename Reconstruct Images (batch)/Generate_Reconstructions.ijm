@@ -43,8 +43,8 @@ macro "Generate Reconstructions" {
 	Z_SPACE_DEF = 30;
 	Z_MIN_DEF = -450;
 	Z_MAX_DEF = 450;
-	Z_AUTO_DEF = true;
-	Z_SAT_DEF = 30; // restriction of 3D span on top and bottom (in nm)
+	Z_AUTO_DEF = false;
+	Z_SAT_DEF = 50; // restriction of 3D span on top and bottom (in nm)
 	Z_UN_DEF = 0;
 	Z_COLOR_ARRAY = newArray("No color", "Colorized 2D", "Colorized 3D");
 	Z_COLOR_DEF = "Colorized 2D";

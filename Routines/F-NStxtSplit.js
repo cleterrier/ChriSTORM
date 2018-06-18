@@ -75,6 +75,7 @@ function NStxtSplit(inPath, outDir) {
 		var outName = inNameExt[0] + "_" + Channels[j] + "." + inNameExt[1];
 		var outPath = outDir + outName;
 		IJ.log("      outName #" + (j+1) + ": " + outName);
+		// IJ.log("      outPath #" + (j+1) + ": " + outPath);
 
 		Files[j] = new File(outPath);
 		if (!Files[j].exists()) {

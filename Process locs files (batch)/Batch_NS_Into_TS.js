@@ -1,6 +1,6 @@
 // Batch NSTORM into ThunderSTORM script by Christophe Leterrier
 // Split and translate txt localization files from Nikon NSTORM to .csv ThunderSTORM localization files
-// Calls F-NStxtSplit.js and F-NStxtTranslate.js
+// Calls F-NSseqSplit.js, F-NStxtSplit.js, and F-NStxtTranslate.js
 // See https://github.com/cleterrier/ChriSTORM/blob/master/Readme.md
 
 importClass(Packages.java.io.File);
@@ -8,7 +8,7 @@ importClass(Packages.ij.io.DirectoryChooser);
 importClass(Packages.ij.IJ);
 importClass(Packages.ij.gui.GenericDialog);
 
-// get arguments if called from macro: (xydrift, warp, zdrift, zfactor, ppc, xcorr)
+// get arguments if called from macro: (seq, xydrift, warp, zdrift, zfactor, ppc, xcorr)
 if (typeof(getArgument) == "function") {
 	called = true;
 	args = getArgument();
@@ -90,35 +90,66 @@ if (gd.wasOKed() || called == true) {
 	// Get the split function path and load
 	if (seq == false) {
 		var splitterJS = "F-NStxtSplit.js";
+		var splitterPath = routinePath + splitterJS;
+		IJ.log("\nSplitter path:" + routinePath + splitterJS);
+		load(splitterPath);
 	}
 	else {
-		var splitterJS = "F-NSseqSplit.js";
+		var splitter1JS = "F-NSseqSplit.js";
+		var splitterJS = "F-NStxtSplit.js";
+		var splitter1Path = routinePath + splitter1JS;
+		var splitterPath = routinePath + splitterJS;
+		IJ.log("\nSequence Splitter  path:" + routinePath + splitter1JS);
+		IJ.log("\Channel Splitter path:" + routinePath + splitterJS);
+		load(splitter1Path);
+		load(splitterPath);
 	}
-	var splitterPath = routinePath + splitterJS;
-	IJ.log("\nSplitter path:" + routinePath + splitterJS);
-	load(splitterPath);
+
 
 	// Define input folder, define and create output folder
 	var inDirSplit = inDir;
 	IJ.log("Split input folder: " + inDirSplit);
-	var outDirSplit = parDir + "Locs Split" + File.separator;
-	IJ.log("Split output folder: " + outDirSplit);
-	var outDirSplitFile = new File(outDirSplit);
-	if (!outDirSplitFile.exists()) {
-			outDirSplitFile.mkdir();
-		}
+	if (seq == false) {	
+		var outDirSplit = parDir + "Locs Split" + File.separator;
+		IJ.log("Split output folder: " + outDirSplit);
+		var outDirSplitFile = new File(outDirSplit);
+		if (!outDirSplitFile.exists()) {
+				outDirSplitFile.mkdir();
+			}
+	}
+	else {
+		var outDirSplit1 = parDir + "Locs Seq Split" + File.separator;
+		var outDirSplit = parDir + "Locs Split" + File.separator;
+		IJ.log("Split Seq output folder: " + outDirSplit1);
+		IJ.log("Split Chan output folder: " + outDirSplit);
+		var outDirSplit1File = new File(outDirSplit1);
+		if (!outDirSplit1File.exists()) {
+				outDirSplit1File.mkdir();
+			}
+		var outDirSplitFile = new File(outDirSplit);
+		if (!outDirSplitFile.exists()) {
+				outDirSplitFile.mkdir();
+			}
+	}
 
 	// Get the file list from the input folder, batch process them using the split function
+	
+	if (seq == true) {
+		IJ.log("\nSequential Splitting...");
+		var fileQueueS1 = getExtFiles(inDirSplit, extFormat);
+		for (var f = 0; f < fileQueueS1.length; f++) {
+			var inPath1 = fileQueueS1[f];
+			NSseqSplit(inPath1, outDirSplit1);
+		}
+		inDirSplit = outDirSplit1;
+	}
+	
+	IJ.log("\nChannel Splitting...");
 	var fileQueueS = getExtFiles(inDirSplit, extFormat);
 	for (var f = 0; f < fileQueueS.length; f++) {
-		inPath = fileQueueS[f];
-		if (seq == false) {
-			NStxtSplit(inPath, outDirSplit);
-		}
-		else {
-			NSseqSplit(inPath, outDirSplit);
-		}
-	}
+		var inPath = fileQueueS[f];
+		NStxtSplit(inPath, outDirSplit);
+	}	
 
 
 	// Batch Translate
@@ -131,8 +162,9 @@ if (gd.wasOKed() || called == true) {
 
 	// Define input folder, define and create output folder
 	// input folder for translation is the output folder from previous step (split)
+	var	inDirTranslate = outDirSplit;
 	var outDirTranslate = parDir + "Locs " + outFormat + File.separator;
-	IJ.log("Translate input folder: " + outDirSplit);
+	IJ.log("Translate input folder: " + inDirTranslate);
 	IJ.log("Translate output folder: " + outDirTranslate);
 	var outDirTFile = new File(outDirTranslate);
 	if (!outDirTFile.exists()) {
@@ -140,7 +172,7 @@ if (gd.wasOKed() || called == true) {
 		}
 
 	// Get the file list from the input folder, batch process them using the translate function
-	var fileQueueT = getExtFiles(outDirSplit, "txt");
+	var fileQueueT = getExtFiles(inDirTranslate, "txt");
 	for (var f = 0; f < fileQueueT.length; f++) {
 		inPath = fileQueueT[f];
 		NStxtTranslate(inPath, outDirTranslate, outFormat, xydrift, warp, zdrift, zfactor, ppc, xcorr);
