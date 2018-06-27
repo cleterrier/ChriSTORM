@@ -29,7 +29,7 @@ var plugDir = IJ.getDirectory("imagej");
 var plugDir = plugDir + "scripts" + File.separator + "NeuroCyto" + File.separator + "ChriSTORM" + File.separator + "Routines" + File.separator;
 
 // Get the translate function path and load
-var translateJS = "F-TranslateTS-ViSP.js";
+var translateJS = "F-TSTranslate.js";
 var translatePath = plugDir + translateJS;
 IJ.log("\nTranslator path:" + plugDir + translateJS);
 load(translatePath);

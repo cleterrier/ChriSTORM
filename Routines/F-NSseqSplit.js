@@ -49,7 +49,7 @@ function NSseqSplit(inPath, outDir) {
 		var currFrame = parseInt(inCells[frameIndex]);
 
 		// Test if frame number jumps back to a small value
-		if (currFrame - prevFrame < -10000 && (br.readLine()) != null) {
+		if (currFrame - prevFrame < -1000 && (br.readLine()) != null) {
 			// Get channel name
 			// var rawChan = "" + inCells[splitIndex]; // force string format!
 			// var currChan = sanitizeString(rawChan);

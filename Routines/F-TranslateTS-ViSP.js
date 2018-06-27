@@ -52,10 +52,14 @@ function TSTranslate(inPath, outDir, outFormat) {
 			zAccu = zAccu + (parseFloat(inCells[iZ])).toFixed(0);
 		}
 	}
-	if (zAccu == 0) 
+	if (i>10 && zAccu == 0) {
 		IJ.log("      2D file detected");
-	else
+		is3D = false;
+	}
+	else {
 		IJ.log("      3D file detected");
+		is3D = true;
+	}
 
 	// Close and reopen to get back at line 0
 	br.close();
@@ -69,13 +73,12 @@ function TSTranslate(inPath, outDir, outFormat) {
 		var outHeader = "";	
 		var sep = "\t";
 		var outSuffix = "";
-		if (zAccu == 0){ // 2D case
+		if (is3D == false){ // 2D case
 			var outExt = ".2dlp";
 		}
 		else { // 3D case
 			var outExt = ".3dlp";
 		}
-
 	}
 
 	// Prepare output file path
@@ -109,7 +112,7 @@ function TSTranslate(inPath, outDir, outFormat) {
 				FDx = (parseFloat(inCells[iDx]) * FWHM).toFixed(2);
 	
 				// Build results line
-				if (zAccu == 0){ // 2D case
+				if (is3D == false){ // 2D case
 					outLine = inCells[iX] + sep + inCells[iY] + sep + FDx + sep + FDx + sep + inCells[iI] + sep + inCells[iF]; 
 				}
 				else { // 3D case
