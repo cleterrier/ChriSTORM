@@ -188,7 +188,7 @@ macro "Generate Zooms & Slices" {
 
 	print("  Loc folder candidate:" + LocFolderPath);
 	
-	if (SPEC == true || File.exists(LocFolderPath) != 1){
+	if (USE_OPEN == false && (SPEC == true || File.exists(LocFolderPath) != 1)){
 		LocFolderPath = getDirectory("Select the localizations folder");
 	}
 	print("  Loc folder:" + LocFolderPath);
@@ -549,7 +549,7 @@ function getLocs(idstring, LocFolderPath) {
 	else shortName = idstring;
 	LocPath = LocFolderPath + File.separator + shortName + LocSuffix1;
 	print(LocPath);
-	if (File.exists(LocPath) == true) {
+	if (File.exists(LocPath) == true || USE_OPEN == true) {
 		return LocPath;
 	}
 	print(LocPath);
