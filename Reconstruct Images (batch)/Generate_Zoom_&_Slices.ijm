@@ -501,7 +501,7 @@ for (z = 1; z < iCount + 1; z++) {
 				// Filter coordinates within the ROI
 				run("Show results table", "action=filter formula=[" + XY_RANGE + "]");
 				// Export localizations within ROI in a csv file
-				LocROIPath = LocROIFolder + File.separator + zoomTitle + "_C=" + (z-1) + ".csv";
+				LocROIPath = LocROIFolder + File.separator + zoomTitle + "(" + XMIN + "," + YMIN + ")_C=" + (z-1) + ".csv";
 				run("Export results", "filepath=[" + LocROIPath + "] fileformat=[CSV (comma separated)] chi2=false saveprotocol=false");
 				// Reset the Results Table
 				run("Show results table", "action=reset");
