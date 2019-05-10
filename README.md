@@ -9,14 +9,14 @@ ChriSTORM is a series of ImageJ scripts and macros that aim to complement the Th
 
 ## Compatibility and Installation
 Installing ThundersTORM:
-- ChriSTORM is used under OSX and Windows 7 inside a [Fiji install](http://fiji.sc/Downloads)) or using an updated [ImageJ install](http://rsbweb.nih.gov/ij/download.html). Due to the current work around javascript compatibility for Java 8, the scripts will only run using Java 6.
+- ChriSTORM is used under OSX and Windows 7 inside a [Fiji install](http://fiji.sc/Downloads) or using an updated [ImageJ install](http://rsbweb.nih.gov/ij/download.html). Due to the current work around javascript compatibility for Java 8, the scripts will only run using Java 6.
 - To use ChriSTORM, you first have to [download the ThunderSTORM plugin](https://github.com/zitmen/thunderstorm/releases). ChriSTORM 1.2.1 has been tested with the latest dev-2016-09-10-b1.jar daily build. Install ThunderSTORM by renaming the .jar file into “Thunder_STORM.jar” and placing it in the ImageJ/Fiji “plugins” folder.
 
 The simplest way to use ChriSTORM is to use the NeuroCyto Lab [Fiji update site](https://www.evernote.com/l/AAIk_1e-n91KsplwdjvrCj3ighQUDYYAVD8) that includes ChriSTORM.
 
 You can alternatively use ChriSTORM in vanilla ImageJ by manually downloading and installing it:
 - Download the latest ChriSTORM folder as a [zip file from the releases section](https://github.com/cleterrier/ChriSTORM/releases).
-- Unzip the folder, rename it “ChriSTORM” 
+- Unzip the folder, rename it “ChriSTORM”
 - Create a "NeuroCyto Lab" folder in your ImageJ/Fiji “plugins” folder.
 - Place the "ChriSTORM" folder inside the "NeuroCyto Lab folder.
 The path to the macros should look like this:
@@ -60,7 +60,7 @@ This scripts translates a single-channel NSTORM localization file (.txt) into a 
 
 #### 1d. “Batch Process Locs” macro
 Once localization files have been converted into the ThunderSTORM format, this macro processes ThunderSTORM localization files as a batch. The input localization files (usually in the “Locs TS” folder) are filtered and new localization files are saved in a “Locs TS proc” folder. Several processing features of the ThunderSTORM plugin are available in the macro dialog:
-- *Choose files based on name*: allows to restrict processing to localization files chosen by name. Can be useful to only process files from a certain channel for example. Check this box and enter the string used to identify files to be processed in the *Name contains* box. 
+- *Choose files based on name*: allows to restrict processing to localization files chosen by name. Can be useful to only process files from a certain channel for example. Check this box and enter the string used to identify files to be processed in the *Name contains* box.
 - *Correct drift*: check this box to apply ThunderSTORM drift correction by autocorrelation to each localization file. The drift correction parameters *Number of bins for sub-images* and *Magnification for cross-correlation* correspond to the respective options in the ThunderSTORM plugin interface.
 - *Filter by photon number*: check this box to filter localizations based on the number of photons emitted. Fill the *Minimum* and *Maximum* photon numbers that are allowed in the filtered file.
 - *Filter by expression*: check this box and fill the *Expression* text line to apply the ThunderSTORM filtering by algebraic expression (see ThunderSTORM help), allowing to filter localization based on any parameter in the Results Table (frame, uncertainty, number of detections etc.).
