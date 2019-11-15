@@ -42,13 +42,15 @@ macro "Generate Zooms & Slices" {
 	CG_DEF = 12.48; // camera gain new images
 	// EM_DEF = 300; // EM gain old images
 	EM_DEF = 100; // EM gain new images
+	RECO_DEF = true; // Generate reconstructions?
 	SR_SIZE_DEF = 4; // 4 nm
-	LOCROI_DEF = false; // generate loc file for the ROIs
+	XY_UN_DEF = 0; // usually 0
+	LOCROI_DEF = true; // generate loc file for the ROIs
 
 	P3D_DEF = false;
 	Z_SPACE_DEF = 4; // 4 nm for 3D
-	Z_MIN_DEF = -450; // -500 nm
-	Z_MAX_DEF = 450; // +500 nm
+	Z_MIN_DEF = -600; // -500 nm
+	Z_MAX_DEF = 600; // +500 nm
 	Z_AUTO_DEF = false;
 	Z_SAT_DEF = 10; // restriction of 3D span on top and bottom (in nm)
 	Z_UN_DEF = 0; // usually 0
@@ -60,7 +62,13 @@ macro "Generate Zooms & Slices" {
 	SLICE_PROJ_DEF = true; // true
 	XY_VIEW_DEF = 0; // 2500 nm
 
+	FILT_DEF = false;
+	FILT_RAD_DEF = 50;
+	FILT_NUMB_DEF = 5;
+	FILT_DIM_A = newArray("2D", "3D");
+	FILT_DIM_DEF = "3D";
 	GAUSS_DEF = 4;
+	GAUSS_MULT_DEF = 1;
 	AD_CONT_DEF = false;
 	SAT_LEV_DEF = 0.1; // 0.1%
 	CLOSE_DEF = true;
@@ -105,7 +113,9 @@ macro "Generate Zooms & Slices" {
 	Dialog.addNumber("Input reconstruction pixel size", pixelWidth * 1000, 0, 3, "nm");
 	Dialog.addNumber("Input reconstruction origin X", RECON_LTX_DEF, 0, 3, "px");
 	Dialog.addNumber("Input reconstruction origin Y", RECON_LTY_DEF, 0, 3, "px");
+	Dialog.addCheckbox("Generate Reconstructions", RECO_DEF);
 	Dialog.addNumber("Final pixel size", SR_SIZE_DEF, 0, 3, "nm");
+	Dialog.addNumber("Force XY uncertainty (0 to keep)", XY_UN_DEF, 0, 3, "nm");
 	Dialog.addCheckbox("Generate Locs files", LOCROI_DEF);
 	Dialog.addMessage("");
 	Dialog.addCheckbox("3D", P3D_DEF);
@@ -124,7 +134,12 @@ macro "Generate Zooms & Slices" {
 	Dialog.addCheckbox("Slice project", SLICE_PROJ_DEF);
 	Dialog.addNumber("XY view size (nm) (0 for smallest)", XY_VIEW_DEF, 0, 4, "nm"); // Minimum box size around slice
 	Dialog.addMessage("");
+	Dialog.addCheckbox("Density filter", FILT_DEF);
+	Dialog.addNumber("Filter radius", FILT_RAD_DEF, 0, 3, "nm");
+	Dialog.addNumber("Locs number", FILT_NUMB_DEF, 0, 3, "nm");
+	Dialog.addChoice("Filter dimension", FILT_DIM_A, FILT_DIM_DEF);
 	Dialog.addNumber("Gaussian blur (0 for no filter)", GAUSS_DEF, 0, 3, "nm");
+	Dialog.addNumber("Apply blur ", GAUSS_MULT_DEF, 0, 3, "times");
 	Dialog.addCheckbox("Adjust contrast", AD_CONT_DEF);
 	Dialog.addNumber("Saturated pixels", SAT_LEV_DEF, 2, 3, "%");
 	Dialog.addCheckbox("Close images", CLOSE_DEF);
@@ -149,7 +164,9 @@ macro "Generate Zooms & Slices" {
 	RECON_PX = Dialog.getNumber();
 	RECON_LTX = Dialog.getNumber();
 	RECON_LTY = Dialog.getNumber();
+	RECO = Dialog.getCheckbox();
 	SR_SIZE = Dialog.getNumber();
+	XY_UN = Dialog.getNumber();
 	LOCROI = Dialog.getCheckbox();
 
 	P3D = Dialog.getCheckbox();
@@ -168,7 +185,12 @@ macro "Generate Zooms & Slices" {
 	SLICE_PROJ = Dialog.getCheckbox();
 	XY_VIEW = Dialog.getNumber();
 
+	FILT = Dialog.getCheckbox();
+	FILT_RAD = Dialog.getNumber();
+	FILT_NUMB = Dialog.getNumber();
+	FILT_DIM = Dialog.getChoice();
 	GAUSS = Dialog.getNumber();
+	GAUSS_MULT = parseInt(Dialog.getNumber());
 	AD_CONT = Dialog.getCheckbox();
 	SAT_LEV = Dialog.getNumber();
 
@@ -226,9 +248,12 @@ macro "Generate Zooms & Slices" {
 	}
 
 	// Directory containing the XY reconstructions
-	ZoomFolder = HomeFolder + File.separator + SaveFolderZooms  + " " + OUT_PARAM;
-	if (File.exists(ZoomFolder) != 1) File.makeDirectory(ZoomFolder);
-	print("  Tiles folder:" + ZoomFolder);
+	if (RECO == true) {
+		ZoomFolder = HomeFolder + File.separator + SaveFolderZooms  + " " + OUT_PARAM;
+		if (File.exists(ZoomFolder) != 1) File.makeDirectory(ZoomFolder);
+		print("  Tiles folder:" + ZoomFolder);
+	}
+	
 
 	// Directory containing the XZ reconstructions
 	if (SLICES == true) {
@@ -266,6 +291,14 @@ macro "Generate Zooms & Slices" {
 		VISU_STRING_Z = COLOR_STRING + " dz=" + ZUS + " threed=true" + DZF_STRING;
 		VISU_STRING_RANGE = " zrange=" + Z_MIN + ":" + Z_SPACE + ":" + Z_MAX;
 
+	}
+
+	if (XY_UN == 0) {
+		XYUN_STRING = "dxforce=false dx=20.0";
+	}
+
+	else {
+		XYUN_STRING = "dxforce=true dx=" + XY_UN;
 	}
 
 
@@ -360,6 +393,13 @@ for (z = 1; z < iCount + 1; z++) {
 			// Draw the bounding box ROI and the name of the ROI
 			makeRectangle(roiX, roiY, roiW, roiH);
 
+			// Coordinates of the ROI in nm				
+			XMIN = roiX * RECON_PX;
+			XMAX = XMIN + (roiW * RECON_PX);
+
+			YMIN = roiY * RECON_PX;
+			YMAX = YMIN + (roiH * RECON_PX);
+
 			//***** Set the channel (after fiddling with the ROI!) *****
 			if (ALL_CHAN == true) {
 				if (stackType == "2C")
@@ -368,16 +408,6 @@ for (z = 1; z < iCount + 1; z++) {
 					Stack.setSlice(z);
 			}
 
-			//***** Preparation of the Visu string *****
-			roiMagnif = CAM_SIZE / SR_SIZE;
-			roiZoom = CAM_SIZE / RECON_PX;
-			reconX = roiX / roiZoom + RECON_LTX;
-			reconY = roiY /roiZoom + RECON_LTY;
-			reconW = roiW /roiZoom;
-			reconH = roiH /roiZoom;
-			// XY part of the Visualization string
-			VISU_STRING_XY = "imleft=" + reconX + " imtop=" + reconY + " imwidth=" + reconW + " imheight=" + reconH + " renderer=[Normalized Gaussian] magnification=" + roiMagnif + " dxforce=false dx=20.0";
-
 			//***** Get path to loc file *****
 			// Get image title
 			if (nSlices > 1) imHeader = getInfo("slice.label");
@@ -385,126 +415,195 @@ for (z = 1; z < iCount + 1; z++) {
 			LocFile = getLocs(imHeader, LocFolderPath);
 			print("        Image title: " + imHeader);
 			print("        Loc file: " + LocFile);
-
 			// Open the loc file
 			if (r == 0 && (USE_OPEN == false))
 				run("Import results", "append=false startingframe=1 rawimagestack= filepath=[" + LocFile + "] livepreview=false fileformat=[CSV (comma separated)]");
-
 			// print(imHeader);
 			// print(prevHeader);
 			if (r > 0 && imHeader != prevHeader)
 				run("Import results", "append=false startingframe=1 rawimagestack= filepath=[" + LocFile + "] livepreview=false fileformat=[CSV (comma separated)]");
 
-			// Calculate automatic Z range
-			if (P3D == true && Z_AUTO == true) {
+			// Count the locs before filtering
+			nLocsBF = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); rows = rt.getRowCount();");
+			nLocK2BF = replace(d2s(nLocsBF / 1000, 2), ".", ",");
+			LocNum = "        Locs number in whole image: " + nLocK2BF + "K";
 
-				ZMinMaxString = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); var rows = rt.getRowCount(); var colz = rt.findColumn(\"z\"); var minz = rt.getValue(0, colz); var maxz = minz; for (var row = 1; row < rows; row++) {var val = rt.getValue(row, colz); if (val > maxz) maxz = val; else if (val < minz) minz = val;} ZMinMaxString = \"\" + minz + \",\" +  maxz;");
-				ZMinMax = split(ZMinMaxString, ",");
+			// Filter locs inside the selection box
+			XY_RANGE = "x>" + XMIN + " & x<" + XMAX + " & y>" + YMIN + " & y<" + YMAX;
+			// print("XY_RANGE:" + XY_RANGE);
+			run("Show results table", "action=filter formula=[" + XY_RANGE + "]");
 
-				Zmini = parseFloat(ZMinMax[0]);
-				Zmaxi = parseFloat(ZMinMax[1]);
-
-				if (Zmini != 0 && Zmaxi != 0) {
-				/*
-					Z_MIN = (floor(Zmini / Z_SPACE)) * Z_SPACE;
-					Z_MAX = (floor(Zmaxi / Z_SPACE) + 1) * Z_SPACE;
-				*/
-					Z_MIN = round(Zmini + Z_SAT);
-					Z_MAX = round(Zmaxi - Z_SAT);
-					Z_N = round((Z_MAX - Z_MIN) / Z_SPACE);
-					Z_SPACE = round((Z_MAX - Z_MIN)  / Z_N); // Here we modify Z_SPACE!
-
-				}
-
-				VISU_STRING_RANGE = " zrange=" + Z_MIN + ":" + Z_SPACE + ":" + Z_MAX;
-				print("        auto Z-range: Zmin = " + parseFloat(ZMinMax[0]) + " nm, Zmax = " + parseFloat(ZMinMax[1]) + " nm, Z_MIN = " + Z_MIN + " nm, Z_MAX = " + Z_MAX + " nm");
+			// Count the locs after spatial filtering
+			nLocs = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); rows = rt.getRowCount();");
+			nLocK = round(nLocs / 1000);
+			nLocK2 = replace(d2s(nLocs / 1000, 2), ".", ",");
+			LocNum = LocNum + "  |  in ROI: " + nLocK2 + "K";
+			
+			// Optional Density filter 
+			if (FILT == true){
+				run("Show results table", "action=density neighbors=" + FILT_NUMB + " dimensions=" + FILT_DIM + " radius=" + FILT_RAD);
+				// Count the locs after density filtering
+				nLocs = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); rows = rt.getRowCount();");
+				nLocK = round(nLocs / 1000);
+				nLocK2 = replace(d2s(nLocs / 1000, 2), ".", ",");
+				LocNum = LocNum + "  |  in density-filtered ROI: " + nLocK2 + "K";					
 			}
 
-			VISU_STRING = VISU_STRING_XY + VISU_STRING_Z + VISU_STRING_RANGE;
+			print(LocNum);
 
-			// Launch the visualization
-			selectWindow(RESULTS_TITLE);
-			run("Visualization", VISU_STRING);
-			rename("ROIoutput");
 
 			// Create output title
 			imHeaderClean = cleanTitle(imHeader);
 			OUT_TITLE = ROI_PARAM + "_" + imHeaderClean;
-			outIm = outProcess(OUT_TITLE);
-			zoomTitle = getTitle();
 
-			if (ROILINE == true) {
-				SCALE = RECON_PX / SR_SIZE;
-				BIG_LINEOUT = getBigCoor(SMALL_LINEOUT, SCALE, roiX, roiY);
-				makeLine(BIG_LINEOUT[0], BIG_LINEOUT[1], BIG_LINEOUT[2], BIG_LINEOUT[3]);
-				if (SLICES == true) {
-					generateSlice(SLICE_THICK/1000, SR_SIZE/1000);
-					sliceTitle = getTitle();
-					optimizeContrast();
-					SaveSlicePath = SliceFolder + File.separator + sliceTitle + "_C=" + (z-1) + ".tif";
-					print("        Slice image:" + SaveSlicePath);
-					save(SaveSlicePath);
-					if (CLOSE == true) close();
+			//****** Make reconstruction ******
+			if (RECO == true) {					
+				//***** Preparation of the Visu string *****
+				roiMagnif = CAM_SIZE / SR_SIZE;
+				roiZoom = CAM_SIZE / RECON_PX;
+				reconX = roiX / roiZoom + RECON_LTX;
+				reconY = roiY /roiZoom + RECON_LTY;
+				reconW = roiW /roiZoom;
+				reconH = roiH /roiZoom;
+				// XY part of the Visualization string
+				VISU_STRING_XY = "imleft=" + reconX + " imtop=" + reconY + " imwidth=" + reconW + " imheight=" + reconH + " renderer=[Normalized Gaussian] magnification=" + roiMagnif + " " + XYUN_STRING;
+				
+				// Calculate automatic Z range
+				if (P3D == true && Z_AUTO == true) {
+	
+					ZMinMaxString = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); var rows = rt.getRowCount(); var colz = rt.findColumn(\"z\"); var minz = rt.getValue(0, colz); var maxz = minz; for (var row = 1; row < rows; row++) {var val = rt.getValue(row, colz); if (val > maxz) maxz = val; else if (val < minz) minz = val;} ZMinMaxString = \"\" + minz + \",\" +  maxz;");
+					ZMinMax = split(ZMinMaxString, ",");
+	
+					Zmini = parseFloat(ZMinMax[0]);
+					Zmaxi = parseFloat(ZMinMax[1]);
+	
+					if (Zmini != 0 && Zmaxi != 0) {
+					/*
+						Z_MIN = (floor(Zmini / Z_SPACE)) * Z_SPACE;
+						Z_MAX = (floor(Zmaxi / Z_SPACE) + 1) * Z_SPACE;
+					*/
+						Z_MIN = round(Zmini + Z_SAT);
+						Z_MAX = round(Zmaxi - Z_SAT);
+						Z_N = round((Z_MAX - Z_MIN) / Z_SPACE);
+						Z_SPACE = round((Z_MAX - Z_MIN)  / Z_N); // Here we modify Z_SPACE!
+	
+					}
+	
+					VISU_STRING_RANGE = " zrange=" + Z_MIN + ":" + Z_SPACE + ":" + Z_MAX;
+					print("        auto Z-range: Zmin = " + parseFloat(ZMinMax[0]) + " nm, Zmax = " + parseFloat(ZMinMax[1]) + " nm, Z_MIN = " + Z_MIN + " nm, Z_MAX = " + Z_MAX + " nm");
 				}
-				selectImage(outIm);
-			}
+	
+				// Build the visualization string
+				VISU_STRING = VISU_STRING_XY + VISU_STRING_Z + VISU_STRING_RANGE;
 
-			// optional filtering
-			if (GAUSS > 0) {
-				run("Gaussian Blur...", "sigma=" + GAUSS/SR_SIZE + " stack");;
-			}
+				// Launch the visualization
+				selectWindow(RESULTS_TITLE);
+				run("Visualization", VISU_STRING);
+				rename("ROIoutput");
+	
 
-			if (P3D == true) {
-				if (Z_PROJ == true) {
-					run("Z Project...", "projection=[Sum Slices]");
-					projID = getImageID();
-					rename(zoomTitle);
-					optimizeContrast();
+				outIm = outProcess(OUT_TITLE);
+				zoomTitle = getTitle();
+	
+				if (ROILINE == true) {
+					SCALE = RECON_PX / SR_SIZE;
+					BIG_LINEOUT = getBigCoor(SMALL_LINEOUT, SCALE, roiX, roiY);
+					makeLine(BIG_LINEOUT[0], BIG_LINEOUT[1], BIG_LINEOUT[2], BIG_LINEOUT[3]);
+					if (SLICES == true) {
+						generateSlice(SLICE_THICK/1000, SR_SIZE/1000);
+						sliceTitle = getTitle();
+						optimizeContrast();
+						
+						// Name for the slice image
+						if (nLocs > 10000) ADD_TITLE = "_" + nLocK2 + "K";
+						else  ADD_TITLE = "_" + nLocK + "K";
+						ADD_TITLE = ADD_TITLE + "_(" + XMIN + "," + YMIN + ")";
+						NEW_TITLE = replace(sliceTitle, "(_([0-9])+K)+_TS", ADD_TITLE + "_TS");
+						// NEW_TITLE = NEW_TITLE + "_C=" + (z-1);
+				
+						// Save slice image						
+						SaveSlicePath = SliceFolder + File.separator + NEW_TITLE + ".tif";
+						print("        Slice image:" + SaveSlicePath);
+						save(SaveSlicePath);
+						if (CLOSE == true) close();
+					}
 					selectImage(outIm);
-					close();
-					selectImage(projID);
 				}
-				else {
-					selectImage(outIm);
-					rename(zoomTitle);
+	
+				// optional filtering
+				if (GAUSS > 0) {
+					radius = GAUSS/SR_SIZE;
+					for (g = 0; g < GAUSS_MULT; g++) {
+						if (P3D == true) {
+							run("Gaussian Blur 3D...", "x=" + radius + " y="+ radius + " z=" + radius);
+						}
+						else {
+							run("Gaussian Blur...", "sigma=" + radius + " stack");
+						}	
+					}
 				}
-			}
-			
-			if (ROILINE == true) {
-				BIG_LINEIN = getBigCoor(SMALL_LINEIN, SCALE, roiX, roiY);
-				makeLine(BIG_LINEIN[0], BIG_LINEIN[1], BIG_LINEIN[2], BIG_LINEIN[3]);
-				if (SLICES == true) generateBox(SLICE_THICK/SR_SIZE, 1);
-					else generateBox(lineWidth*RECON_PX/SR_SIZE, 1);
-				run("Select None");
+	
+				if (P3D == true) {
+					if (Z_PROJ == true) {
+						run("Z Project...", "projection=[Sum Slices]");
+						projID = getImageID();
+						rename(zoomTitle);
+						optimizeContrast();
+						selectImage(outIm);
+						close();
+						selectImage(projID);
+					}
+					else {
+						selectImage(outIm);
+						rename(zoomTitle);
+					}
+				}
+				
+				if (ROILINE == true) {
+					BIG_LINEIN = getBigCoor(SMALL_LINEIN, SCALE, roiX, roiY);
+					makeLine(BIG_LINEIN[0], BIG_LINEIN[1], BIG_LINEIN[2], BIG_LINEIN[3]);
+					if (SLICES == true) generateBox(SLICE_THICK/SR_SIZE, 1);
+						else generateBox(lineWidth*RECON_PX/SR_SIZE, 1);
+					run("Select None");
+				}
+	
+				// Adjust image size so that all have same size (does not work very well)
+				if (XY_VIEW > 0) {
+					magS = floor(XY_VIEW / SR_SIZE);
+					run("Canvas Size...", "width=" + magS + " height=" + magS + " position=Center zero");
+				}
+
+				// Name for the zoom image
+				if (nLocs > 10000) ADD_TITLE = "_" + nLocK2 + "K";
+				else  ADD_TITLE = "_" + nLocK + "K";
+				ADD_TITLE = ADD_TITLE + "_(" + XMIN + "," + YMIN + ")";
+				NEW_TITLE = replace(zoomTitle, "(_([0-9])+K)+_TS", ADD_TITLE + "_TS");
+				// NEW_TITLE = NEW_TITLE + "_C=" + (z-1);
+				
+				// Save zoom image
+				SaveZoomPath = ZoomFolder + File.separator + NEW_TITLE + ".tif";
+				print("        Box image:" + SaveZoomPath);
+				save(SaveZoomPath);
+				if (CLOSE == true) close();
 			}
 
-			// Adjust image size so that all have same size (does not work very well)
-			if (XY_VIEW > 0) {
-				magS = floor(XY_VIEW / SR_SIZE);
-				run("Canvas Size...", "width=" + magS + " height=" + magS + " position=Center zero");
-			}
-			
-			// Save zoomed image
-			SaveZoomPath = ZoomFolder + File.separator + zoomTitle + "_C=" + (z-1) + ".tif";
-			print("        Box image:" + SaveZoomPath);
-			save(SaveZoomPath);
-			if (CLOSE == true) close();
-
-			// Save localizations for each ROI 
+			// ******** Save localizations for each ROI *******
 			if (LOCROI == true) {
-				// Coordinates of the ROI in nm				
-				XMIN = reconX * CAM_SIZE;
-				XMAX = XMIN + (reconW * CAM_SIZE);
-				YMIN = reconY * CAM_SIZE;
-				YMAX = YMIN + (reconH * CAM_SIZE);
-				XY_RANGE = "x>" + XMIN + " & x<" + XMAX + " & y>" + YMIN + " & y<" + YMAX;  
-				// Filter coordinates within the ROI
-				run("Show results table", "action=filter formula=[" + XY_RANGE + "]");
+				selectWindow(RESULTS_TITLE);
+
+				// New name				
+				if (nLocs > 10000) ADD_TITLE = "_" + nLocK2 + "K";
+				else  ADD_TITLE = "_" + nLocK + "K";
+				ADD_TITLE = ADD_TITLE + "_(" + XMIN + "," + YMIN + ")";
+				NEW_TITLE = replace(OUT_TITLE, "(_([0-9])+K)+_TS", ADD_TITLE + "_TS");
+				// NEW_TITLE = NEW_TITLE + "_C=" + (z-1);
+				
 				// Export localizations within ROI in a csv file
-				LocROIPath = LocROIFolder + File.separator + zoomTitle + "(" + XMIN + "," + YMIN + ")_C=" + (z-1) + ".csv";
+				LocROIPath = LocROIFolder + File.separator + NEW_TITLE + ".csv";
 				run("Export results", "filepath=[" + LocROIPath + "] fileformat=[CSV (comma separated)] chi2=false saveprotocol=false");
+				
 				// Reset the Results Table
-				run("Show results table", "action=reset");
+				run("Show results table", "action=reset");			
 			}	
 			
 		}
@@ -548,7 +647,7 @@ function getLocs(idstring, LocFolderPath) {
 	if (cut > 0) shortName = substring(idstring, 0, cut);
 	else shortName = idstring;
 	LocPath = LocFolderPath + File.separator + shortName + LocSuffix1;
-	print(LocPath);
+	// print(LocPath);
 	if (File.exists(LocPath) == true || USE_OPEN == true) {
 		return LocPath;
 	}
@@ -608,8 +707,13 @@ function generateSlice(sd, vX) {
 	ResID = getImageID();
 	// optional filtering
 	if (GAUSS > 0) {
-		run("Gaussian Blur...", "sigma=" + GAUSS/SR_SIZE + " stack");;
+		radius = GAUSS/SR_SIZE;
+		for (g = 0; g < GAUSS_MULT; g++) {	
+				run("Gaussian Blur 3D...", "x=" + radius + " y="+ radius + " z=" + radius);
+				 //run("Gaussian Blur...", "sigma=" + radius + " stack");			
+		}
 	}
+				
 	if (SLICE_PROJ_DEF == true) {
 		run("Z Project...", "projection=[Sum Slices]");
 		// run("Flip Horizontally");
@@ -646,7 +750,7 @@ function outProcess(outTitle){
 		close();
 		selectImage(outID);
 	}
-
+	
 	rename(OUT_TITLE);
 	outID = getImageID();
 	return outID;

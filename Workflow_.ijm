@@ -76,6 +76,7 @@ macro "Workflow" {
 		REC_3D = true;
 		SR_SIZE = 16;
 		GAUSS = 8;
+		GAUSS_MULT = 1;
 	}
 
 
@@ -92,6 +93,7 @@ macro "Workflow" {
 		REC_3D = true;
 		SR_SIZE = 16;
 		GAUSS = 8;
+		GAUSS_MULT = 1;
 	}
 
 	if (MODE == "to RCC") {
@@ -107,6 +109,7 @@ macro "Workflow" {
 		REC_3D = false;
 		SR_SIZE = 16;
 		GAUSS = 8;
+		GAUSS_MULT = 1;
 	}
 
 
@@ -127,6 +130,7 @@ macro "Workflow" {
 	CHOOSE_STRING = "";
 //	EXCL = true;
 //	EXCL_STRING = "_ZR_";
+	COUNT = true;
 	// Drift correction
 //	CORR_DRIFT = true;
 	BIN = 12; // number of frames per sub-reconstruction used for autocorrelation
@@ -163,8 +167,8 @@ macro "Workflow" {
 	XY_UN = 0;
 	P3D = false;
 	Z_SPACE = 30;
-	Z_MIN = -400;
-	Z_MAX = 800;
+	Z_MIN = -450;
+	Z_MAX = 450;
 	Z_AUTO = true;
 	Z_SAT = 10;
 	Z_UN = 0;
@@ -186,7 +190,7 @@ macro "Workflow" {
 	// Optional Batch Proc
 	if (BATCH_PROC == true) {
 		BatchProc_path = plugin_path + File.separator + "NeuroCyto" + File.separator + "ChriSTORM" + File.separator + "Process locs files (batch)" + File.separator+ "Batch_Process_Locs.ijm";
-		BatchProc_args = out_path + "," + CHOOSE + "," + CHOOSE_STRING + "," + EXCL + "," + EXCL_STRING + "," + CORR_DRIFT + "," + BIN + "," + MAG + "," + SM + "," + MERGE + "," + DIST + "," + MAXF + "," + OFF + "," + PHOT_FILT + "," + PHOT_MIN + "," + PHOT_MAX + "," + EXP_FILT + "," + EXP_STRING + "," + DENS_FILT + "," + DENS_RAD + "," + DENS_NUMB + "," + DENS_DIM + "," + TSF;
+		BatchProc_args = out_path + "," + CHOOSE + "," + CHOOSE_STRING + "," + EXCL + "," + EXCL_STRING + "," + COUNT + "," + CORR_DRIFT + "," + BIN + "," + MAG + "," + SM + "," + MERGE + "," + DIST + "," + MAXF + "," + OFF + "," + PHOT_FILT + "," + PHOT_MIN + "," + PHOT_MAX + "," + EXP_FILT + "," + EXP_STRING + "," + DENS_FILT + "," + DENS_RAD + "," + DENS_NUMB + "," + DENS_DIM + "," + TSF;
 		out_path = runMacro(BatchProc_path, BatchProc_args);
 	}
 
@@ -194,14 +198,14 @@ macro "Workflow" {
 	// Generate Recs (2D)
 	if (REC_2D == true) {
 		Gen_Recon_path = plugin_path + File.separator + "NeuroCyto" + File.separator + "ChriSTORM" + File.separator + "Reconstruct Images (batch)" + File.separator+ "Generate_Reconstructions.ijm";
-		Gen_Recon_args = out_path + "," + CAM_SIZE + "," + SR_SIZE + "," + XMIN + "," + YMIN + "," + XWIDTH + "," + YWIDTH + "," + XY_UN + "," + P3D + "," + Z_SPACE + "," + Z_MIN + "," + Z_MAX + "," + Z_AUTO + "," + Z_SAT + "," + Z_UN + "," + Z_COLOR + "," + Z_LUT + "," + GAUSS + "," + to16 + "," + AD_CONT + "," + SAT_LEV + "," + XY_AUTO;
+		Gen_Recon_args = out_path + "," + CAM_SIZE + "," + SR_SIZE + "," + XMIN + "," + YMIN + "," + XWIDTH + "," + YWIDTH + "," + XY_UN + "," + P3D + "," + Z_SPACE + "," + Z_MIN + "," + Z_MAX + "," + Z_AUTO + "," + Z_SAT + "," + Z_UN + "," + Z_COLOR + "," + Z_LUT + "," + GAUSS + "," + GAUSS_MULT + "," + to16 + "," + AD_CONT + "," + SAT_LEV + "," + XY_AUTO;
 		out_path2 = runMacro(Gen_Recon_path, Gen_Recon_args);
 	}
 
 	// Optional Generate Recs (Zc)
 	if (REC_3D == true) {
 		P3D = true;
-		Gen_Recon_args = out_path + "," + CAM_SIZE + "," + SR_SIZE + "," + XMIN + "," + YMIN + "," + XWIDTH + "," + YWIDTH + ","+ XY_UN + ","  + P3D + "," + Z_SPACE + "," + Z_MIN + "," + Z_MAX + "," + Z_AUTO + "," + Z_SAT + "," + Z_UN + "," + Z_COLOR + "," + Z_LUT + "," + GAUSS + "," + to16 + "," + AD_CONT + "," + SAT_LEV + "," + XY_AUTO;
+		Gen_Recon_args = out_path + "," + CAM_SIZE + "," + SR_SIZE + "," + XMIN + "," + YMIN + "," + XWIDTH + "," + YWIDTH + ","+ XY_UN + ","  + P3D + "," + Z_SPACE + "," + Z_MIN + "," + Z_MAX + "," + Z_AUTO + "," + Z_SAT + "," + Z_UN + "," + Z_COLOR + "," + Z_LUT + "," + GAUSS + "," + GAUSS_MULT + "," + to16 + "," + AD_CONT + "," + SAT_LEV + "," + XY_AUTO;
 		out_path2 = runMacro(Gen_Recon_path, Gen_Recon_args);
 	}
 

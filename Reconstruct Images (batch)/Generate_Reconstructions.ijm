@@ -38,11 +38,12 @@ macro "Generate Reconstructions" {
 	XWIDTH_DEF = 256;
 	YWIDTH_DEF = 256;
 	XY_AUTO_DEF = false;
+	XY_ORI_DEF = false;
 	XY_UN_DEF = 0;
 	P3D_DEF = false;
 	Z_SPACE_DEF = 30;
-	Z_MIN_DEF = -450;
-	Z_MAX_DEF = 450;
+	Z_MIN_DEF = -600;
+	Z_MAX_DEF = 600;
 	Z_AUTO_DEF = false;
 	Z_SAT_DEF = 50; // restriction of 3D span on top and bottom (in nm)
 	Z_UN_DEF = 0;
@@ -53,6 +54,7 @@ macro "Generate Reconstructions" {
 	AD_CONT_DEF = false;
 	SAT_LEV_DEF = 0.1;
 	GAUSS_DEF = 8;
+	GAUSS_MULT_DEF = 1;
 
 //*************** Dialog 1 : get the input images folder path ***************
 
@@ -84,6 +86,7 @@ macro "Generate Reconstructions" {
 		Dialog.addNumber("Width of reconstruction", XWIDTH_DEF, 0, 4, "pixels");
 		Dialog.addNumber("Height of reconstruction", YWIDTH_DEF, 0, 4, "pixels");
 		Dialog.addCheckbox("Auto XY-range", XY_AUTO_DEF);
+		Dialog.addCheckbox("Use file name for XY origin", XY_ORI_DEF);
 		Dialog.addNumber("Force XY uncertainty (0 to keep)", XY_UN_DEF, 0, 3, "nm");
 		Dialog.addMessage(" ");
 		Dialog.addCheckbox("3D (will just process 3D files)", P3D_DEF);
@@ -97,6 +100,7 @@ macro "Generate Reconstructions" {
 		Dialog.addChoice("Color LUT", LUT_ARRAY, Z_LUT_DEF);
 		Dialog.addMessage(" ");
 		Dialog.addNumber("Gaussian blur (0 for no filter)", GAUSS_DEF, 0, 3, "nm");
+		Dialog.addNumber("Apply blur ", GAUSS_MULT_DEF, 0, 3, "times");
 		Dialog.addCheckbox("Convert to 16-bit (non-colorized only)", to16_DEF);
 		Dialog.addCheckbox("Adjust contrast", AD_CONT_DEF);
 		Dialog.addNumber("Saturated pixels", SAT_LEV_DEF, 2, 3, "%");
@@ -112,6 +116,7 @@ macro "Generate Reconstructions" {
 		XWIDTH = Dialog.getNumber();
 		YWIDTH = Dialog.getNumber();
 		XY_AUTO = Dialog.getCheckbox();
+		XY_ORI = Dialog.getCheckbox();
 		XY_UN = Dialog.getNumber();
 		P3D = Dialog.getCheckbox();
 		Z_SPACE = Dialog.getNumber();
@@ -123,6 +128,7 @@ macro "Generate Reconstructions" {
 		Z_COLOR = Dialog.getChoice();
 		Z_LUT = Dialog.getChoice();
 		GAUSS = Dialog.getNumber();
+		GAUSS_MULT = parseInt(Dialog.getNumber());
 		to16 = Dialog.getCheckbox();
 		AD_CONT = Dialog.getCheckbox();
 		SAT_LEV = Dialog.getNumber();
@@ -148,10 +154,11 @@ macro "Generate Reconstructions" {
 		Z_COLOR = argarray[15];
 		Z_LUT = argarray[16];
 		GAUSS = parseInt(argarray[17]);
-		to16 = argarray[18];
-		AD_CONT = argarray[19];
-		SAT_LEV = argarray[20];
-		XY_AUTO = argarray[21];
+		GAUSS_MULT = parseInt(argarray[18]);
+		to16 = argarray[19];
+		AD_CONT = argarray[20];
+		SAT_LEV = argarray[21];
+		XY_AUTO = argarray[22];
 	}
 
 //*************** Prepare Processing (get names, open images, make output folder) ***************
@@ -294,20 +301,41 @@ macro "Generate Reconstructions" {
 					XMinMaxString = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); var rows = rt.getRowCount(); var colz = rt.findColumn(\"x\"); var minz = rt.getValue(0, colz); var maxz = minz; for (var row = 1; row < rows; row++) {var val = rt.getValue(row, colz); if (val > maxz) maxz = val; else if (val < minz) minz = val;} ZMinMaxString = \"\" + minz + \",\" +  maxz;");
 					XMinMax = split(XMinMaxString, ",");
 					Xmini = parseFloat(XMinMax[0]);
+					if (Xmini < 0) Xmini = 0;
 					Xmaxi = parseFloat(XMinMax[1]);
 					YMinMaxString = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); var rows = rt.getRowCount(); var colz = rt.findColumn(\"y\"); var minz = rt.getValue(0, colz); var maxz = minz; for (var row = 1; row < rows; row++) {var val = rt.getValue(row, colz); if (val > maxz) maxz = val; else if (val < minz) minz = val;} ZMinMaxString = \"\" + minz + \",\" +  maxz;");
 					YMinMax = split(YMinMaxString, ",");
 					Ymini = parseFloat(YMinMax[0]);
+					if (Ymini < 0) Ymini = 0;
 					Ymaxi = parseFloat(YMinMax[1]);
 
 					Xw = Xmaxi - Xmini;
 					Yh = Ymaxi - Ymini;
 
-					XminiPX = floor(Xmini / CAM_SIZE);
-					YminiPX = floor(Ymini / CAM_SIZE);
-					XwPX = floor(Xw / CAM_SIZE) + 1;
-					YhPX = floor(Yh / CAM_SIZE) + 1;
-					
+					XminiPX = Xmini / CAM_SIZE;
+					YminiPX = Ymini / CAM_SIZE;
+
+					XwPX = Xw / CAM_SIZE;
+					YhPX = Yh / CAM_SIZE;
+
+					// Case if origin is coded in file name (as for exported ROI locs)
+					if (XY_ORI == true){
+						StartI = lastIndexOf(FILE_NAME, "_(");
+						StopI = lastIndexOf(FILE_NAME, ")_");
+						XYori = substring(FILE_NAME, StartI+2, StopI);
+						XYoriA = split(XYori, ",");
+						Xmini = parseFloat(XYoriA[0]);
+						Ymini = parseFloat(XYoriA[1]);
+						XminiPX = Xmini / CAM_SIZE;
+						YminiPX = Ymini / CAM_SIZE;	
+
+						Xw = Xmaxi - Xmini;
+						Yh = Ymaxi - Ymini;
+
+						XwPX = Xw / CAM_SIZE;
+						YhPX = Yh / CAM_SIZE;
+					}
+									
 
 					VISU_STRING_XY = "imleft=" + XminiPX + " imtop=" + YminiPX + " imwidth=" + XwPX + " imheight=" + YhPX + " renderer=[Normalized Gaussian] magnification=" + Magnif + " " + FORCE_STRING + " ";
 					print("      auto XY range (nm): X: " + Xmini + " to " + Xmaxi + " nm (width " + Xw + " nm), Y: " + Ymini + " to " + Ymaxi + " nm (height " + Yh + " nm)");
@@ -331,11 +359,12 @@ macro "Generate Reconstructions" {
 						Z_N = round((Z_MAX - Z_MIN) / Z_SPACE);
 						Z_SPACE = round((Z_MAX - Z_MIN)  / Z_N); // Here we modify Z_SPACE!
 
+						VISU_STRING_RANGE = " zrange=" + Z_MIN + ":" + Z_SPACE + ":" + Z_MAX;
+						print("      auto Z range: " + Zmini + " to " + Zmaxi + " nm, slices " + Z_MIN + " to " + Z_MAX + " nm (" + Z_SPACE + " nm spacing)" );	
 					}
 
 
-					VISU_STRING_RANGE = " zrange=" + Z_MIN + ":" + Z_SPACE + ":" + Z_MAX;
-					print("      auto Z range: " + Zmini + " to " + Zmaxi + " nm, slices " + Z_MIN + " to " + Z_MAX + " nm (" + Z_SPACE + " nm spacing)" );
+
 				}
 
 
@@ -351,7 +380,15 @@ macro "Generate Reconstructions" {
 
 				// optional filtering
 				if (GAUSS > 0) {
-					run("Gaussian Blur...", "sigma=" + GAUSS/SR_SIZE + " stack");;
+					radius = GAUSS/SR_SIZE;
+					for (g = 0; g < GAUSS_MULT; g++) {
+						if (P3D == true) {
+							run("Gaussian Blur 3D...", "x=" + radius + " y="+ radius + " z=" + radius);
+						}
+						else {
+							run("Gaussian Blur...", "sigma=" + radius + " stack");
+						}	
+					}
 				}
 
 				// Colorized output

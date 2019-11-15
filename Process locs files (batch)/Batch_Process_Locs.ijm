@@ -21,7 +21,8 @@ macro "Batch Process Localizations" {
 		called = false;
 	}
 
-	LOC_SUFFIX = ".csv";
+	LOC_SUFFIX1 = ".csv";
+	LOC_SUFFIX2 = ".xls";
 	OUT_PARAM = "proc";
 	
 	// Camera setup variables
@@ -35,6 +36,8 @@ macro "Batch Process Localizations" {
 
 	EXC_DEF = true;
 	EXC_STRING_DEF = "_ZR_";
+
+	COUNT_DEF = true;
 
 	// Drift correction
 	CORR_DRIFT_DEF = true;
@@ -94,6 +97,7 @@ macro "Batch Process Localizations" {
 		Dialog.addString("Name contains", CHOOSE_STRING_DEF);
 		Dialog.addCheckbox("Exclude files based on name", EXC_DEF);
 		Dialog.addString("Name contains", EXC_STRING_DEF);
+		Dialog.addCheckbox("Reset Loc Counter", COUNT_DEF);
 		Dialog.addMessage("");
 		Dialog.addCheckbox("Correct drift", CORR_DRIFT_DEF);
 		Dialog.addNumber("Number of bins for sub-images", BIN_DEF, 0, 5, "");
@@ -126,6 +130,8 @@ macro "Batch Process Localizations" {
 
 		EXC = Dialog.getCheckbox();
 		EXC_STRING = Dialog.getString();
+
+		RESET = Dialog.getCheckbox();
 		
 		CORR_DRIFT = Dialog.getCheckbox();
 		BIN = Dialog.getNumber();
@@ -158,25 +164,26 @@ macro "Batch Process Localizations" {
 		CHOOSE = argarray[1];
 		CHOOSE_STRING = argarray[2];
 		EXC = argarray[3];
-		EXC_STRING = argarray[4];		
-		CORR_DRIFT = argarray[5];
-		BIN = argarray[6];
-		MAG = argarray[7];
-		SM = argarray[8];
-		MERGE = argarray[9];
-		DIST = argarray[10];
-		MAXF = argarray[11];
-		OFF = argarray[12];
-		PHOT_FILT = argarray[13];
-		PHOT_MIN = argarray[14];
-		PHOT_MAX = argarray[15];
-		EXP_FILT = argarray[16];
-		EXP_STRING = argarray[17];
-		DENS_FILT = argarray[18];
-		DENS_RAD = argarray[19];
-		DENS_NUMB = argarray[20];
-		DENS_DIM = argarray[21];
-		TSF = argarray[22];		
+		EXC_STRING = argarray[4];
+		RESET = argarray[5];		
+		CORR_DRIFT = argarray[6];
+		BIN = argarray[7];
+		MAG = argarray[8];
+		SM = argarray[9];
+		MERGE = argarray[10];
+		DIST = argarray[11];
+		MAXF = argarray[12];
+		OFF = argarray[13];
+		PHOT_FILT = argarray[14];
+		PHOT_MIN = argarray[15];
+		PHOT_MAX = argarray[16];
+		EXP_FILT = argarray[17];
+		EXP_STRING = argarray[18];
+		DENS_FILT = argarray[19];
+		DENS_RAD = argarray[20];
+		DENS_NUMB = argarray[21];
+		DENS_DIM = argarray[22];
+		TSF = argarray[23];		
 	}
 	
 //*************** Prepare processing ***************	
@@ -187,6 +194,8 @@ macro "Batch Process Localizations" {
 	// Get all file names
 	ALL_NAMES = getFileList(INPUT_DIR);
 	Array.sort(ALL_NAMES);
+	ALL_TS = newArray(ALL_NAMES.length);
+	ALL_TYPES = newArray(ALL_NAMES.length);
 	
 	OUTPUT_DIR = File.getParent(INPUT_DIR);
 	OUTPUT_NAME = File.getName(INPUT_DIR);
@@ -205,17 +214,31 @@ macro "Batch Process Localizations" {
 	// Detect number of files
 	FileTotal = 0;
 	for (n = 0; n < ALL_NAMES.length; n++) {
-		if (endsWith(ALL_NAMES[n], LOC_SUFFIX) == true) {
+		ALL_TS[n] = false;
+		ALL_TYPES[n] = "not TS";
+		if (endsWith(ALL_NAMES[n], LOC_SUFFIX1) == true) {
+			LOC_SUFFIX = LOC_SUFFIX1;
+			ALL_TS[n] = true;
+			ALL_TYPES[n] = "[CSV (comma separated)]";
+		}
+		if (endsWith(ALL_NAMES[n], LOC_SUFFIX2) == true) {
+			LOC_SUFFIX = LOC_SUFFIX2;
+			ALL_TS[n] = true;
+			ALL_TYPES [n] = "[XLS (tab separated)]";
+		}		
+		if (ALL_TS[n] == true) {
 			if ((CHOOSE == false || indexOf(ALL_NAMES[n], CHOOSE_STRING) > -1) && (EXC == false || indexOf(ALL_NAMES[n], EXC_STRING) == -1)) {
 				FileTotal++;
 			}
 		}
 	}
 
+	// print(FileTotal);
+
 	// Loop on all TS loc files
 	FileCount = 0;
 	for (n = 0; n < ALL_NAMES.length; n++) {
-		if (endsWith(ALL_NAMES[n], LOC_SUFFIX) == true) {
+		if (ALL_TS[n] == true) {
 			if ((CHOOSE == false || indexOf(ALL_NAMES[n], CHOOSE_STRING) > -1) && (EXC == false || indexOf(ALL_NAMES[n], EXC_STRING) == -1)) {
 				// Image counter
 				FileCount++;
@@ -231,7 +254,7 @@ macro "Batch Process Localizations" {
 				OUT_TITLE = FILE_NAME;
 				
 				// Open the loc file	
-				run("Import results", "append=false startingframe=1 rawimagestack= filepath=[" + FILE_PATH + "] livepreview=false fileformat=[CSV (comma separated)]");
+				run("Import results", "append=false startingframe=1 rawimagestack= filepath=[" + FILE_PATH + "] livepreview=false fileformat=" + ALL_TYPES[n]);
 	
 				
 				if (CORR_DRIFT == true) {
@@ -263,8 +286,8 @@ macro "Batch Process Localizations" {
 				}
 	
 				if (DENS_FILT == true){
-					colZ = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); var colZ = rt.findColumn(\"z [nm]\");");
-					if (colZ < 0) DENS_DIM = "2D";
+					// colZ = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); var colZ = rt.findColumn(\"z [nm]\");");
+					// if (colZ < 0) DENS_DIM = "2D";
 					run("Show results table", "action=density neighbors=" + DENS_NUMB + " dimensions=" + DENS_DIM + " radius=" + DENS_RAD);
 				}
 				
@@ -275,19 +298,40 @@ macro "Batch Process Localizations" {
 				nLocK = round(nLocs / 1000);
 				// OUT_TITLE = replace(OUT_TITLE, "([0-9])+K_", nLocK + "K_");
 
-				ADD_TITLE = "";
 				//if (CORR_DRIFT == true) {
 				//	ADD_TITLE = ADD_TITLE + "DC";
 				//}		
+
+				ADD_TITLE = "_" + nLocK + "K";
 				
-				ADD_TITLE = ADD_TITLE + nLocK + "K";
-				if (indexOf(OUT_TITLE, "_TS") > 0) {
-					NEW_TITLE = replace(OUT_TITLE, "([0-9])+K_TS", ADD_TITLE + "_TS");
-				}
-				else {
-					NEW_TITLE = replace(OUT_TITLE, LOC_SUFFIX, ADD_TITLE + LOC_SUFFIX);
+				if (indexOf(OUT_TITLE, "_TS2D.") > 0 || indexOf(OUT_TITLE, "_TS3D.") > 0) {
+					
+					if (RESET == true) {
+						NEW_TITLE = replace(OUT_TITLE, "(_([0-9])+K)+_TS", ADD_TITLE + "_TS");
+					}
+					else {
+						NEW_TITLE = replace(OUT_TITLE, "_TS", ADD_TITLE + "_TS");
+					}
 				}
 
+				else {
+					NEW_TITLE = replace(OUT_TITLE, LOC_SUFFIX, ADD_TITLE + LOC_SUFFIX1);
+				}
+
+				
+/*
+ 				else {
+					if (RESET == true) {
+						NEW_TITLE = replace(OUT_TITLE, "(_([0-9])+K)+", ADD_TITLE);
+					}
+					else {
+						insert = lastIndexOf(OUT_TITLE, "K_");
+						NEW_TIT1 = substring(OUT_TITLE, 0, insert+1);
+						NEW_TIT2 = substring(OUT_TITLE, insert+1, lengthOf(OUT_TITLE));
+						NEW_TITLE = NEW_TIT1 + ADD_TITLE + NEW_TIT2;
+					}				
+				}
+*/
 				
 				if (TSF == false) {
 					OUT_PATH = OUTPUT_DIR + NEW_TITLE;
