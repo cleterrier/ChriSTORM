@@ -96,10 +96,10 @@ macro "Generate Zooms & Slices" {
 	if (bitDepth() == 24)
 		stackType += "_zc";
 
-//*************** Dialog : options ***************
+//*************** Dialog1 : options ***************
 
 	//Creation of the dialog box
-	Dialog.create("Generate zooms & slices: options");
+	Dialog.create("Generate zooms & slices: options 1");
 	if (roiManager("count") > 1)
 		Dialog.addCheckbox("Process all ROIs", MULTI_ROI_DEF);
 	if (stackType == "2C" || stackType == "2C_zc")
@@ -128,21 +128,6 @@ macro "Generate Zooms & Slices" {
 	Dialog.addCheckbox("Z project", Z_PROJ_DEF);
 	Dialog.addCheckbox("Z colorized", Z_COLOR_DEF);
 	Dialog.addChoice("Color LUT", LUT_ARRAY, Z_LUT_DEF);
-	Dialog.addMessage("");
-	Dialog.addCheckbox("Generate slices", SLICES_DEF);
-	Dialog.addNumber("Slice thickness (nm)", SLICE_THICK_DEF, 0, 4, "nm");
-	Dialog.addCheckbox("Slice project", SLICE_PROJ_DEF);
-	Dialog.addNumber("XY view size (nm) (0 for smallest)", XY_VIEW_DEF, 0, 4, "nm"); // Minimum box size around slice
-	Dialog.addMessage("");
-	Dialog.addCheckbox("Density filter", FILT_DEF);
-	Dialog.addNumber("Filter radius", FILT_RAD_DEF, 0, 3, "nm");
-	Dialog.addNumber("Locs number", FILT_NUMB_DEF, 0, 3, "nm");
-	Dialog.addChoice("Filter dimension", FILT_DIM_A, FILT_DIM_DEF);
-	Dialog.addNumber("Gaussian blur (0 for no filter)", GAUSS_DEF, 0, 3, "nm");
-	Dialog.addNumber("Apply blur ", GAUSS_MULT_DEF, 0, 3, "times");
-	Dialog.addCheckbox("Adjust contrast", AD_CONT_DEF);
-	Dialog.addNumber("Saturated pixels", SAT_LEV_DEF, 2, 3, "%");
-	Dialog.addCheckbox("Close images", CLOSE_DEF);
 	Dialog.show();
 
 	// Feeding variables from dialog choices
@@ -180,6 +165,27 @@ macro "Generate Zooms & Slices" {
 	Z_COLOR = Dialog.getCheckbox();
 	Z_LUT = Dialog.getChoice();
 
+//*************** Dialog2 : options ***************
+
+	//Creation of the dialog box
+	Dialog.create("Generate zooms & slices: options 2");
+	Dialog.addCheckbox("Generate slices", SLICES_DEF);
+	Dialog.addNumber("Slice thickness (nm)", SLICE_THICK_DEF, 0, 4, "nm");
+	Dialog.addCheckbox("Slice project", SLICE_PROJ_DEF);
+	Dialog.addNumber("XY view size (nm) (0 for smallest)", XY_VIEW_DEF, 0, 4, "nm"); // Minimum box size around slice
+	Dialog.addMessage("");
+	Dialog.addCheckbox("Density filter", FILT_DEF);
+	Dialog.addNumber("Filter radius", FILT_RAD_DEF, 0, 3, "nm");
+	Dialog.addNumber("Locs number", FILT_NUMB_DEF, 0, 3, "nm");
+	Dialog.addChoice("Filter dimension", FILT_DIM_A, FILT_DIM_DEF);
+	Dialog.addNumber("Gaussian blur (0 for no filter)", GAUSS_DEF, 0, 3, "nm");
+	Dialog.addNumber("Apply blur ", GAUSS_MULT_DEF, 0, 3, "times");
+	Dialog.addCheckbox("Adjust contrast", AD_CONT_DEF);
+	Dialog.addNumber("Saturated pixels", SAT_LEV_DEF, 2, 3, "%");
+	Dialog.addCheckbox("Close images", CLOSE_DEF);
+	Dialog.show();
+
+	// Feeding variables from dialog choices
 	SLICES = Dialog.getCheckbox();
 	SLICE_THICK = Dialog.getNumber();
 	SLICE_PROJ = Dialog.getCheckbox();
