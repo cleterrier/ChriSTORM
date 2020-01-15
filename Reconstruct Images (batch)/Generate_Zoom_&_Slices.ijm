@@ -14,7 +14,7 @@ macro "Generate Zooms & Slices" {
 	// Titles of the Thunderstorm windows for catching them
 	RESULTS_TITLE = "ThunderSTORM: results";
 	RECON_TITLE = "ROIoutput";
-	LUT_ARRAY = newArray("Rainbow RGB", "Jet", "ametrine", "ThunderSTORM");
+	LUT_ARRAY = newArray("Rainbow RGB", "Jet", "Turbo", "ametrine", "ThunderSTORM");
 
 	// log
 	print("\n\n***** Generate Zooms & Slices started *****");
@@ -209,6 +209,7 @@ macro "Generate Zooms & Slices" {
 
 	// Change input folder if processed loc chosen
 	OUT_PARAM = "";
+	ROI_PARAM = "";
 	if (PRO == true){
 		LocFolder = "Locs TS proc";
 	}
@@ -240,7 +241,23 @@ macro "Generate Zooms & Slices" {
 		OUT_PARAM += "_s" + SLICE_THICK; 
 		if (SLICE_PROJ == true) OUT_PARAM += "p";
 	}
+	if (XY_VIEW > 0) {
+		OUT_PARAM += "_m" + toString(XY_VIEW/1000, 2); 
+		if (ROI_PARAM == "") ROI_PARAM = "(";
+		else ROI_PARAM += "_";
+		ROI_PARAM += "m" + toString(XY_VIEW/1000, 2); 
+	}
+	if (FILT == true) {
+		OUT_PARAM += "_d" + FILT_RAD + "-" + FILT_NUMB + "-" + FILT_DIM;
+		if (ROI_PARAM == "") ROI_PARAM = "(";
+		else ROI_PARAM += "_";
+		ROI_PARAM += "d" + FILT_RAD + "-" + FILT_NUMB + "-" + FILT_DIM; 
+	}
+	if (GAUSS > 0) {
+		OUT_PARAM += "_g" + toString(GAUSS, 0) + "-" + GAUSS_MULT; 
+	}
 	OUT_PARAM += ")";
+	ROI_PARAM += ")";
 
 	print("  Output parameters: " + OUT_PARAM);
 
@@ -248,7 +265,7 @@ macro "Generate Zooms & Slices" {
 
 	// Directory containing the localizations files for each ROI
 	if (LOCROI == true) {
-		LocROIFolder = HomeFolder + File.separator + SaveFolderLocROI;
+		LocROIFolder = HomeFolder + File.separator + SaveFolderLocROI + " " + ROI_PARAM;
 		if (File.exists(LocROIFolder) != 1) File.makeDirectory(LocROIFolder);
 		print("  ROI locs folder:" + LocROIFolder);
 	}
@@ -371,29 +388,36 @@ for (z = 1; z < iCount + 1; z++) {
 				roiY = boxY;
 				roiW = boxW;
 				roiH = boxH;
-				// Test if ROI is big enough compared to minimum size
-				// size of the minimum box (in pixels)
-				boxMin = floor(XY_VIEW / RECON_PX);
-				// coordinates of ROI middle
-				midX = ((lineX2 - lineX1) / 2) + lineX1;
-				midY = ((lineY2 - lineY1) / 2) + lineY1;
-				// Enlarge in X
-				if (boxW < boxMin) {
-					roiX = (midX - boxMin/2);
-					roiW = boxMin;
-				}
-				// Enlarge in Y
-				if (boxH < boxMin) {
-					roiY = (midY - boxMin/2);
-					roiH = boxMin;
-				}
-
 			}
 			//If not, just get the bounding box
 			else {
 				ROILINE = false;
 				getSelectionBounds(roiX, roiY, roiW, roiH);
 			}
+
+			// Test if ROI is big enough compared to minimum size
+			// size of the minimum box (in pixels)
+			boxMin = floor(XY_VIEW / RECON_PX);
+			// coordinates of ROI middle
+			if (ROILINE == true) {
+				midX = ((lineX2 - lineX1) / 2) + lineX1;
+				midY = ((lineY2 - lineY1) / 2) + lineY1;			
+			}
+			else {
+				midX = (roiW / 2) + roiX;
+				midY = (roiH / 2) + roiY;
+			}
+			// Enlarge in X
+			if (roiW < boxMin) {
+				roiX = (midX - boxMin/2);
+				roiW = boxMin;
+			}
+			// Enlarge in Y
+			if (roiH < boxMin) {
+				roiY = (midY - boxMin/2);
+				roiH = boxMin;
+			}
+		
 			// print("roiX=" + roiX + ", roiY=" + roiY + ", roiW=" + roiW + ", roiH=" + roiH);
 
 			// Draw the bounding box ROI and the name of the ROI
@@ -607,10 +631,11 @@ for (z = 1; z < iCount + 1; z++) {
 				// Export localizations within ROI in a csv file
 				LocROIPath = LocROIFolder + File.separator + NEW_TITLE + ".csv";
 				run("Export results", "filepath=[" + LocROIPath + "] fileformat=[CSV (comma separated)] chi2=false saveprotocol=false");
-				
-				// Reset the Results Table
-				run("Show results table", "action=reset");			
+			
 			}	
+
+			// Reset the Results Table
+			run("Show results table", "action=reset");	
 			
 		}
 	}

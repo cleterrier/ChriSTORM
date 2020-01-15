@@ -11,12 +11,12 @@ macro "Workflow" {
 	BATCH_PROC_DEF = true;
 	EXCL_STRING_DEF = "_ZR_";
 	CORR_DRIFT_DEF = true;
-	EXP_STRING_DEF = "intensity>800 & intensity<200000 & detections<50";
+	EXP_STRING_DEF = "intensity>700 & intensity<50000 & detections<5";
 	REC_2D_DEF = true;
 	REC_3D_DEF = true;
 	SR_SIZE_DEF = 16;
 	GAUSS_DEF = 8;
-	LUTS = newArray("Rainbow RGB", "Jet", "ametrine", "ThunderSTORM");
+	LUTS = newArray("Rainbow RGB", "Jet", "Turbo", "ametrine", "ThunderSTORM");
 	LUT_DEF = "Rainbow RGB";
 
 	// Get input directory (Locs text files from N-STORM)
@@ -70,13 +70,12 @@ macro "Workflow" {
 		EXCL_STRING = "_ZR_";
 		CORR_DRIFT = true;
 		EXP_FILT = true;
-		EXP_STRING = "intensity>700 & intensity<30000 & detections<5";
+		EXP_STRING = "intensity>700 & intensity<50000 & detections<5";
 
 		REC_2D = true;
 		REC_3D = true;
 		SR_SIZE = 16;
 		GAUSS = 8;
-		GAUSS_MULT = 1;
 	}
 
 
@@ -87,13 +86,12 @@ macro "Workflow" {
 		EXCL_STRING = "_ZR_";
 		CORR_DRIFT = true;
 		EXP_FILT = true;
-		EXP_STRING = "intensity>1000 & intensity<1000000 & detections<50";
+		EXP_STRING = "intensity>800 & intensity<200000 & detections<50";
 
 		REC_2D = true;
 		REC_3D = true;
 		SR_SIZE = 16;
 		GAUSS = 8;
-		GAUSS_MULT = 1;
 	}
 
 	if (MODE == "to RCC") {
@@ -103,14 +101,14 @@ macro "Workflow" {
 		EXCL_STRING = "_ZR_";
 		CORR_DRIFT = true;
 		EXP_FILT = true;
-		EXP_STRING = "intensity>700 & intensity<30000 & detections<5";
+		EXP_STRING = "intensity>700 & intensity<50000 & detections<5";
 
 		REC_2D = false;
 		REC_3D = false;
 		SR_SIZE = 16;
 		GAUSS = 8;
-		GAUSS_MULT = 1;
 	}
+
 
 
 
@@ -178,6 +176,7 @@ macro "Workflow" {
 	AD_CONT = false;
 	SAT_LEV = 0.1;
 //	GAUSS = 8;
+	GAUSS_MULT = 1;
 	XY_AUTO = false;
 
 

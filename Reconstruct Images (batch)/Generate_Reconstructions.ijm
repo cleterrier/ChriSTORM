@@ -24,7 +24,7 @@ macro "Generate Reconstructions" {
 	RECON_TITLE = "Normalized Gaussian";
 	// Index of column containing Z coordinates in TS3D files
 	colZ = 3;
-	LUT_ARRAY = newArray("Rainbow RGB", "Jet", "ametrine", "ThunderSTORM");
+	LUT_ARRAY = newArray("Rainbow RGB", "Jet", "Turbo", "ametrine", "ThunderSTORM");
 
 // Default values for the Options Panel
 	CAM_SIZE_DEF = 160;
@@ -382,7 +382,7 @@ macro "Generate Reconstructions" {
 				if (GAUSS > 0) {
 					radius = GAUSS/SR_SIZE;
 					for (g = 0; g < GAUSS_MULT; g++) {
-						if (P3D == true) {
+						if (P3D == true && Z_COLOR == "No color") {
 							run("Gaussian Blur 3D...", "x=" + radius + " y="+ radius + " z=" + radius);
 						}
 						else {
