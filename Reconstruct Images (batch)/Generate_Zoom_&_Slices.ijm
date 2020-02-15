@@ -469,9 +469,9 @@ for (z = 1; z < iCount + 1; z++) {
 			nLocK2 = replace(d2s(nLocs / 1000, 2), ".", ",");
 			LocNum = LocNum + "  |  in ROI: " + nLocK2 + "K";
 			
-			// Optional Density filter 
+			// Optional Density filter (will not run on dummy image that has only 12 locs)
 			if (FILT == true){
-				run("Show results table", "action=density neighbors=" + FILT_NUMB + " dimensions=" + FILT_DIM + " radius=" + FILT_RAD);
+				if (nLocs>12) run("Show results table", "action=density neighbors=" + FILT_NUMB + " dimensions=" + FILT_DIM + " radius=" + FILT_RAD);
 				// Count the locs after density filtering
 				nLocs = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); rows = rt.getRowCount();");
 				nLocK = round(nLocs / 1000);
@@ -745,7 +745,7 @@ function generateSlice(sd, vX) {
 		}
 	}
 				
-	if (SLICE_PROJ_DEF == true) {
+	if (SLICE_PROJ == true) {
 		run("Z Project...", "projection=[Sum Slices]");
 		// run("Flip Horizontally");
 		ZpID = getImageID();
