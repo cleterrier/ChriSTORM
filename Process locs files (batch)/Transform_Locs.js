@@ -8,6 +8,7 @@ importClass(Packages.ij.gui.GenericDialog);
 
 // Default values
 var isBatchdef = 0;
+var isSmalldef = 0;
 var xTdef = 0; // coordinates translation (in nm) for X
 var yTdef = 0; // coordinates translation (in nm) for Y
 var zTdef = 0; // coordinates translation (in nm) for Z
@@ -19,6 +20,7 @@ var yCdef = 20480; // Y coordinate (in nm) of rotation center
 var rotAdef = 0; // Rotation angle (in degrees)
 var fvdef = false; // flip vertically
 var fhdef = false; // flip horizontally
+var uFdef = 1; // Scale XY uncertainty
 var zUdef = 2; // scaling factor to calculate Z uncertainty from XY uncertainty using Z = zU * xyU
 
 // Name of the processing
@@ -53,6 +55,7 @@ IJ.log("Input name:" + name);
 // Options dialog
 var gd = new GenericDialog("Process ThunderSTORM csv: options");
 gd.addCheckbox("Batch mode", isBatchdef);
+gd.addCheckbox("Round numbers for smaller file (not implemented yet)", isSmalldef);
 gd.addMessage("Coordinates translation");
 gd.addNumericField("X translation:", xTdef, 0, 6, "nm (0 for none)");
 gd.addNumericField("Y translation:", yTdef, 0, 6, "nm  (0 for none)");
@@ -67,10 +70,13 @@ gd.addNumericField("Center Y:", yCdef, 0, 6, "nm");
 gd.addNumericField("Angle:", rotAdef, 0, 3, "deg (0 for none)");
 gd.addCheckbox("Flip horizontally", fhdef);
 gd.addCheckbox("Flip vertically", fvdef);
+gd.addMessage("XY uncertainty scaling");
+gd.addNumericField("Scaling factor:", uFdef, 0, 6, "X (1 for none)");
 gd.addMessage("Z uncertainty creation (by scaling XY uncertainty)");
 gd.addNumericField("Scaling factor:", zUdef, 0, 6, "X (0 for none)");
 gd.showDialog();
 var isBatch = gd.getNextBoolean();
+var isSmall = gd.getNextBoolean();
 var xT = gd.getNextNumber();
 var yT = gd.getNextNumber();
 var zT = gd.getNextNumber();
@@ -82,6 +88,7 @@ var yC = gd.getNextNumber();
 var rotA = gd.getNextNumber();
 var fh = gd.getNextBoolean();
 var fv = gd.getNextBoolean();
+var uF = gd.getNextNumber();
 var zU = gd.getNextNumber();
 
 if (isBatch == 0) IJ.log("Processing a single file, path:" + path);
@@ -101,7 +108,7 @@ if (gd.wasOKed()) {
 
 	if (isBatch == 0) {
 		// Process the single file
-		TransformLocs(path, directory, xT, yT, zT, xF, yF, zF, xC, yC, rotA, fh, fv, zU);
+		TransformLocs(path, directory, isSmall, xT, yT, zT, xF, yF, zF, xC, yC, rotA, fh, fv, uF, zU);
 	}
 	else {
 		// Define input folder, define and create output folder
@@ -119,7 +126,7 @@ if (gd.wasOKed()) {
 		for (var f = 0; f < fileQueue.length; f++) {
 			inPath = fileQueue[f];
 			IJ.log("\n");
-			TransformLocs(inPath, outDir, xT, yT, zT, xF, yF, zF, xC, yC, rotA, fh, fv, zU);
+			TransformLocs(inPath, outDir, isSmall, xT, yT, zT, xF, yF, zF, xC, yC, rotA, fh, fv, uF, zU);
 		}
 	}
 

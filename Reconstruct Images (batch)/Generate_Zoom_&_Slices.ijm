@@ -24,9 +24,10 @@ macro "Generate Zooms & Slices" {
 	LocFolder = "Locs TS";
 	LocSuffix1 = ".csv";
 	StackFolder = getDirectory("image");
-	SaveFolderLocROI = "Locs TS ROIs"; 
+	SaveFolderLocROI = "Locs TS ROIs";
 	SaveFolderZooms = "Recs TS Tiles";
 	SaveFolderSlices = "Recs TS Slices";
+	SaveFolderSliceLong = "Recs TS Slices Long";
 	HomeFolder = getHomeFolder(StackFolder);
 	print("  Home folder:" + HomeFolder);
 
@@ -59,6 +60,7 @@ macro "Generate Zooms & Slices" {
 	Z_LUT_DEF = "Rainbow RGB"; // LUT for color-coded 3D
 	SLICES_DEF = false;
 	SLICE_THICK_DEF = 400; // 800 nm
+	SLICE_LONG_DEF = true;
 	SLICE_PROJ_DEF = true; // true
 	XY_VIEW_DEF = 0; // 2500 nm
 
@@ -171,6 +173,7 @@ macro "Generate Zooms & Slices" {
 	Dialog.create("Generate zooms & slices: options 2");
 	Dialog.addCheckbox("Generate slices", SLICES_DEF);
 	Dialog.addNumber("Slice thickness (nm)", SLICE_THICK_DEF, 0, 4, "nm");
+	Dialog.addCheckbox("Slice longitudinal", SLICE_LONG_DEF);
 	Dialog.addCheckbox("Slice project", SLICE_PROJ_DEF);
 	Dialog.addNumber("XY view size (nm) (0 for smallest)", XY_VIEW_DEF, 0, 4, "nm"); // Minimum box size around slice
 	Dialog.addMessage("");
@@ -188,6 +191,7 @@ macro "Generate Zooms & Slices" {
 	// Feeding variables from dialog choices
 	SLICES = Dialog.getCheckbox();
 	SLICE_THICK = Dialog.getNumber();
+	SLICE_LONG = Dialog.getCheckbox();
 	SLICE_PROJ = Dialog.getCheckbox();
 	XY_VIEW = Dialog.getNumber();
 
@@ -209,14 +213,14 @@ macro "Generate Zooms & Slices" {
 
 	// Change input folder if processed loc chosen
 	OUT_PARAM = "";
-	ROI_PARAM = "";
+	ROI_PARAM = "(";
 	if (PRO == true){
 		LocFolder = "Locs TS proc";
 	}
 	LocFolderPath = HomeFolder + File.separator + LocFolder;
 
 	print("  Loc folder candidate:" + LocFolderPath);
-	
+
 	if (USE_OPEN == false && (SPEC == true || File.exists(LocFolderPath) != 1)){
 		LocFolderPath = getDirectory("Select the localizations folder");
 	}
@@ -238,23 +242,23 @@ macro "Generate Zooms & Slices" {
 		if (Z_PROJ == true) OUT_PARAM += "p";
 	}
 	if (SLICES == true) {
-		OUT_PARAM += "_s" + SLICE_THICK; 
+		OUT_PARAM += "_s" + SLICE_THICK;
 		if (SLICE_PROJ == true) OUT_PARAM += "p";
 	}
 	if (XY_VIEW > 0) {
-		OUT_PARAM += "_m" + toString(XY_VIEW/1000, 2); 
+		OUT_PARAM += "_m" + toString(XY_VIEW/1000, 2);
 		if (ROI_PARAM == "") ROI_PARAM = "(";
 		else ROI_PARAM += "_";
-		ROI_PARAM += "m" + toString(XY_VIEW/1000, 2); 
+		ROI_PARAM += "m" + toString(XY_VIEW/1000, 2);
 	}
 	if (FILT == true) {
 		OUT_PARAM += "_d" + FILT_RAD + "-" + FILT_NUMB + "-" + FILT_DIM;
 		if (ROI_PARAM == "") ROI_PARAM = "(";
 		else ROI_PARAM += "_";
-		ROI_PARAM += "d" + FILT_RAD + "-" + FILT_NUMB + "-" + FILT_DIM; 
+		ROI_PARAM += "d" + FILT_RAD + "-" + FILT_NUMB + "-" + FILT_DIM;
 	}
 	if (GAUSS > 0) {
-		OUT_PARAM += "_g" + toString(GAUSS, 0) + "-" + GAUSS_MULT; 
+		OUT_PARAM += "_g" + toString(GAUSS, 0) + "-" + GAUSS_MULT;
 	}
 	OUT_PARAM += ")";
 	ROI_PARAM += ")";
@@ -276,13 +280,20 @@ macro "Generate Zooms & Slices" {
 		if (File.exists(ZoomFolder) != 1) File.makeDirectory(ZoomFolder);
 		print("  Tiles folder:" + ZoomFolder);
 	}
-	
+
 
 	// Directory containing the XZ reconstructions
 	if (SLICES == true) {
 		SliceFolder = HomeFolder + File.separator + SaveFolderSlices + " " + OUT_PARAM;
 		if (File.exists(SliceFolder) != 1) File.makeDirectory(SliceFolder);
 		print("  Slices folder:" + SliceFolder);
+	}
+
+	// Directory containing the XZ longitudinal reconstructions
+	if (SLICES == true && SLICE_LONG == true) {
+		SliceLongFolder = HomeFolder + File.separator + SaveFolderSliceLong + " " + OUT_PARAM;
+		if (File.exists(SliceLongFolder) != 1) File.makeDirectory(SliceLongFolder);
+		print("  Slices folder:" + SliceLongFolder);
 	}
 
 	// Build the reconstrution part of the Visualization string
@@ -401,7 +412,7 @@ for (z = 1; z < iCount + 1; z++) {
 			// coordinates of ROI middle
 			if (ROILINE == true) {
 				midX = ((lineX2 - lineX1) / 2) + lineX1;
-				midY = ((lineY2 - lineY1) / 2) + lineY1;			
+				midY = ((lineY2 - lineY1) / 2) + lineY1;
 			}
 			else {
 				midX = (roiW / 2) + roiX;
@@ -417,13 +428,13 @@ for (z = 1; z < iCount + 1; z++) {
 				roiY = (midY - boxMin/2);
 				roiH = boxMin;
 			}
-		
+
 			// print("roiX=" + roiX + ", roiY=" + roiY + ", roiW=" + roiW + ", roiH=" + roiH);
 
 			// Draw the bounding box ROI and the name of the ROI
 			makeRectangle(roiX, roiY, roiW, roiH);
 
-			// Coordinates of the ROI in nm				
+			// Coordinates of the ROI in nm
 			XMIN = roiX * RECON_PX;
 			XMAX = XMIN + (roiW * RECON_PX);
 
@@ -468,7 +479,7 @@ for (z = 1; z < iCount + 1; z++) {
 			nLocK = round(nLocs / 1000);
 			nLocK2 = replace(d2s(nLocs / 1000, 2), ".", ",");
 			LocNum = LocNum + "  |  in ROI: " + nLocK2 + "K";
-			
+
 			// Optional Density filter (will not run on dummy image that has only 12 locs)
 			if (FILT == true){
 				if (nLocs>12) run("Show results table", "action=density neighbors=" + FILT_NUMB + " dimensions=" + FILT_DIM + " radius=" + FILT_RAD);
@@ -476,7 +487,7 @@ for (z = 1; z < iCount + 1; z++) {
 				nLocs = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); rows = rt.getRowCount();");
 				nLocK = round(nLocs / 1000);
 				nLocK2 = replace(d2s(nLocs / 1000, 2), ".", ",");
-				LocNum = LocNum + "  |  in density-filtered ROI: " + nLocK2 + "K";					
+				LocNum = LocNum + "  |  in density-filtered ROI: " + nLocK2 + "K";
 			}
 
 			print(LocNum);
@@ -487,7 +498,7 @@ for (z = 1; z < iCount + 1; z++) {
 			OUT_TITLE = ROI_PARAM + "_" + imHeaderClean;
 
 			//****** Make reconstruction ******
-			if (RECO == true) {					
+			if (RECO == true) {
 				//***** Preparation of the Visu string *****
 				roiMagnif = CAM_SIZE / SR_SIZE;
 				roiZoom = CAM_SIZE / RECON_PX;
@@ -497,16 +508,16 @@ for (z = 1; z < iCount + 1; z++) {
 				reconH = roiH /roiZoom;
 				// XY part of the Visualization string
 				VISU_STRING_XY = "imleft=" + reconX + " imtop=" + reconY + " imwidth=" + reconW + " imheight=" + reconH + " renderer=[Normalized Gaussian] magnification=" + roiMagnif + " " + XYUN_STRING;
-				
+
 				// Calculate automatic Z range
 				if (P3D == true && Z_AUTO == true) {
-	
+
 					ZMinMaxString = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); var rows = rt.getRowCount(); var colz = rt.findColumn(\"z\"); var minz = rt.getValue(0, colz); var maxz = minz; for (var row = 1; row < rows; row++) {var val = rt.getValue(row, colz); if (val > maxz) maxz = val; else if (val < minz) minz = val;} ZMinMaxString = \"\" + minz + \",\" +  maxz;");
 					ZMinMax = split(ZMinMaxString, ",");
-	
+
 					Zmini = parseFloat(ZMinMax[0]);
 					Zmaxi = parseFloat(ZMinMax[1]);
-	
+
 					if (Zmini != 0 && Zmaxi != 0) {
 					/*
 						Z_MIN = (floor(Zmini / Z_SPACE)) * Z_SPACE;
@@ -516,13 +527,13 @@ for (z = 1; z < iCount + 1; z++) {
 						Z_MAX = round(Zmaxi - Z_SAT);
 						Z_N = round((Z_MAX - Z_MIN) / Z_SPACE);
 						Z_SPACE = round((Z_MAX - Z_MIN)  / Z_N); // Here we modify Z_SPACE!
-	
+
 					}
-	
+
 					VISU_STRING_RANGE = " zrange=" + Z_MIN + ":" + Z_SPACE + ":" + Z_MAX;
 					print("        auto Z-range: Zmin = " + parseFloat(ZMinMax[0]) + " nm, Zmax = " + parseFloat(ZMinMax[1]) + " nm, Z_MIN = " + Z_MIN + " nm, Z_MAX = " + Z_MAX + " nm");
 				}
-	
+
 				// Build the visualization string
 				VISU_STRING = VISU_STRING_XY + VISU_STRING_Z + VISU_STRING_RANGE;
 
@@ -530,36 +541,85 @@ for (z = 1; z < iCount + 1; z++) {
 				selectWindow(RESULTS_TITLE);
 				run("Visualization", VISU_STRING);
 				rename("ROIoutput");
-	
+
 
 				outIm = outProcess(OUT_TITLE);
 				zoomTitle = getTitle();
-	
+
 				if (ROILINE == true) {
 					SCALE = RECON_PX / SR_SIZE;
 					BIG_LINEOUT = getBigCoor(SMALL_LINEOUT, SCALE, roiX, roiY);
 					makeLine(BIG_LINEOUT[0], BIG_LINEOUT[1], BIG_LINEOUT[2], BIG_LINEOUT[3]);
 					if (SLICES == true) {
 						generateSlice(SLICE_THICK/1000, SR_SIZE/1000);
-						sliceTitle = getTitle();
+						sliceID = getImageID();
 						optimizeContrast();
-						
+
+						if (SLICE_LONG == true) {
+							run("Reslice [/]...", "start=Left rotate");
+							slicelongID = getImageID();
+						}
+
+						selectImage(sliceID);
+
+						if (SLICE_PROJ == true) {
+							run("Z Project...", "projection=[Sum Slices]");
+							// run("Flip Horizontally");
+							ZpID = getImageID();
+							selectImage(sliceID);
+							close();
+							selectImage(ZpID);
+							optimizeContrast();
+							sliceID = ZpID;
+						}
+
 						// Name for the slice image
 						if (nLocs > 10000) ADD_TITLE = "_" + nLocK2 + "K";
 						else  ADD_TITLE = "_" + nLocK + "K";
 						ADD_TITLE = ADD_TITLE + "_(" + XMIN + "," + YMIN + ")";
-						NEW_TITLE = replace(sliceTitle, "(_([0-9])+K)+_TS", ADD_TITLE + "_TS");
+						NEW_TITLE = zoomTitle + "_slice";
+						NEW_TITLE = replace(NEW_TITLE, "(_([0-9])+K)+_TS", ADD_TITLE + "_TS");
 						// NEW_TITLE = NEW_TITLE + "_C=" + (z-1);
-				
-						// Save slice image						
+
+						// Save slice image
 						SaveSlicePath = SliceFolder + File.separator + NEW_TITLE + ".tif";
 						print("        Slice image:" + SaveSlicePath);
 						save(SaveSlicePath);
 						if (CLOSE == true) close();
+
+						if (SLICE_LONG == true) {
+
+					 		selectImage(slicelongID);
+
+							if (SLICE_PROJ == true) {
+								run("Z Project...", "projection=[Sum Slices]");
+								// run("Flip Horizontally");
+								LZpID = getImageID();
+								selectImage(slicelongID);
+								close();
+								selectImage(LZpID);
+								optimizeContrast();
+								slicelongID = LZpID;
+							}
+
+							// Name for the slice image
+							if (nLocs > 10000) ADD_TITLE = "_" + nLocK2 + "K";
+							else  ADD_TITLE = "_" + nLocK + "K";
+							ADD_TITLE = ADD_TITLE + "_(" + XMIN + "," + YMIN + ")";
+							NEW_TITLE = zoomTitle + "_slicelong";
+							NEW_TITLE = replace(NEW_TITLE, "(_([0-9])+K)+_TS", ADD_TITLE + "_TS");
+							// NEW_TITLE = NEW_TITLE + "_C=" + (z-1);
+
+							// Save slice image
+							SaveSliceLongPath = SliceLongFolder + File.separator + NEW_TITLE + ".tif";
+							print("        Slice Long image:" + SaveSliceLongPath);
+							save(SaveSliceLongPath);
+							if (CLOSE == true) close();
+						}
 					}
 					selectImage(outIm);
 				}
-	
+
 				// optional filtering
 				if (GAUSS > 0) {
 					radius = GAUSS/SR_SIZE;
@@ -569,10 +629,10 @@ for (z = 1; z < iCount + 1; z++) {
 						}
 						else {
 							run("Gaussian Blur...", "sigma=" + radius + " stack");
-						}	
+						}
 					}
 				}
-	
+
 				if (P3D == true) {
 					if (Z_PROJ == true) {
 						run("Z Project...", "projection=[Sum Slices]");
@@ -588,7 +648,7 @@ for (z = 1; z < iCount + 1; z++) {
 						rename(zoomTitle);
 					}
 				}
-				
+
 				if (ROILINE == true) {
 					BIG_LINEIN = getBigCoor(SMALL_LINEIN, SCALE, roiX, roiY);
 					makeLine(BIG_LINEIN[0], BIG_LINEIN[1], BIG_LINEIN[2], BIG_LINEIN[3]);
@@ -596,7 +656,7 @@ for (z = 1; z < iCount + 1; z++) {
 						else generateBox(lineWidth*RECON_PX/SR_SIZE, 1);
 					run("Select None");
 				}
-	
+
 				// Adjust image size so that all have same size (does not work very well)
 				if (XY_VIEW > 0) {
 					magS = floor(XY_VIEW / SR_SIZE);
@@ -609,7 +669,7 @@ for (z = 1; z < iCount + 1; z++) {
 				ADD_TITLE = ADD_TITLE + "_(" + XMIN + "," + YMIN + ")";
 				NEW_TITLE = replace(zoomTitle, "(_([0-9])+K)+_TS", ADD_TITLE + "_TS");
 				// NEW_TITLE = NEW_TITLE + "_C=" + (z-1);
-				
+
 				// Save zoom image
 				SaveZoomPath = ZoomFolder + File.separator + NEW_TITLE + ".tif";
 				print("        Box image:" + SaveZoomPath);
@@ -621,22 +681,22 @@ for (z = 1; z < iCount + 1; z++) {
 			if (LOCROI == true) {
 				selectWindow(RESULTS_TITLE);
 
-				// New name				
+				// New name
 				if (nLocs > 10000) ADD_TITLE = "_" + nLocK2 + "K";
 				else  ADD_TITLE = "_" + nLocK + "K";
 				ADD_TITLE = ADD_TITLE + "_(" + XMIN + "," + YMIN + ")";
 				NEW_TITLE = replace(OUT_TITLE, "(_([0-9])+K)+_TS", ADD_TITLE + "_TS");
 				// NEW_TITLE = NEW_TITLE + "_C=" + (z-1);
-				
+
 				// Export localizations within ROI in a csv file
 				LocROIPath = LocROIFolder + File.separator + NEW_TITLE + ".csv";
 				run("Export results", "filepath=[" + LocROIPath + "] fileformat=[CSV (comma separated)] chi2=false saveprotocol=false");
-			
-			}	
+
+			}
 
 			// Reset the Results Table
-			run("Show results table", "action=reset");	
-			
+			run("Show results table", "action=reset");
+
 		}
 	}
 
@@ -739,31 +799,13 @@ function generateSlice(sd, vX) {
 	// optional filtering
 	if (GAUSS > 0) {
 		radius = GAUSS/SR_SIZE;
-		for (g = 0; g < GAUSS_MULT; g++) {	
+		for (g = 0; g < GAUSS_MULT; g++) {
 				run("Gaussian Blur 3D...", "x=" + radius + " y="+ radius + " z=" + radius);
-				 //run("Gaussian Blur...", "sigma=" + radius + " stack");			
+				 //run("Gaussian Blur...", "sigma=" + radius + " stack");
 		}
 	}
-				
-	if (SLICE_PROJ == true) {
-		run("Z Project...", "projection=[Sum Slices]");
-		// run("Flip Horizontally");
-		ZpID = getImageID();
-		outTitle = inTitle + "_slice";
-		rename(outTitle);
-		selectImage(ResID);
-		close();
-		selectImage(ZpID);
-		ZpTitle = getTitle();
-		return ZpTitle();
-	}
-	else {
-		outTitle = inTitle + "_slice";
-		rename(outTitle);
-		ResTitle = getTitle();
-		return ResTitle();
 
-	}
+	return inTitle;
 
 }
 
@@ -781,7 +823,7 @@ function outProcess(outTitle){
 		close();
 		selectImage(outID);
 	}
-	
+
 	rename(OUT_TITLE);
 	outID = getImageID();
 	return outID;

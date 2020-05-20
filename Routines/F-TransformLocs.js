@@ -15,33 +15,35 @@ importClass(Packages.java.lang.Double);
 // xTrans, ytrans, zTrans: translation (in nm) in X, Y and Z
 // xFactor, yFactor, zFactor: scaling in X, Y and Z
 // xCenter, yCenter, rotAngle: oration around (xCenter, yCenter) (in nm) of rotAngle
-// flipV, flipH: (booleans) flip vertically/horizontally 
+// flipV, flipH: (booleans) flip vertically/horizontally
+// uFactor: scaling of xy uncertainty
+// zUnc: creation of Z uncertainty by xy uncertainty scaling
 
-function TransformLocs(inPath, outDir, xTrans, yTrans, zTrans, xFactor, yFactor, zFactor, xCenter, yCenter, rotAngle, flipV, flipH, zUnc) {
+function TransformLocs(inPath, outDir, doSmall, xTrans, yTrans, zTrans, xFactor, yFactor, zFactor, xCenter, yCenter, rotAngle, flipV, flipH, uFactor, zUnc) {
 
 	// separators (csv files)
 	var inSep = ",";
 	var sep = ",";
 
-	var xHeader = "x [nm]";
-	var yHeader = "y [nm]";
-	var zHeader = "z [nm]";
-	var uxyHeader = "uncertainty_xy [nm]";
-	var uzHeader = "uncertainty_z [nm]";
+	var xHeader = "\"x [nm]\"";
+	var yHeader = "\"y [nm]\"";
+	var zHeader = "\"z [nm]\"";
+	var uxyHeader = "\"uncertainty_xy [nm]\"";
+	var uzHeader = "\"uncertainty_z [nm]\"";
 
 	// Define input files, folder, open it etc.
-	var inFile = new File(inPath); 
+	var inFile = new File(inPath);
 	var inName = inFile.getName();
 	var inNameExt = getExt("" + inName);
-	
+
 	var br = new BufferedReader(new FileReader(inFile));
 
 	IJ.log("    inName: " + inName);
 
 	// Get the header line and find index of Z, intensity, background and x coordinate columns
-	var inHLine = br.readLine();	
-	//IJ.log("inHLine: " + inHLine);	
-	var inHeader = inHLine.split(inSep);	
+	var inHLine = br.readLine();
+	//IJ.log("inHLine: " + inHLine);
+	var inHeader = inHLine.split(inSep);
 
 	var xIndex = arrayFind(inHeader, xHeader);
 	var yIndex = arrayFind(inHeader, yHeader);
@@ -49,10 +51,15 @@ function TransformLocs(inPath, outDir, xTrans, yTrans, zTrans, xFactor, yFactor,
 	var uxyIndex = arrayFind(inHeader, uxyHeader);
 	var uzIndex = arrayFind(inHeader, uzHeader);
 
-	//IJ.log("indexes: " + xIndex + "," + yIndex + "," + zIndex + "," + uxyIndex + "," + uzIndex);
+	// IJ.log("indexes: xIndex=" + xIndex + ", yIndex=" + yIndex + ",zIndex=" + zIndex + ",uxyIndex=" + uxyIndex + ",uzIndex=" + uzIndex);
 
 	// Generate output name and path, open file writer
-	var outName = inName.replace("TS3D", "transfo_TS3D");
+	if (zIndex > -1) {
+		var outName = inName.replace("TS3D", "transfo_TS3D");
+	}
+	else {
+		var outName = inName.replace("TS2D", "transfo_TS2D");
+	}
 	if (outName == inName) outName = inNameExt[0] + "_transfo." + inNameExt[1];
 	var outPath = outDir + outName;
 	var outFile = new File(outPath);
@@ -65,19 +72,19 @@ function TransformLocs(inPath, outDir, xTrans, yTrans, zTrans, xFactor, yFactor,
 	IJ.log("      outName: " + outName);
 
 	// New header
-	// Add Z uncertainty column only if not already existing
-	if (zUnc != 0) {
+	outHLine = inHLine;
+	// Add Z uncertainty column only if there is a Z coordinate column and Z uncertainty not already existing
+	if (zIndex > -1 && zUnc != 0) {
 		if (uzIndex == -1) {
 			IJ.log("      adding Z uncertainty");
-			var outHLine = inHLine + sep + uzHeader;
+			var outHLine = outHLine + sep + uzHeader;
 		}
 		else {
 			IJ.log("      replacing Z uncertainty");
-			var outHLine = inHLine;
 		}
 	}
-	
-	bw.write(outHLine);	
+
+	bw.write(outHLine);
 	bw.newLine();
 
 	// Write the output file line by line
@@ -102,13 +109,13 @@ function TransformLocs(inPath, outDir, xTrans, yTrans, zTrans, xFactor, yFactor,
 		}
 
 		// translate Z
-		if (zTrans != 0) {
+		if (zIndex > -1 && zTrans != 0) {
 			var Z = Double.parseDouble(inCells[zIndex]);
 			var zC= Z + zTrans;
 			var zCS = zC.toFixed(1);
 			inCells[zIndex] = zCS;
 		}
-		
+
 		// scaling X
 		if (xFactor != 1) {
 			var X = Double.parseDouble(inCells[xIndex]);
@@ -116,7 +123,7 @@ function TransformLocs(inPath, outDir, xTrans, yTrans, zTrans, xFactor, yFactor,
 			var xCS = xC.toFixed(1);
 			inCells[xIndex] = xCS;
 		}
-		
+
 		// scaling Y
 		if (yFactor != 1) {
 			var Y = Double.parseDouble(inCells[yIndex]);
@@ -126,20 +133,20 @@ function TransformLocs(inPath, outDir, xTrans, yTrans, zTrans, xFactor, yFactor,
 		}
 
 		// scaling Z
-		if (zFactor != 1) {
+		if (zIndex > -1 && zFactor != 1) {
 		var Z = Double.parseDouble(inCells[zIndex]);
 		var zC= Z * zFactor;
 		var zCS = zC.toFixed(1);
 		inCells[zIndex] = zCS;
 		}
-		
+
 		// rotate localizations
 		if (rotAngle != 0) {
 			var X = Double.parseDouble(inCells[xIndex]);
 			var Y = Double.parseDouble(inCells[xIndex]);
 			var XYrot = rotateXY(X, Y, xCenter, yCenter, rotAngle);
 			var xCS = XYrot[0].toFixed(1);
-			var yCS = XYrot[1].toFixed(1);		
+			var yCS = XYrot[1].toFixed(1);
 			inCells[xIndex] = xCS;
 			inCells[yIndex] = yCS;
 		}
@@ -150,7 +157,7 @@ function TransformLocs(inPath, outDir, xTrans, yTrans, zTrans, xFactor, yFactor,
 			var Y = Double.parseDouble(inCells[xIndex]);
 			var XYrot = flipVcoor(X, Y, xCenter, yCenter, rotAngle);
 			var xCS = XYrot[0].toFixed(1);
-			var yCS = XYrot[1].toFixed(1);		
+			var yCS = XYrot[1].toFixed(1);
 			inCells[xIndex] = xCS;
 			inCells[yIndex] = yCS;
 		}
@@ -161,13 +168,21 @@ function TransformLocs(inPath, outDir, xTrans, yTrans, zTrans, xFactor, yFactor,
 			var Y = Double.parseDouble(inCells[xIndex]);
 			var XYrot = flipHcoor(X, Y, xCenter, yCenter, rotAngle);
 			var xCS = XYrot[0].toFixed(1);
-			var yCS = XYrot[1].toFixed(1);		
+			var yCS = XYrot[1].toFixed(1);
 			inCells[xIndex] = xCS;
 			inCells[yIndex] = yCS;
 		}
 
+		// Scale XY uncertainty
+		if (uFactor != 1) {
+			var Uxy = Double.parseDouble(inCells[uxyIndex]);
+			var UxyC= Uxy * uFactor;
+			var UxyCS = UxyC.toFixed(1);
+			inCells[uxyIndex] = UxyCS;
+		}
+
 		// add Z uncertainty
-		if (zUnc != 0) {
+		if (zIndex > -1 && zUnc != 0) {
 			var Uxy = Double.parseDouble(inCells[uxyIndex]);
 			var Uz= Uxy * zUnc;
 			var UzS = Uz.toFixed(1);
@@ -178,13 +193,13 @@ function TransformLocs(inPath, outDir, xTrans, yTrans, zTrans, xFactor, yFactor,
 		var outLine = inCells[0];
 		for (i = 1; i < inCells.length; i++) outLine = outLine + sep + inCells[i];
 
-		// Add Z if not present
-		if (uzIndex == -1) outLine = outLine + sep + UzS;
+		// Add Z uncertainty if not present
+		if (zIndex > -1 && uzIndex == -1) outLine = outLine + sep + UzS;
 
 		// Write new line
 		bw.write(outLine);
 		bw.newLine();
-	}		 
+	}
 	br.close();
 	bw.close();
 }
@@ -203,14 +218,14 @@ function arrayFind(a, s){
 	index = -1;
 	for (var i = 0; i < a.length; i++) {
 		testS = a[i];
-		if (testS.indexOf(s)>-1 && testS.indexOf(s)<3) index = i;	
+		if (testS.indexOf(s)>-1 && testS.indexOf(s)<3) index = i;
 	}
 	return index;
 }
 
 function rotateXY(x, y, xm, ym, a){
 	// Convert to radians because that's what JavaScript likes
-	a = a * Math.PI / 180, 
+	a = a * Math.PI / 180,
 
     // Subtract midpoints, so that midpoint is translated to origin
     // and add it in the end again
