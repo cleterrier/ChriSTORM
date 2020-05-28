@@ -1,4 +1,4 @@
-// ThunderSTORM Transform Locs script by Christophe Leterrier
+// ThunderSTORM Transform_TS script by Christophe Leterrier
 // Calls F-TransformLocs.js to trasnform the localizations in a ThunderSTORM file
 
 importClass(Packages.ij.io.OpenDialog)
@@ -24,7 +24,7 @@ var uFdef = 1; // Scale XY uncertainty
 var zUdef = 2; // scaling factor to calculate Z uncertainty from XY uncertainty using Z = zU * xyU
 
 // Name of the processing
-procName = "Transform Locs";
+procName = "Transform_TS";
 
 // Where to find the routine JS in the plugins folder
 var plugDir = IJ.getDirectory("imagej");
@@ -53,7 +53,7 @@ IJ.log("Input directory:" + directory);
 IJ.log("Input name:" + name);
 
 // Options dialog
-var gd = new GenericDialog("Process ThunderSTORM csv: options");
+var gd = new GenericDialog("Transform TS Locs: options");
 gd.addCheckbox("Batch mode", isBatchdef);
 gd.addCheckbox("Round numbers for smaller file (not implemented yet)", isSmalldef);
 gd.addMessage("Coordinates translation");

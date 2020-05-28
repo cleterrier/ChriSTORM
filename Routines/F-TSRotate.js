@@ -22,7 +22,11 @@ function TSRotate(inPath, outDir, Xc, Yc, angle, h, v, zd) {
 	var inName = inFile.getName();
 	var inNameExt = getExt("" + inName);
 
-	if (angle != 0) var outString = "rot" + angle;
+	if (angle != 0) {
+		anglestring = angle.toFixed(1);
+		anglestring = anglestring.replace(".", ",");
+		var outString = "rot" + anglestring;
+	}
 	else var outString = "";
 	if (h == true) outString = outString + "fH";
 	if (v == true) outString = outString + "fV";
