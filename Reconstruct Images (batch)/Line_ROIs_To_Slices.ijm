@@ -1,5 +1,5 @@
 
-macro "Line ROIs to Slices" {
+macro "Line ROIs To Slices" {
 	sliceWN = 2000; // width of each slice in nm
 	sliceTN = 800; // thickness of each slice in nm
 	sliceSN = 1000; // spacing between two consecutive slices in nm
