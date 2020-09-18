@@ -171,11 +171,11 @@ macro "Generate Zooms & Slices" {
 
 	//Creation of the dialog box
 	Dialog.create("Generate zooms & slices: options 2");
-	Dialog.addCheckbox("Generate slices", SLICES_DEF);
-	Dialog.addNumber("Slice thickness (nm)", SLICE_THICK_DEF, 0, 4, "nm");
-	Dialog.addCheckbox("Slice longitudinal", SLICE_LONG_DEF);
+	Dialog.addCheckbox("Generate slices (only for line ROIs)", SLICES_DEF);
+	Dialog.addNumber("Slice thickness (0 for line ROI thickness", SLICE_THICK_DEF, 0, 4, "nm");
+	Dialog.addCheckbox("Slice in both directions", SLICE_LONG_DEF);
 	Dialog.addCheckbox("Slice project", SLICE_PROJ_DEF);
-	Dialog.addNumber("XY view size (nm) (0 for smallest)", XY_VIEW_DEF, 0, 4, "nm"); // Minimum box size around slice
+	Dialog.addNumber("XY view min size (0 for smallest)", XY_VIEW_DEF, 0, 4, "nm"); // Minimum box size around slice
 	Dialog.addMessage("");
 	Dialog.addCheckbox("Density filter", FILT_DEF);
 	Dialog.addNumber("Filter radius", FILT_RAD_DEF, 0, 3, "nm");
@@ -390,6 +390,7 @@ for (z = 1; z < iCount + 1; z++) {
 				ROILINE = true;
 				// get Line ROI coordinates
 				getLine(lineX1, lineY1, lineX2, lineY2, lineWidth);
+				if (SLICE_THICK == 0) SLICE_THICK = lineWidth * RECON_PX;
 				SMALL_LINEIN = newArray(lineX1, lineY1, lineX2, lineY2);
 				// Make box around line
 				if (SLICES == true) SMALL_LINEOUT = generateBox(SLICE_THICK/RECON_PX, 0);
