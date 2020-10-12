@@ -24,7 +24,7 @@ macro "Generate Reconstructions" {
 	RECON_TITLE = "Normalized Gaussian";
 	// Index of column containing Z coordinates in TS3D files
 	colZ = 3;
-	LUT_ARRAY = newArray("Rainbow RGB", "Jet", "Turbo", "ametrine", "ThunderSTORM");
+	LUT_ARRAY = newArray("Rainbow RGB", "Jet", "Turbo", "ametrine", "ThunderSTORM", "3color-RMB", "3color-CGY");
 
 // Default values for the Options Panel
 	CAM_SIZE_DEF = 160;
@@ -38,6 +38,7 @@ macro "Generate Reconstructions" {
 	XWIDTH_DEF = 256;
 	YWIDTH_DEF = 256;
 	XY_AUTO_DEF = false;
+	XY_ZERO_DEF = true;
 	XY_ORI_DEF = false;
 	XY_UN_DEF = 0;
 	P3D_DEF = false;
@@ -86,6 +87,7 @@ macro "Generate Reconstructions" {
 		Dialog.addNumber("Width of reconstruction", XWIDTH_DEF, 0, 4, "pixels");
 		Dialog.addNumber("Height of reconstruction", YWIDTH_DEF, 0, 4, "pixels");
 		Dialog.addCheckbox("Auto XY-range", XY_AUTO_DEF);
+		Dialog.addCheckbox("Start at (0,0)", XY_ZERO_DEF);
 		Dialog.addCheckbox("Use file name for XY origin", XY_ORI_DEF);
 		Dialog.addNumber("Force XY uncertainty (0 to keep)", XY_UN_DEF, 0, 3, "nm");
 		Dialog.addMessage(" ");
@@ -116,6 +118,7 @@ macro "Generate Reconstructions" {
 		XWIDTH = Dialog.getNumber();
 		YWIDTH = Dialog.getNumber();
 		XY_AUTO = Dialog.getCheckbox();
+		XY_ZERO = Dialog.getCheckbox();
 		XY_ORI = Dialog.getCheckbox();
 		XY_UN = Dialog.getNumber();
 		P3D = Dialog.getCheckbox();
@@ -159,6 +162,9 @@ macro "Generate Reconstructions" {
 		AD_CONT = argarray[20];
 		SAT_LEV = argarray[21];
 		XY_AUTO = argarray[22];
+
+		XY_ORI = false;
+		XY_ZERO = true;
 	}
 
 //*************** Prepare Processing (get names, open images, make output folder) ***************
@@ -301,12 +307,12 @@ macro "Generate Reconstructions" {
 					XMinMaxString = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); var rows = rt.getRowCount(); var colz = rt.findColumn(\"x\"); var minz = rt.getValue(0, colz); var maxz = minz; for (var row = 1; row < rows; row++) {var val = rt.getValue(row, colz); if (val > maxz) maxz = val; else if (val < minz) minz = val;} ZMinMaxString = \"\" + minz + \",\" +  maxz;");
 					XMinMax = split(XMinMaxString, ",");
 					Xmini = parseFloat(XMinMax[0]);
-					if (Xmini < 0) Xmini = 0;
+					if (Xmini < 0 || XY_ZERO == true) Xmini = 0;
 					Xmaxi = parseFloat(XMinMax[1]);
 					YMinMaxString = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); var rows = rt.getRowCount(); var colz = rt.findColumn(\"y\"); var minz = rt.getValue(0, colz); var maxz = minz; for (var row = 1; row < rows; row++) {var val = rt.getValue(row, colz); if (val > maxz) maxz = val; else if (val < minz) minz = val;} ZMinMaxString = \"\" + minz + \",\" +  maxz;");
 					YMinMax = split(YMinMaxString, ",");
 					Ymini = parseFloat(YMinMax[0]);
-					if (Ymini < 0) Ymini = 0;
+					if (Ymini < 0 || XY_ZERO == true) Ymini = 0;
 					Ymaxi = parseFloat(YMinMax[1]);
 
 					Xw = Xmaxi - Xmini;
