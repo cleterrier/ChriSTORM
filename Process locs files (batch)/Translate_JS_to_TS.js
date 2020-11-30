@@ -1,4 +1,4 @@
-// Translate Jonas Ries Spline csv to TS script by Christophe Leterrier
+// Translate SMAP csv to TS script by Christophe Leterrier
 // Calls F-TranslateJS-TS.js to translate a JSpline localization file into a ThunderSTORM file
 
 importClass(Packages.ij.io.OpenDialog)
@@ -10,10 +10,10 @@ importClass(Packages.ij.gui.GenericDialog);
 var isBatchdef = 0;
 
 // Name of the processing
-procName = "Translate DOM to TS";
+procName = "Translate SMAP to TS";
 
 // Extensions of the input files
-inputExt = "txt";
+inputExt = "csv";
 
 // Where to find the routine JS in the plugins folder
 var routineFolder =  "NeuroCyto" + File.separator + "ChriSTORM" + File.separator + "Routines" + File.separator;
@@ -25,7 +25,7 @@ var routineJS = "F-TranslateJS-TS.js";
 var addFolder = "TS";
 
 // Choose file or folder dialog
-var od = new OpenDialog("Choose a JSpline results file", "");
+var od = new OpenDialog("Choose a SMAP csv results file", "");
 var path = od.getPath(); // path of selected file
 var directory = od.getDirectory(); // path of containing folder
 var name = od.getFileName(); // name of delected file

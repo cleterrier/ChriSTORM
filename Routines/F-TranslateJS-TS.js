@@ -20,21 +20,22 @@ function TranslateJSTS(inPath, outDir){
 	var sep = ","; // output separator 
 
 	// Fields of the input header
-	var inHeaderList = ["frame","x_pix","y_pix","z_nm","photons","background","crlb_x","crlb_y","crlb_z","crlb_photons","crlb_background","logLikelyhood","x_nm","y_nm","crlb_xnm","crlb_ynm"];
-	var outHeader3DList = ["\"frame\"","\"x [nm]\"","\"y [nm]\"","\"z [nm]\"","\"intensity [photon]\"","\"offset [photon]\"","\"bkgstd [photon]\"","\"uncertainty_xy [nm]\"","\"uncertainty_z [nm]\"", "\"chi2\""];
+	var inHeaderList = ["xnm","ynm","znm","frame","locprecnm","phot","bg","LLrel","PSFxnm","PSFxpix","PSFynm","PSFypix","channel","colorfield","filenumber","groupindex","iterations","locprecznm","logLikelihood","numberInGroup","photerr","xnmerr","xpix","xpixerr","ynmerr","ypix","ypixerr"];
+	var outHeader3DList = ["\"frame\"","\"x [nm]\"","\"y [nm]\"","\"z [nm]\"","\"intensity [photon]\"","\"offset [photon]\"","\"uncertainty_xy [nm]\"","\"uncertainty_z [nm]\"", "\"chi2\"", "detections"];
 
 	// Correspondance
 	/*
-	frame = frame [0]
-	x_(nm) = x [nm] [12]
-	y_(nm) = y [nm] [13]
-	average(crlb_xnm,crlb_ynm) = uncertainty_xy[nm] sqrt([15]^2 +[16]^2)
-	photons = intensity [photon] [4]
-	background = offset [photon] [5]
-	crlb_background = bkgstd [photon]? [10]
-	loglikelyhood = chi2 [11]
-	z_nm = z [nm][3]
-	Z_loc_error(nm) = uncertainty_z[nm] [8]
+	frame = frame [3]
+	x_(nm) = x [nm] [0]
+	y_(nm) = y [nm] [1]
+	locprecnm = uncertainty_xy[nm] [4]
+	phot = intensity [photon] [5]
+	bg = offset [photon] [6]
+	logLikelyhood = chi2 [18]
+	z_nm = z [nm][2]
+	locprecznm = uncertainty_z[nm] [17]
+	numberInGroup = detections [19]
+	
 	*/
 	
 	// Define input files, folder, open it etc.
@@ -52,17 +53,16 @@ function TranslateJSTS(inPath, outDir){
 	var inHeaderArray = inHeader.split(inSep);	
 
 	// get the indexes of the columns needed in input file from its header
-	var fIndex = arrayFind(inHeaderArray, inHeaderList[0]);
-	var xIndex = arrayFind(inHeaderArray, inHeaderList[12]);
-	var yIndex = arrayFind(inHeaderArray, inHeaderList[13]);
-	var unxIndex = arrayFind(inHeaderArray, inHeaderList[14]);
-	var unyIndex = arrayFind(inHeaderArray, inHeaderList[15]);
-	var intIndex = arrayFind(inHeaderArray, inHeaderList[4]);
-	var bgIndex = arrayFind(inHeaderArray, inHeaderList[5]);
-	var errbgIndex = arrayFind(inHeaderArray, inHeaderList[10]);
-	var chi2Index = arrayFind(inHeaderArray, inHeaderList[11]);
-	var zIndex = arrayFind(inHeaderArray, inHeaderList[3]);
-	var unzIndex = arrayFind(inHeaderArray, inHeaderList[8]);
+	var fIndex = arrayFind(inHeaderArray, inHeaderList[3]);
+	var xIndex = arrayFind(inHeaderArray, inHeaderList[0]);
+	var yIndex = arrayFind(inHeaderArray, inHeaderList[1]);
+	var unxyIndex = arrayFind(inHeaderArray, inHeaderList[4]);
+	var intIndex = arrayFind(inHeaderArray, inHeaderList[5]);
+	var bgIndex = arrayFind(inHeaderArray, inHeaderList[6]);
+	var chi2Index = arrayFind(inHeaderArray, inHeaderList[18]);
+	var zIndex = arrayFind(inHeaderArray, inHeaderList[2]);
+	var unzIndex = arrayFind(inHeaderArray, inHeaderList[17]);
+	var detIndex = arrayFind(inHeaderArray, inHeaderList[19]);
 
 	// will only use for 3D
 	var is3D = true;
@@ -98,20 +98,18 @@ function TranslateJSTS(inPath, outDir){
 		var fOut = inCells[fIndex];
 		var xOut = (parseFloat(inCells[xIndex])).toFixed(1);
 		var yOut = (parseFloat(inCells[yIndex])).toFixed(1);
-		var unxOut = parseFloat(inCells[unxIndex]);
-		var unyOut = parseFloat(inCells[unyIndex]);
-		var unxyOut = (Math.sqrt((unxOut * unxOut)  + (unyOut * unyOut))).toFixed(1);
+		var unxyOut = (parseFloat(inCells[unxyIndex])).toFixed(1);
 
 		var intOut = (parseFloat(inCells[intIndex])).toFixed(0);
 		var offOut = (parseFloat(inCells[bgIndex])).toFixed(0);
-		var bgstdOut = (parseFloat(inCells[errbgIndex])).toFixed(1);
 		var chi2Out = (parseFloat(inCells[chi2Index])).toFixed(2);
 
 		var zOut = (parseFloat(inCells[zIndex])).toFixed(1);
 		var unzOut = (parseFloat(inCells[unzIndex])).toFixed(1);
+		var detOut = (parseFloat(inCells[detIndex])).toFixed(0);
 
 		// Assemble output line
-		var outLineArray = [fOut, xOut, yOut, zOut, intOut, offOut, bgstdOut, unxyOut, unzOut, chi2Out];			
+		var outLineArray = [fOut, xOut, yOut, zOut, intOut, offOut, unxyOut, unzOut, chi2Out, detOut];			
 		var outLine = makeLineFromArray(outLineArray, sep);
 
 		// Write new line
