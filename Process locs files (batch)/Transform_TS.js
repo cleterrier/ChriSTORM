@@ -12,7 +12,7 @@ var isSmalldef = 0;
 var xTdef = 0; // coordinates translation (in nm) for X
 var yTdef = 0; // coordinates translation (in nm) for Y
 var zTdef = 0; // coordinates translation (in nm) for Z
-var xFdef = 1.0369; // coordinates scaling for X
+var xFdef = 1; // coordinates scaling for X
 var yFdef = 1; // coordinates scaling for Y
 var zFdef = 1; // coordinates scaling for Z
 var xCdef = 20480; // X coordinate (in nm) of rotation center
@@ -21,7 +21,7 @@ var rotAdef = 0; // Rotation angle (in degrees)
 var fvdef = false; // flip vertically
 var fhdef = false; // flip horizontally
 var uFdef = 1; // Scale XY uncertainty
-var zUdef = 2; // scaling factor to calculate Z uncertainty from XY uncertainty using Z = zU * xyU
+var zUdef = 0; // scaling factor to calculate Z uncertainty from XY uncertainty using Z = zU * xyU
 
 // Name of the processing
 procName = "Transform_TS";
