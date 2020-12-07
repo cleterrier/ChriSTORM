@@ -42,17 +42,17 @@ macro "Generate Reconstructions" {
 	XY_ORI_DEF = false;
 	XY_UN_DEF = 0;
 	P3D_DEF = false;
-	Z_SPACE_DEF = 30;
-	Z_MIN_DEF = -600;
-	Z_MAX_DEF = 600;
+	Z_SPACE_DEF = 20;
+	Z_MIN_DEF = -400;
+	Z_MAX_DEF = 400;
 	Z_AUTO_DEF = false;
 	Z_SAT_DEF = 50; // restriction of 3D span on top and bottom (in nm)
 	Z_UN_DEF = 0;
-	Z_COLOR_ARRAY = newArray("No color", "Colorized 2D", "Colorized 3D");
+	Z_COLOR_ARRAY = newArray("No color", "Colorized 2D", "Colorized 2D weighted", "Colorized 3D");
 	Z_COLOR_DEF = "Colorized 2D";
 	Z_LUT_DEF = "Rainbow RGB"; // LUT for color-coded 3D, other good ones: Jet, ametrine, ThunderSTORM
 	to16_DEF = false;
-	AD_CONT_DEF = false;
+	AD_CONT_DEF = true;
 	SAT_LEV_DEF = 0.1;
 	GAUSS_DEF = 8;
 	GAUSS_MULT_DEF = 1;
@@ -104,7 +104,7 @@ macro "Generate Reconstructions" {
 		Dialog.addNumber("Gaussian blur (0 for no filter)", GAUSS_DEF, 0, 3, "nm");
 		Dialog.addNumber("Apply blur ", GAUSS_MULT_DEF, 0, 3, "times");
 		Dialog.addCheckbox("Convert to 16-bit (non-colorized only)", to16_DEF);
-		Dialog.addCheckbox("Adjust contrast", AD_CONT_DEF);
+		Dialog.addCheckbox("Adjust contrast (colorized & 16-bit only)", AD_CONT_DEF);
 		Dialog.addNumber("Saturated pixels", SAT_LEV_DEF, 2, 3, "%");
 		Dialog.show();
 
@@ -162,7 +162,6 @@ macro "Generate Reconstructions" {
 		AD_CONT = argarray[20];
 		SAT_LEV = argarray[21];
 		XY_AUTO = argarray[22];
-
 		XY_ORI = false;
 		XY_ZERO = true;
 	}
@@ -182,6 +181,9 @@ macro "Generate Reconstructions" {
 	}
 	else if (Z_COLOR == "Colorized 2D"){
 		OUT_PARAM = "xy" + SR_SIZE + "zc";
+	}
+	else if (Z_COLOR == "Colorized 2D weighted"){
+		OUT_PARAM = "xy" + SR_SIZE + "zw";
 	}
 	else if (Z_COLOR == "Colorized 3D"){
 		OUT_PARAM = "xy" + SR_SIZE + "z" + Z_SPACE + "c";
@@ -221,12 +223,8 @@ macro "Generate Reconstructions" {
 		Z_SPAN = Z_MAX - Z_MIN;
 		Z_SLICES = floor(2 * Z_SPAN / Z_SPACE) + 1;
 
-		// Case of a colorized output
-		if (Z_COLOR == "Colorized 2D" || Z_COLOR == "Colorized 3D") {
-			COLOR_STRING = "colorize=true pickedlut=[" + Z_LUT + "] threed=true ";
-		}
-
-		else COLOR_STRING = "colorize=false threed=true ";
+		// Colored output does not use the built-in TS code, but dowsntream temporal color-code by Kiota Miura et al.
+		COLOR_STRING = "colorize=false threed=true ";
 
 		// Z uncertainty: Z_UN = 0 corresponds to Z uncertainty coded in the file (for each loc)
 		if (Z_UN == 0) {
@@ -333,7 +331,7 @@ macro "Generate Reconstructions" {
 						Xmini = parseFloat(XYoriA[0]);
 						Ymini = parseFloat(XYoriA[1]);
 						XminiPX = Xmini / CAM_SIZE;
-						YminiPX = Ymini / CAM_SIZE;	
+						YminiPX = Ymini / CAM_SIZE;
 
 						Xw = Xmaxi - Xmini;
 						Yh = Ymaxi - Ymini;
@@ -341,13 +339,13 @@ macro "Generate Reconstructions" {
 						XwPX = Xw / CAM_SIZE;
 						YhPX = Yh / CAM_SIZE;
 					}
-									
 
 					VISU_STRING_XY = "imleft=" + XminiPX + " imtop=" + YminiPX + " imwidth=" + XwPX + " imheight=" + YhPX + " renderer=[Normalized Gaussian] magnification=" + Magnif + " " + FORCE_STRING + " ";
 					print("      auto XY range (nm): X: " + Xmini + " to " + Xmaxi + " nm (width " + Xw + " nm), Y: " + Ymini + " to " + Ymaxi + " nm (height " + Yh + " nm)");
 					print("      auto XY range (px): X: " + XminiPX + " to " + (XminiPX + XwPX) + " px (width " + XwPX + " px), Y: " + YminiPX + " to " + (YminiPX + YhPX) + " px (height " + YhPX + " px)");
-				}
-				
+
+				} // end IF loop auto XY range
+
 				//Detect Z range if auto-range (necessarily after CSV opening)
 				if (P3D == true && Z_AUTO == true) {
 					ZMinMaxString = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); var rows = rt.getRowCount(); var colz = rt.findColumn(\"z\"); var minz = rt.getValue(0, colz); var maxz = minz; for (var row = 1; row < rows; row++) {var val = rt.getValue(row, colz); if (val > maxz) maxz = val; else if (val < minz) minz = val;} ZMinMaxString = \"\" + minz + \",\" +  maxz;");
@@ -366,12 +364,9 @@ macro "Generate Reconstructions" {
 						Z_SPACE = round((Z_MAX - Z_MIN)  / Z_N); // Here we modify Z_SPACE!
 
 						VISU_STRING_RANGE = " zrange=" + Z_MIN + ":" + Z_SPACE + ":" + Z_MAX;
-						print("      auto Z range: " + Zmini + " to " + Zmaxi + " nm, slices " + Z_MIN + " to " + Z_MAX + " nm (" + Z_SPACE + " nm spacing)" );	
+						print("      auto Z range: " + Zmini + " to " + Zmaxi + " nm, slices " + Z_MIN + " to " + Z_MAX + " nm (" + Z_SPACE + " nm spacing)" );
 					}
-
-
-
-				}
+				} // end of IF loop auto-Z range
 
 
 
@@ -383,6 +378,7 @@ macro "Generate Reconstructions" {
 				selectWindow(RESULTS_TITLE);
 				run("Visualization", VISU_STRING);
 				setVoxelSize(SR_SIZE/1000, SR_SIZE/1000, Z_SPACE/1000, "um");
+				visID = getImageID();
 
 				// optional filtering
 				if (GAUSS > 0) {
@@ -393,57 +389,67 @@ macro "Generate Reconstructions" {
 						}
 						else {
 							run("Gaussian Blur...", "sigma=" + radius + " stack");
-						}	
-					}
-				}
-
-				// Colorized output
-				if (Z_COLOR == "Colorized 2D" || Z_COLOR == "Colorized 3D") {
-					run("Stack to RGB");
-					colorID = getImageID();
-					if (Z_COLOR == "Colorized 2D") {
-						run("Z Project...", "projection=[Sum Slices]");
-						if (AD_CONT == true) run("Enhance Contrast...", "saturated=" + SAT_LEV);
-						rename(OUT_TITLE);
-						selectImage(colorID);
-						close();
-						selectWindow(RECON_TITLE);
-						close();
-					}
-					else {
-						rename(OUT_TITLE);
-						selectWindow(RECON_TITLE);
-						close();
-					}
-				}
-
-				// Grayscale output
-				else {
-					// Reset contrast
-					if (nSlices > 1) Stack.getStatistics(OutCount, OutMean, OutMin, OutMax);
-					else getStatistics(OutArea, OutMean, OutMin, OutMax);
-					setMinAndMax(0, OutMax);
-					ScaleMax = 1;
-
-					if (to16 == true) {
-						run("16-bit");
-						ScaleMax = 65535;
-						setMinAndMax(0, ScaleMax);
-						if (AD_CONT == true) {
-							run("Enhance Contrast...", "saturated=" + SAT_LEV + " normalize process_all use");
-							setMinAndMax(0, ScaleMax);
 						}
 					}
+				}
 
+				// Colorized output 3D
+				if (nSlices > 1 && Z_COLOR == "Colorized 3D") {
+
+					if (AD_CONT == true) run("Enhance Contrast...", "saturated=" + SAT_LEV + " process_all use");
+					run("Temporal-Color Code", "lut=[" + Z_LUT + "] projection=None start=1 end=" + nSlices + "");
+					colorID = getImageID();
+					run("Select None");
+					selectImage(colorID);
+					rename(OUT_TITLE);
+					selectImage(visID);
+					close();
+				}
+
+				// Colorized output 2D
+				else if (nSlices > 1 && Z_COLOR == "Colorized 2D Weighted") {
+
+					if (AD_CONT == true) run("Enhance Contrast...", "saturated=" + SAT_LEV + " process_all use");
+					run("Temporal-Color Code", "lut=[" + Z_LUT + "] projection=WeightedSUM start=1 end=" + nSlices + "");
+					colorID = getImageID();
+					run("Select None");
+					selectImage(colorID);
+					rename(OUT_TITLE);
+					selectImage(visID);
+					close();
+				}
+
+				else if (nSlices > 1 && Z_COLOR == "Colorized 2D") {
+					
+					if (AD_CONT == true) run("Enhance Contrast...", "saturated=" + SAT_LEV + " process_all use");
+					run("Temporal-Color Code", "lut=[" + Z_LUT + "] projection=SUM start=1 end=" + nSlices + "");
+					colorID = getImageID();
+					run("Select None");
+					selectImage(colorID);
+					rename(OUT_TITLE);
+					selectImage(visID);
+					close();
+				}
+
+				// Grayscale 16-bit output
+				else if (to16 == true) {
+					run("16-bit");
+					// ScaleMax = 65535;
+					// setMinAndMax(0, ScaleMax);
+					if (AD_CONT == true) {
+						run("Enhance Contrast...", "saturated=" + SAT_LEV + " normalize process_all use");
+						// setMinAndMax(0, ScaleMax);
+					}
 					outID = getImageID();
 					rename(OUT_TITLE);
 				}
 
+				// Save and close reconstruction
 				save(OUT_PATH);
 				close();
 				print("      Output file:", OUT_TITLE + ".tif");
-			}
 
+			} // end of if loop on 2D/3D files
 		}	// end of IF loop on extensions
 	}	// end of FOR loop on n extensions
 
