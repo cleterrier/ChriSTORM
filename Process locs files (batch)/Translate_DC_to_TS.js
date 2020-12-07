@@ -1,10 +1,5 @@
-<<<<<<< HEAD:Process locs files (batch)/Translate_DC_to_TS.js
 // Translate DECODE csv to TS script by Christophe Leterrier
 // Calls F-TranslateDC-TS.js to translate a DECODE csv localization file into a ThunderSTORM file
-=======
-// Translate SMAP csv to TS script by Christophe Leterrier
-// Calls F-TranslateJS-TS.js to translate a JSpline localization file into a ThunderSTORM file
->>>>>>> d39f3353122f9d89544aa0fd1a80ad1d6d836f91:Process locs files (batch)/Translate_JS_to_TS.js
 
 importClass(Packages.ij.io.OpenDialog)
 importClass(Packages.java.io.File)
@@ -23,11 +18,7 @@ var compZDef = 0.8; // compensate Z coordinates for index mismatch (default is 0
 var scaleUDef = 0.4; // scale uncertainties (as done by Ries lab for SMAP output, default is 0.4)
 
 // Name of the processing
-<<<<<<< HEAD:Process locs files (batch)/Translate_DC_to_TS.js
 procName = "Translate DECODE to TS";
-=======
-procName = "Translate SMAP to TS";
->>>>>>> d39f3353122f9d89544aa0fd1a80ad1d6d836f91:Process locs files (batch)/Translate_JS_to_TS.js
 
 // Extensions of the input files
 inputExt = "csv";
@@ -42,11 +33,7 @@ var routineJS = "F-TranslateDC-TS.js";
 var addFolder = "TS";
 
 // Choose file or folder dialog
-<<<<<<< HEAD:Process locs files (batch)/Translate_DC_to_TS.js
 var od = new OpenDialog("Choose a DECODE csv results file", "");
-=======
-var od = new OpenDialog("Choose a SMAP csv results file", "");
->>>>>>> d39f3353122f9d89544aa0fd1a80ad1d6d836f91:Process locs files (batch)/Translate_JS_to_TS.js
 var path = od.getPath(); // path of selected file
 var directory = od.getDirectory(); // path of containing folder
 var name = od.getFileName(); // name of delected file
