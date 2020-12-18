@@ -71,7 +71,7 @@ macro "Batch FRC" {
 		INPUT_DIR = argarray[0];
 	}
 	
-	print("\n\n\n*** Batch Process Localizations started ***");
+	print("\n\n\n*** Batch FRC started ***");
 	print("");
 	print("Input folder: " + INPUT_DIR);
 
@@ -80,7 +80,7 @@ macro "Batch FRC" {
 
 	if (called == false) {	
 		//Creation of the dialog box
-		Dialog.create("Batch process localizations: options");
+		Dialog.create("Batch FRC: options");
 		Dialog.addCheckbox("Choose files based on name", CHOOSE_DEF);
 		Dialog.addString("Name contains", CHOOSE_STRING_DEF);
 		Dialog.addCheckbox("Exclude files based on name", EXC_DEF);

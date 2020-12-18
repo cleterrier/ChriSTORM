@@ -1,7 +1,7 @@
 // Batch Drift Correction macro by Christophe Leterrier
 // Process ThunderSTORM csv localization files
 // Drift correction in 2D (autocorrelation) with ThunderSTORM, in 3D (RCC) with ZOLA
-// Best results are obtained by performing 2D and 3D corrections seqentially
+// 2D TS and 3D ZOLA can be applied sequentially (or only ZOLA with a pre-pass)
 
 macro "Batch Drift Correction" {
 
@@ -71,7 +71,7 @@ macro "Batch Drift Correction" {
 
 	if (called == false) {
 		//Creation of the dialog box
-		Dialog.create("Batch correct drift: options");
+		Dialog.create("Batch drift correction: options");
 		Dialog.addCheckbox("Choose files based on name", CHOOSE_DEF);
 		Dialog.addString("Name contains", CHOOSE_STRING_DEF);
 		Dialog.addCheckbox("Exclude files based on name", EXC_DEF);
@@ -262,13 +262,13 @@ macro "Batch Drift Correction" {
 
 	// Restore settings
 	restoreSettings();
-	showStatus("Batch Process Localizations finished");
+	showStatus("Batch Drift correction finished");
 
 	//Time counter
 	stopTime = getTime();
 	Time = stopTime - startTime;
 
 	print("");
-	print("*** Batch 3D Drift ZOLA end after " + Time / 1000 + " s ***\n\n\n");
+	print("*** Batch drift correction ends after " + Time / 1000 + " s ***\n\n\n");
 	if (called == true) return OUTPUT_DIR;
 }
