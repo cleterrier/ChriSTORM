@@ -88,6 +88,7 @@ function TranslateDCTS(inPath, outDir, ps, cf, rf, sX, sY, fz, cz, su){
 		outFile.createNewFile();
 	}
 	var bw = new BufferedWriter(new FileWriter(outFile));
+	var countloc = 0;
 
 	IJ.log("      outName: " + outName);
 
@@ -132,10 +133,18 @@ function TranslateDCTS(inPath, outDir, ps, cf, rf, sX, sY, fz, cz, su){
 
 		// Write new line
 		bw.write(outLine);
+		countloc = countloc + 1;
 		bw.newLine();
 	}
 	br.close();
 	bw.close();
+
+	// Rename file with its line count
+	var countK = Math.round(countloc / 1000);
+	var outName2 = inNameExt[0] + "_" + countK + "K" + outSuffix + "." + inNameExt[1];
+	var newFile = new File(outFile.getParent(), outName2);
+	outFile.renameTo(newFile);
+
 }
 
 
