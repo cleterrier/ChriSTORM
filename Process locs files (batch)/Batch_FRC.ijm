@@ -95,7 +95,7 @@ macro "Batch FRC" {
 		Dialog.addNumber("SR image pairs pixel size", PIX_DEF, 0, 5, "nm");
 		Dialog.addCheckbox("Compute BIOP FRC", FRC_DEF);
 		Dialog.addCheckbox("Compute NanoJ FRC Map", NFRC_DEF);
-		Dialog.addNumber("FRC Map blocks per axis", BLOCK_DEF, 0, 5, "blocks");
+		Dialog.addNumber("FRC map blocks per axis", BLOCK_DEF, 0, 5, "blocks");
 
 		Dialog.show();
 		
@@ -363,7 +363,7 @@ macro "Batch FRC" {
 					Table.update(OUT_NFRC);
 
 					// Log min and max FRC values
-					print("      FRC Map performed: resolution is between " + d2s(vala[3],1) + " nm and " + d2s(vala[2],1) + " nm.");
+					print("      FRC map performed: resolution is between " + d2s(vala[3],1) + " nm and " + d2s(vala[2],1) + " nm.");
 					print("");
 					
 					// Rename FRC map image with unique name
