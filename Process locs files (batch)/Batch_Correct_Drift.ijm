@@ -1,4 +1,4 @@
-// Batch Drift COrrection macro by Christophe Leterrier
+// Batch Drift Correction macro by Christophe Leterrier
 // Process ThunderSTORM csv localization files
 // Drift correction in 2D (autocorrelation) with ThunderSTORM, in 3D (RCC) with ZOLA
 // Best results are obtained by performing 2D and 3D corrections seqentially
