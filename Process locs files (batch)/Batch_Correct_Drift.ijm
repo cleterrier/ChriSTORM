@@ -206,6 +206,9 @@ macro "Batch Drift Correction" {
 					print("      ThunderSTORM drift-corrected file saved");
 					// Close output graph
 					close();
+					// update file path for further processing
+					FILE_PATH = OUTPUT_DIR + OUT_NAME;
+					
 				}
 			
 				// ZOLA 3D drift correction

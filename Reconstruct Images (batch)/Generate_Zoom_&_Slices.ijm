@@ -46,6 +46,7 @@ macro "Generate Zooms & Slices" {
 	RECO_DEF = true; // Generate reconstructions?
 	SR_SIZE_DEF = 4; // 4 nm
 	XY_UN_DEF = 0; // usually 0
+	START_ROI_DEF = 1; // start ROI numbering at something different from 1
 	LOCROI_DEF = true; // generate loc file for the ROIs
 
 	P3D_DEF = false;
@@ -55,13 +56,15 @@ macro "Generate Zooms & Slices" {
 	Z_AUTO_DEF = false;
 	Z_SAT_DEF = 10; // restriction of 3D span on top and bottom (in nm)
 	Z_UN_DEF = 0; // usually 0
-	Z_PROJ_DEF = true; // true
+	Z_PROJ_A = newArray("None", "Maximum (32-bit or color)", "Sum (32-bit or color)", "Weighted sum (color)");
+	Z_PROJ_DEF = "Weighted sum (color)";
 	Z_COLOR_DEF = false;
 	Z_LUT_DEF = "Rainbow RGB"; // LUT for color-coded 3D
 	SLICES_DEF = false;
 	SLICE_THICK_DEF = 400; // 800 nm
 	SLICE_LONG_DEF = true;
-	SLICE_PROJ_DEF = true; // true
+	SLICE_PROJ_A = newArray("None", "Maximum", "Sum");
+	SLICE_PROJ_DEF = "Sum"; // true
 	XY_VIEW_DEF = 0; // 2500 nm
 
 	FILT_DEF = false;
@@ -118,6 +121,7 @@ macro "Generate Zooms & Slices" {
 	Dialog.addCheckbox("Generate Reconstructions", RECO_DEF);
 	Dialog.addNumber("Final pixel size", SR_SIZE_DEF, 0, 3, "nm");
 	Dialog.addNumber("Force XY uncertainty (0 to keep)", XY_UN_DEF, 0, 3, "nm");
+	Dialog.addNumber("ROI numbering starts at", START_ROI_DEF, 0, 3, "");
 	Dialog.addCheckbox("Generate Locs files", LOCROI_DEF);
 	Dialog.addMessage("");
 	Dialog.addCheckbox("3D", P3D_DEF);
@@ -127,7 +131,7 @@ macro "Generate Zooms & Slices" {
 	Dialog.addCheckbox("Z auto-range", Z_AUTO_DEF);
 	Dialog.addNumber("Restrict Z-range by", Z_SAT_DEF, 0, 4, "nm");
 	Dialog.addNumber("Force Z uncertainty (0 to keep)", Z_UN_DEF, 0, 3, "nm");
-	Dialog.addCheckbox("Z project", Z_PROJ_DEF);
+	Dialog.addChoice("Z project", Z_PROJ_A, Z_PROJ_DEF);
 	Dialog.addCheckbox("Z colorized", Z_COLOR_DEF);
 	Dialog.addChoice("Color LUT", LUT_ARRAY, Z_LUT_DEF);
 	Dialog.show();
@@ -154,6 +158,7 @@ macro "Generate Zooms & Slices" {
 	RECO = Dialog.getCheckbox();
 	SR_SIZE = Dialog.getNumber();
 	XY_UN = Dialog.getNumber();
+	START_ROI = Dialog.getNumber();
 	LOCROI = Dialog.getCheckbox();
 
 	P3D = Dialog.getCheckbox();
@@ -163,7 +168,7 @@ macro "Generate Zooms & Slices" {
 	Z_AUTO = Dialog.getCheckbox();
 	Z_SAT = Dialog.getNumber();
 	Z_UN = Dialog.getNumber();
-	Z_PROJ = Dialog.getCheckbox();
+	Z_PROJ = Dialog.getChoice();
 	Z_COLOR = Dialog.getCheckbox();
 	Z_LUT = Dialog.getChoice();
 
@@ -174,7 +179,7 @@ macro "Generate Zooms & Slices" {
 	Dialog.addCheckbox("Generate slices (only for line ROIs)", SLICES_DEF);
 	Dialog.addNumber("Slice thickness (0 for line ROI thickness", SLICE_THICK_DEF, 0, 4, "nm");
 	Dialog.addCheckbox("Slice in both directions", SLICE_LONG_DEF);
-	Dialog.addCheckbox("Slice project", SLICE_PROJ_DEF);
+	Dialog.addChoice("Slice project", SLICE_PROJ_A, SLICE_PROJ_DEF);
 	Dialog.addNumber("XY view min size (0 for smallest)", XY_VIEW_DEF, 0, 4, "nm"); // Minimum box size around slice
 	Dialog.addMessage("");
 	Dialog.addCheckbox("Density filter", FILT_DEF);
@@ -192,7 +197,7 @@ macro "Generate Zooms & Slices" {
 	SLICES = Dialog.getCheckbox();
 	SLICE_THICK = Dialog.getNumber();
 	SLICE_LONG = Dialog.getCheckbox();
-	SLICE_PROJ = Dialog.getCheckbox();
+	SLICE_PROJ = Dialog.getChoice();
 	XY_VIEW = Dialog.getNumber();
 
 	FILT = Dialog.getCheckbox();
@@ -235,15 +240,15 @@ macro "Generate Zooms & Slices" {
 	}
 	else if (Z_COLOR == true){
 		OUT_PARAM += "(xy" + SR_SIZE + "z" + Z_SPACE + "c";
-		if (Z_PROJ == true) OUT_PARAM += "p";
+		if (Z_PROJ != "None") OUT_PARAM += "p";
 	}
 	else {
 		OUT_PARAM += "(xy" + SR_SIZE + "z" + Z_SPACE;
-		if (Z_PROJ == true) OUT_PARAM += "p";
+		if (Z_PROJ != "None") OUT_PARAM += "p";
 	}
 	if (SLICES == true) {
 		OUT_PARAM += "_s" + SLICE_THICK;
-		if (SLICE_PROJ == true) OUT_PARAM += "p";
+		if (SLICE_PROJ != "None") OUT_PARAM += "p";
 	}
 	if (XY_VIEW > 0) {
 		OUT_PARAM += "_m" + toString(XY_VIEW/1000, 2);
@@ -306,11 +311,7 @@ macro "Generate Zooms & Slices" {
 		Z_SPAN = Z_MAX - Z_MIN;
 		Z_SLICES = floor(2 * Z_SPAN / Z_SPACE) + 1;
 
-		if (Z_COLOR == true) {
-			COLOR_STRING = " colorize=true pickedlut=[" + Z_LUT + "]";
-		}
-
-		else COLOR_STRING = " colorize=false pickedlut=[" + Z_LUT + "]";
+		COLOR_STRING = " colorize=false pickedlut=[" + Z_LUT + "]";
 
 		if (Z_UN == 0) {
 			DZF_STRING = " dzforce=false";
@@ -364,7 +365,7 @@ for (z = 1; z < iCount + 1; z++) {
 
 			//***** Preparation of the ROI *****
 			print("      ROI #" + (r + 1) + "/"  + rN);
-			ROI_PARAM = "Roi" + IJ.pad(r + 1, 3);
+			ROI_PARAM = "Roi" + IJ.pad(START_ROI + r, 3);
 
 			// Get the ROI (already active if multi-ROI is false)
 			prevHeader = "dummy";
@@ -554,26 +555,38 @@ for (z = 1; z < iCount + 1; z++) {
 					if (SLICES == true) {
 						generateSlice(SLICE_THICK/1000, SR_SIZE/1000);
 						sliceID = getImageID();
-						optimizeContrast();
+						run("Flip Horizontally", "stack");
+					//	optimizeContrast();
 
 						if (SLICE_LONG == true) {
 							run("Reslice [/]...", "start=Left rotate");
 							slicelongID = getImageID();
+							
 						}
 
 						selectImage(sliceID);
 
-						if (SLICE_PROJ == true) {
-							run("Z Project...", "projection=[Sum Slices]");
-							// run("Flip Horizontally");
+						if (SLICE_PROJ != "None") {
+							if (SLICE_PROJ == "Maximum") SL_STRING = "[Max Intensity]";
+							else if (SLICE_PROJ == "Sum") SL_STRING = "[Sum Slices]";
+							run("Z Project...", "projection=" + SL_STRING);
 							ZpID = getImageID();
 							selectImage(sliceID);
 							close();
 							selectImage(ZpID);
-							optimizeContrast();
 							sliceID = ZpID;
 						}
 
+						if (Z_COLOR == true) {
+							slicecID = ColorZ(sliceID, Z_LUT);
+							selectImage(sliceID);
+							close();
+							selectImage(slicecID);
+							sliceID = slicecID;
+						}
+
+						optimizeContrast();
+						
 						// Name for the slice image
 						if (nLocs > 10000) ADD_TITLE = "_" + nLocK2 + "K";
 						else  ADD_TITLE = "_" + nLocK + "K";
@@ -592,16 +605,27 @@ for (z = 1; z < iCount + 1; z++) {
 
 					 		selectImage(slicelongID);
 
-							if (SLICE_PROJ == true) {
-								run("Z Project...", "projection=[Sum Slices]");
+							if (SLICE_PROJ != "None") {
+								if (SLICE_PROJ == "Maximum") SL_STRING = "[Max Intensity]";
+								else if (SLICE_PROJ == "Sum") SL_STRING = "[Sum Slices]";
+								run("Z Project...", "projection=" + SL_STRING);
 								// run("Flip Horizontally");
 								LZpID = getImageID();
 								selectImage(slicelongID);
 								close();
 								selectImage(LZpID);
-								optimizeContrast();
 								slicelongID = LZpID;
 							}
+
+							if (Z_COLOR == true) {
+								slicelongcID = ColorZ(slicelongID, Z_LUT);
+								selectImage(slicelongID);
+								close();
+								selectImage(slicelongcID);
+								slicelongID = slicelongcID;
+							}
+
+							optimizeContrast();
 
 							// Name for the slice image
 							if (nLocs > 10000) ADD_TITLE = "_" + nLocK2 + "K";
@@ -623,6 +647,7 @@ for (z = 1; z < iCount + 1; z++) {
 
 				// optional filtering
 				if (GAUSS > 0) {
+					selectImage(outIm);
 					radius = GAUSS/SR_SIZE;
 					for (g = 0; g < GAUSS_MULT; g++) {
 						if (P3D == true) {
@@ -635,11 +660,28 @@ for (z = 1; z < iCount + 1; z++) {
 				}
 
 				if (P3D == true) {
-					if (Z_PROJ == true) {
-						run("Z Project...", "projection=[Sum Slices]");
+					selectImage(outIm);
+					nOutS = nSlices;
+					if (Z_COLOR == true) {
+						if (Z_PROJ == "Sum (32-bit or color)") PROJ_STRING = "SUM";
+						else if (Z_PROJ == "Maximum (32-bit or color)") PROJ_STRING = "MAX";
+						else if (Z_PROJ == "Weighted sum (color)") PROJ_STRING = "WeightedSUM";
+						else if (Z_PROJ == "None") PROJ_STRING = "None";
+						run("Temporal-Color Code", "lut=[" + Z_LUT + "] projection=" + PROJ_STRING + " start=1 end=" + nOutS + "");
 						projID = getImageID();
 						rename(zoomTitle);
-						optimizeContrast();
+						// optimizeContrast();
+						selectImage(outIm);
+						close();
+						selectImage(projID);
+					}
+					else if (Z_PROJ != "None" && Z_COLOR == false){
+						if (Z_PROJ == "Maximum (32-bit or color)") PROJ_STRING = "[Maximum Intensity]";
+						else PROJ_STRING = "[Sum Slices]";
+						run("Z Project...", "projection=" + PROJ_STRING);
+						projID = getImageID();
+						rename(zoomTitle);
+						// optimizeContrast();
 						selectImage(outIm);
 						close();
 						selectImage(projID);
@@ -657,6 +699,8 @@ for (z = 1; z < iCount + 1; z++) {
 						else generateBox(lineWidth*RECON_PX/SR_SIZE, 1);
 					run("Select None");
 				}
+
+				optimizeContrast();
 
 				// Adjust image size so that all have same size (does not work very well)
 				if (XY_VIEW > 0) {
@@ -815,16 +859,6 @@ function outProcess(outTitle){
 	// Set scale
 	setVoxelSize(SR_SIZE/1000, SR_SIZE/1000, Z_SPACE/1000, "um");
 
-
-	if (Z_COLOR == true) {
-		run("Stack to RGB");
-		colorID = getImageID();
-		outID = getImageID();
-		selectWindow(RECON_TITLE);
-		close();
-		selectImage(outID);
-	}
-
 	rename(OUT_TITLE);
 	outID = getImageID();
 	return outID;
@@ -850,4 +884,68 @@ function optimizeContrast() {
 	}
 	else if (AD_CONT == true) run("Enhance Contrast...", "saturated=" + SAT_LEVEL);
 	return;
+}
+
+function ColorZ(imgID, Z_LUT) {
+
+	setBatchMode(true);
+	
+	selectImage(imgID);
+	getDimensions(iw, ih, ich, isl, ifr);
+	
+	run("Duplicate...", "title=Out duplicate");
+	run("RGB Color");
+	outsID = getImageID();
+
+	newImage("L", "32-bit ramp", ih, iw, 1);
+	lutID = getImageID();	
+	run(Z_LUT);
+	run("Rotate 90 Degrees Left");
+	run("RGB Color");
+	run("RGB Stack");
+
+
+	for (s = 1; s <= isl; s++) {
+	
+		selectImage(imgID);
+		setSlice(s);
+		run("Duplicate...", "title=D");
+		dupID = getImageID();
+		run("RGB Color");
+		run("RGB Stack");
+	
+		imageCalculator("Multiply create 32-bit stack", "D","L");
+		run("Make Composite", "display=Composite");
+		compID = getImageID();
+		for (imc = 1; imc < 4; imc++) {
+			Stack.setChannel(imc);
+			setMinAndMax(0, 65025);
+		}
+		run("RGB Color");
+		outID = getImageID();
+		run("Select All");
+		run("Copy");
+
+	
+		selectImage(outsID);
+		setSlice(s);
+		run("Paste");
+		run("Select None");
+	
+		selectImage(dupID);
+		close();
+	
+		selectImage(compID);
+		close();
+	
+		selectImage(outID);
+		close();
+	}
+
+	selectImage(lutID);
+	close();
+	
+	setBatchMode("exit and display");
+
+	return(outsID);
 }

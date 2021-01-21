@@ -466,7 +466,7 @@ macro "Generate Reconstructions" {
 	print("");
 	print("*** Generate Reconstructions end after " + Time / 1000 + " s  ***\n\n\n");
 	showStatus("Generate Recon finished");
-	return OUTPUT_DIR;
+	if (called == true) return OUTPUT_DIR;
 }
 
 // function to test if a file is 2D or 3D (independantly of its name)
