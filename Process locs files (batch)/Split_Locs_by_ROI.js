@@ -78,7 +78,7 @@ var gd = new GenericDialog(procName + ": options");
 
 gd.addNumericField("Reconstruction image pixel size", pxSizeNm, 1, 6, "nm");
 gd.addCheckbox("Save localizations inside ROI", saveInsideDef);
-gd.addCheckbox("Save localizations outside ROI", saveInsideDef);
+gd.addCheckbox("Save localizations outside ROI", saveOutsideDef);
 
 gd.showDialog();
 

@@ -109,7 +109,7 @@ if (gd.wasOKed() || called == true) {
 	// Define input folder, define and create output folder
 	var inDirSplit = inDir;
 	IJ.log("Split input folder: " + inDirSplit);
-	if (seq == false) {	
+	if (seq == false) {
 		var outDirSplit = parDir + "Locs Split" + File.separator;
 		IJ.log("Split output folder: " + outDirSplit);
 		var outDirSplitFile = new File(outDirSplit);
@@ -133,7 +133,7 @@ if (gd.wasOKed() || called == true) {
 	}
 
 	// Get the file list from the input folder, batch process them using the split function
-	
+
 	if (seq == true) {
 		IJ.log("\nSequential Splitting...");
 		var fileQueueS1 = getExtFiles(inDirSplit, extFormat);
@@ -143,13 +143,13 @@ if (gd.wasOKed() || called == true) {
 		}
 		inDirSplit = outDirSplit1;
 	}
-	
+
 	IJ.log("\nChannel Splitting...");
 	var fileQueueS = getExtFiles(inDirSplit, extFormat);
 	for (var f = 0; f < fileQueueS.length; f++) {
 		var inPath = fileQueueS[f];
 		NStxtSplit(inPath, outDirSplit);
-	}	
+	}
 
 
 	// Batch Translate

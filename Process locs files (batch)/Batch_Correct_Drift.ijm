@@ -13,7 +13,7 @@ macro "Batch Drift Correction" {
 
 	// Detect if called from macro
 	arg = getArgument();
-	if (lengthOf(arg)>0) {
+	if (lengthOf(arg)>3) {
 		called = true;
 		argarray = split(arg, ",");
 	}
@@ -49,8 +49,9 @@ macro "Batch Drift Correction" {
 	BIN1 = 2;
 	BIN2_DEF = 8; // number of frames per sub-reconstruction used for autocorrelation
 	MAG1 = 32;
-	MAG2_DEF = 25; //  pixel size (nm) of sub-reconstructions used for autocorrelation
-	SM_DEF = 10; // Maximal drift (um)
+	MAG2_DEF = 32; //  pixel size (nm) of sub-reconstructions used for autocorrelation
+	SM1 = 20; // Maximal drift (um)
+	SM2_DEF = 15;
 
 //*************** Get input folder ***************
 
@@ -87,7 +88,7 @@ macro "Batch Drift Correction" {
 		Dialog.addCheckbox("Use GPU", GPU_DEF);
 		Dialog.addNumber("Number of bins for sub-images", BIN2_DEF, 0, 5, "");
 		Dialog.addNumber("Pixel size for autocorrelation", MAG2_DEF, 0, 5, "nm");
-		Dialog.addNumber("Maximum drift", SM_DEF, 0, 5, "µm");
+		Dialog.addNumber("Maximum drift", SM2_DEF, 0, 5, "µm");
 		Dialog.show();
 
 		// Feeding variables from dialog choices
@@ -107,7 +108,7 @@ macro "Batch Drift Correction" {
 		GPU = Dialog.getCheckbox();
 		BIN2 = Dialog.getNumber();
 		MAG2 = Dialog.getNumber();
-		SM = Dialog.getNumber();
+		SM2 = Dialog.getNumber();
 	}
 
 	// called from macro:
@@ -222,7 +223,7 @@ macro "Batch Drift Correction" {
 
 					// coarse pre-pass
 					if (ZOLA_DOUBLE == true) {
-						run("3D Drift correction", "" + GPU_STRING + " cross-correlation_pixel_size=" + MAG1 + " number=" + BIN1 + " maximum_drift=" + SM + " localization_table_attached=[]");
+						run("3D Drift correction", "" + GPU_STRING + " cross-correlation_pixel_size=" + MAG1 + " number=" + BIN1 + " maximum_drift=" + SM1 + " localization_table_attached=[]");
 						// close output windows
 						close();
 						selectWindow("Z_drift");
@@ -238,7 +239,7 @@ macro "Batch Drift Correction" {
 					}
 
 					// Fine pass
-					run("3D Drift correction", "" + GPU_STRING + " cross-correlation_pixel_size=" + MAG2 + " number=" + BIN2 + " maximum_drift=" + SM + " localization_table_attached=[]");
+					run("3D Drift correction", "" + GPU_STRING + " cross-correlation_pixel_size=" + MAG2 + " number=" + BIN2 + " maximum_drift=" + SM2 + " localization_table_attached=[]");
 					// close output windows
 					close();
 					selectWindow("Z_drift");

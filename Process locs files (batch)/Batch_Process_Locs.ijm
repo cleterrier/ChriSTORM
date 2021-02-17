@@ -8,9 +8,9 @@ macro "Batch Process Localizations" {
 	// Save Settings
 	saveSettings();
 
-//*************** Initialize variables ***************	
+//*************** Initialize variables ***************
 
-	
+
 	// Detect if called from macro
 	arg = getArgument();
 	if (lengthOf(arg)>0) {
@@ -24,11 +24,11 @@ macro "Batch Process Localizations" {
 	LOC_SUFFIX1 = ".csv";
 	LOC_SUFFIX2 = ".xls";
 	OUT_PARAM = "proc";
-	
+
 	// Camera setup variables
 	CAM_SIZE = 160;
 	CG = 12.48; // camera gain new images
-	EM = 100; // EM gain new images	
+	EM = 100; // EM gain new images
 
 	// File chooser
 	CHOOSE_DEF = false;
@@ -70,10 +70,7 @@ macro "Batch Process Localizations" {
 	DENS_DIM_A = newArray("2D", "3D");
 	DENS_DIM_DEF = "2D";
 
-	// TSF Export
-	TSF_DEF = false;
-	
-//*************** Get input folder ***************	
+//*************** Get input folder ***************
 
 	// Get input directory (dialog or argument)
 	if (called == false) {
@@ -82,15 +79,15 @@ macro "Batch Process Localizations" {
 	else {
 		INPUT_DIR = argarray[0];
 	}
-	
+
 	print("\n\n\n*** Batch Process Localizations started ***");
 	print("");
 	print("Input folder: " + INPUT_DIR);
 
 
-//*************** Dialog ***************	
+//*************** Dialog ***************
 
-	if (called == false) {	
+	if (called == false) {
 		//Creation of the dialog box
 		Dialog.create("Batch process localizations: options");
 		Dialog.addCheckbox("Choose files based on name", CHOOSE_DEF);
@@ -120,10 +117,8 @@ macro "Batch Process Localizations" {
 		Dialog.addNumber("Filter radius", DENS_RAD_DEF, 0, 3, "nm");
 		Dialog.addNumber("Min loc number", DENS_NUMB_DEF, 0, 3, "");
 		Dialog.addChoice("Filter dimension", DENS_DIM_A, DENS_DIM_DEF);
-		Dialog.addMessage("");
-		Dialog.addCheckbox("Export as .tsf", TSF_DEF);
 		Dialog.show();
-		
+
 		// Feeding variables from dialog choices
 		CHOOSE = Dialog.getCheckbox();
 		CHOOSE_STRING = Dialog.getString();
@@ -132,7 +127,7 @@ macro "Batch Process Localizations" {
 		EXC_STRING = Dialog.getString();
 
 		RESET = Dialog.getCheckbox();
-		
+
 		CORR_DRIFT = Dialog.getCheckbox();
 		BIN = Dialog.getNumber();
 		MAG = Dialog.getNumber();
@@ -146,16 +141,14 @@ macro "Batch Process Localizations" {
 		PHOT_FILT = Dialog.getCheckbox();
 		PHOT_MIN = Dialog.getNumber();
 		PHOT_MAX = Dialog.getNumber();
-	
+
 		EXP_FILT = Dialog.getCheckbox();
 		EXP_STRING = Dialog.getString();
-	
+
 		DENS_FILT = Dialog.getCheckbox();
 		DENS_RAD = Dialog.getNumber();
 		DENS_NUMB = Dialog.getNumber();
 		DENS_DIM = Dialog.getChoice();
-	
-		TSF = Dialog.getCheckbox();
 	}
 
 	// called from macro:
@@ -165,7 +158,7 @@ macro "Batch Process Localizations" {
 		CHOOSE_STRING = argarray[2];
 		EXC = argarray[3];
 		EXC_STRING = argarray[4];
-		RESET = argarray[5];		
+		RESET = argarray[5];
 		CORR_DRIFT = argarray[6];
 		BIN = argarray[7];
 		MAG = argarray[8];
@@ -183,20 +176,19 @@ macro "Batch Process Localizations" {
 		DENS_RAD = argarray[20];
 		DENS_NUMB = argarray[21];
 		DENS_DIM = argarray[22];
-		TSF = argarray[23];		
 	}
-	
-//*************** Prepare processing ***************	
+
+//*************** Prepare processing ***************
 
 	//Time counter
 	startTime = getTime();
-	
+
 	// Get all file names
 	ALL_NAMES = getFileList(INPUT_DIR);
 	Array.sort(ALL_NAMES);
 	ALL_TS = newArray(ALL_NAMES.length);
 	ALL_TYPES = newArray(ALL_NAMES.length);
-	
+
 	OUTPUT_DIR = File.getParent(INPUT_DIR);
 	OUTPUT_NAME = File.getName(INPUT_DIR);
 	OUTPUT_DIR = OUTPUT_DIR + File.separator + OUTPUT_NAME + " " + OUT_PARAM + File.separator;
@@ -225,7 +217,7 @@ macro "Batch Process Localizations" {
 			LOC_SUFFIX = LOC_SUFFIX2;
 			ALL_TS[n] = true;
 			ALL_TYPES [n] = "[XLS (tab separated)]";
-		}		
+		}
 		if (ALL_TS[n] == true) {
 			if ((CHOOSE == false || indexOf(ALL_NAMES[n], CHOOSE_STRING) > -1) && (EXC == false || indexOf(ALL_NAMES[n], EXC_STRING) == -1)) {
 				FileTotal++;
@@ -242,33 +234,33 @@ macro "Batch Process Localizations" {
 			if ((CHOOSE == false || indexOf(ALL_NAMES[n], CHOOSE_STRING) > -1) && (EXC == false || indexOf(ALL_NAMES[n], EXC_STRING) == -1)) {
 				// Image counter
 				FileCount++;
-				
+
 				// Get the file path
 				FILE_PATH = INPUT_DIR + ALL_NAMES[n];
-				
+
 				// Store components of the file name
 				FILE_NAME = File.getName(FILE_PATH);
-				
+
 				print("    Input file #" + FileCount + "/" + FileTotal + ": " + FILE_NAME);
-	
+
 				OUT_TITLE = FILE_NAME;
-				
-				// Open the loc file	
+
+				// Open the loc file
 				run("Import results", "append=false startingframe=1 rawimagestack= filepath=[" + FILE_PATH + "] livepreview=false fileformat=" + ALL_TYPES[n]);
-	
-				
+
+
 				if (CORR_DRIFT == true) {
 					// Obtain the number of locs (# of lines in the loc file) and the number of steps for autocorrelation
 					// ROWS = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); rows = rt.getRowCount();");
 					// FRAMES = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); var rows = rt.getRowCount(); var colf = rt.findColumn(\"frame\"); var minf = parseInt(rt.getValue(0, colf)); var maxf = minf; for (var row = 1; row < rows; row++) {var val = parseInt(rt.getValue(row, colf)); if (val > maxf) maxf = val} frames = maxf;");
 					// FRAMES = parseInt(FRAMES);
-					
+
 					// STEPS = floor(FRAMES / PACKET_SIZE);
 					// if (STEPS < 2) STEPS = 2;
 					// MAGNIF = CAM_SIZE / XCORR_SIZE;
-		
+
 					// print("      Drift correction: found " + FRAMES + " frames, " + STEPS + " sub-images");
-		
+
 					// run("Show results table", "action=drift magnification=" + MAGNIF + " save=false showcorrelations=false method=[Cross correlation] steps=" + STEPS);
 					run("Show results table", "action=drift magnification=" + MAG + " ccsmoothingbandwidth=" + SM + " save=false showcorrelations=false method=[Cross correlation] steps=" + BIN);
 				}
@@ -284,13 +276,13 @@ macro "Batch Process Localizations" {
 				if (EXP_FILT == true){
 					run("Show results table", "action=filter formula=[" + EXP_STRING + "]");
 				}
-	
+
 				if (DENS_FILT == true){
 					// colZ = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); var colZ = rt.findColumn(\"z [nm]\");");
 					// if (colZ < 0) DENS_DIM = "2D";
 					run("Show results table", "action=density neighbors=" + DENS_NUMB + " dimensions=" + DENS_DIM + " radius=" + DENS_RAD);
 				}
-				
+
 				// Export the corrected locs into an output file
 
 				// Count the new Loc number
@@ -300,14 +292,14 @@ macro "Batch Process Localizations" {
 
 				//if (CORR_DRIFT == true) {
 				//	ADD_TITLE = ADD_TITLE + "DC";
-				//}		
+				//}
 
 				ADD_TITLE = "_" + nLocK + "K";
-				
+
 				if (indexOf(OUT_TITLE, "_TS2D.") > 0 || indexOf(OUT_TITLE, "_TS3D.") > 0) {
-					
+
 					if (RESET == true) {
-						NEW_TITLE = replace(OUT_TITLE, "(_([0-9])+K)+_TS", ADD_TITLE + "_TS");
+						NEW_TITLE = replace(OUT_TITLE, "(_([0-9])+K)+_", ADD_TITLE + "_");
 					}
 					else {
 						NEW_TITLE = replace(OUT_TITLE, "_TS", ADD_TITLE + "_TS");
@@ -318,7 +310,7 @@ macro "Batch Process Localizations" {
 					NEW_TITLE = replace(OUT_TITLE, LOC_SUFFIX, ADD_TITLE + LOC_SUFFIX1);
 				}
 
-				
+
 /*
  				else {
 					if (RESET == true) {
@@ -329,30 +321,23 @@ macro "Batch Process Localizations" {
 						NEW_TIT1 = substring(OUT_TITLE, 0, insert+1);
 						NEW_TIT2 = substring(OUT_TITLE, insert+1, lengthOf(OUT_TITLE));
 						NEW_TITLE = NEW_TIT1 + ADD_TITLE + NEW_TIT2;
-					}				
+					}
 				}
 */
-				
-				if (TSF == false) {
-					OUT_PATH = OUTPUT_DIR + NEW_TITLE;
-					run("Export results", "filepath=[" + OUT_PATH + "] fileformat=[CSV (comma separated)] chi2=false saveprotocol=false");
-					// remove chi2 that causes an error on 27-07-2017 version (see bug on GitHub)
-				}
-				else {
-					NEW_TITLE = replace(NEW_TITLE, ".csv", ".tsf");
-					OUT_PATH = OUTPUT_DIR + NEW_TITLE;
-					run("Export results", "filepath=[" + OUT_PATH + "] fileformat=[Tagged spot file] saveprotocol=false");
-				}
-				
-				print("      Output file:" + OUT_TITLE);
-	
+
+				OUT_PATH = OUTPUT_DIR + NEW_TITLE;
+				run("Export results", "filepath=[" + OUT_PATH + "] fileformat=[CSV (comma separated)] chi2=false saveprotocol=false");
+				// remove chi2 that causes an error on 27-07-2017 version (see bug on GitHub)
+
+				print("      Output file:" + NEW_TITLE);
+
 				// Rename the drift image
 				if (CORR_DRIFT == true) {
 					selectWindow("Drift");
-					rename(OUT_TITLE);
+					rename(NEW_TITLE);
 				}
-				
-			} // end of IF loop on include/exclude names	
+
+			} // end of IF loop on include/exclude names
 		}	// end of IF loop on extensions
 	}	// end of FOR loop on n extensions
 
@@ -368,16 +353,16 @@ macro "Batch Process Localizations" {
 	//NEW_INPUT = substring(INPUT_DIR, 0, lengthOf(INPUT_DIR) - 1) + " no proc" + File.separator;
 	//File.rename(INPUT_DIR, NEW_INPUT);
 	//File.rename(OUTPUT_DIR, INPUT_DIR);
-	
+
 	// Restore settings
-	restoreSettings();	
+	restoreSettings();
 	showStatus("Batch Process Localizations finished");
-	
+
 	//Time counter
 	stopTime = getTime();
 	Time = stopTime - startTime;
-	
+
 	print("");
 	print("*** Batch Process Localizations end after " + Time / 1000 + " s ***\n\n\n");
-	return OUTPUT_DIR;
+	if (called == true) return OUTPUT_DIR;
 }

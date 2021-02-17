@@ -14,7 +14,7 @@ macro "Generate Zooms & Slices" {
 	// Titles of the Thunderstorm windows for catching them
 	RESULTS_TITLE = "ThunderSTORM: results";
 	RECON_TITLE = "ROIoutput";
-	LUT_ARRAY = newArray("Rainbow RGB", "Jet", "Turbo", "ametrine", "ThunderSTORM");
+	LUT_ARRAY = newArray("Rainbow RGB", "Jet", "Turbo", "ametrine", "ThunderSTORM", "ZOLA", "3color-RMB", "3color-CGY", "2C Cyan-Green", "2C Yellow-Red", "2C Green-Cyan", "2C Red-Yellow");
 
 	// log
 	print("\n\n***** Generate Zooms & Slices started *****");
@@ -47,17 +47,17 @@ macro "Generate Zooms & Slices" {
 	SR_SIZE_DEF = 4; // 4 nm
 	XY_UN_DEF = 0; // usually 0
 	START_ROI_DEF = 1; // start ROI numbering at something different from 1
-	LOCROI_DEF = true; // generate loc file for the ROIs
+	LOCROI_DEF = false; // generate loc file for the ROIs
 
 	P3D_DEF = false;
 	Z_SPACE_DEF = 4; // 4 nm for 3D
-	Z_MIN_DEF = -600; // -500 nm
-	Z_MAX_DEF = 600; // +500 nm
+	Z_MIN_DEF = -800; // -500 nm
+	Z_MAX_DEF = 800; // +500 nm
 	Z_AUTO_DEF = false;
 	Z_SAT_DEF = 10; // restriction of 3D span on top and bottom (in nm)
 	Z_UN_DEF = 0; // usually 0
 	Z_PROJ_A = newArray("None", "Maximum (32-bit or color)", "Sum (32-bit or color)", "Weighted sum (color)");
-	Z_PROJ_DEF = "Weighted sum (color)";
+	Z_PROJ_DEF = "Sum (32-bit or color)";
 	Z_COLOR_DEF = false;
 	Z_LUT_DEF = "Rainbow RGB"; // LUT for color-coded 3D
 	SLICES_DEF = false;
@@ -72,8 +72,12 @@ macro "Generate Zooms & Slices" {
 	FILT_NUMB_DEF = 5;
 	FILT_DIM_A = newArray("2D", "3D");
 	FILT_DIM_DEF = "3D";
-	GAUSS_DEF = 4;
+	GAUSS_DEF = 0;
 	GAUSS_MULT_DEF = 1;
+	UNS_SIZE_DEF = 0;
+	UNS_WEIGHT_DEF = 0.3;
+	UNS_MULT_DEF = 1;
+	GAM_DEF = 1;
 	AD_CONT_DEF = false;
 	SAT_LEV_DEF = 0.1; // 0.1%
 	CLOSE_DEF = true;
@@ -188,6 +192,10 @@ macro "Generate Zooms & Slices" {
 	Dialog.addChoice("Filter dimension", FILT_DIM_A, FILT_DIM_DEF);
 	Dialog.addNumber("Gaussian blur (0 for no filter)", GAUSS_DEF, 0, 3, "nm");
 	Dialog.addNumber("Apply blur ", GAUSS_MULT_DEF, 0, 3, "times");
+	Dialog.addNumber("Unsharp mask (0 for no filter)", UNS_SIZE_DEF, 0, 3, "nm");
+	Dialog.addNumber("Mask weight (0-1)", UNS_WEIGHT_DEF, 2, 3, "");
+	Dialog.addNumber("Apply unsharp", UNS_MULT_DEF, 0, 3, "times");
+	Dialog.addNumber("Gamma (1 for none)", GAM_DEF, 2, 3, "");
 	Dialog.addCheckbox("Adjust contrast", AD_CONT_DEF);
 	Dialog.addNumber("Saturated pixels", SAT_LEV_DEF, 2, 3, "%");
 	Dialog.addCheckbox("Close images", CLOSE_DEF);
@@ -206,9 +214,12 @@ macro "Generate Zooms & Slices" {
 	FILT_DIM = Dialog.getChoice();
 	GAUSS = Dialog.getNumber();
 	GAUSS_MULT = parseInt(Dialog.getNumber());
+	UNS_SIZE = Dialog.getNumber();
+	UNS_WEIGHT = Dialog.getNumber();
+	UNS_MULT = Dialog.getNumber();
+	GAM = Dialog.getNumber();
 	AD_CONT = Dialog.getCheckbox();
 	SAT_LEV = Dialog.getNumber();
-
 	CLOSE = Dialog.getCheckbox();
 
 //*************** Prepare visualization ***************
@@ -561,7 +572,7 @@ for (z = 1; z < iCount + 1; z++) {
 						if (SLICE_LONG == true) {
 							run("Reslice [/]...", "start=Left rotate");
 							slicelongID = getImageID();
-							
+
 						}
 
 						selectImage(sliceID);
@@ -586,7 +597,7 @@ for (z = 1; z < iCount + 1; z++) {
 						}
 
 						optimizeContrast();
-						
+
 						// Name for the slice image
 						if (nLocs > 10000) ADD_TITLE = "_" + nLocK2 + "K";
 						else  ADD_TITLE = "_" + nLocK + "K";
@@ -599,6 +610,7 @@ for (z = 1; z < iCount + 1; z++) {
 						SaveSlicePath = SliceFolder + File.separator + NEW_TITLE + ".tif";
 						print("        Slice image:" + SaveSlicePath);
 						save(SaveSlicePath);
+						selectImage(sliceID);
 						if (CLOSE == true) close();
 
 						if (SLICE_LONG == true) {
@@ -639,13 +651,14 @@ for (z = 1; z < iCount + 1; z++) {
 							SaveSliceLongPath = SliceLongFolder + File.separator + NEW_TITLE + ".tif";
 							print("        Slice Long image:" + SaveSliceLongPath);
 							save(SaveSliceLongPath);
+							selectImage(slicelongID);
 							if (CLOSE == true) close();
 						}
 					}
 					selectImage(outIm);
 				}
 
-				// optional filtering
+				// optional gaussian blur
 				if (GAUSS > 0) {
 					selectImage(outIm);
 					radius = GAUSS/SR_SIZE;
@@ -657,6 +670,19 @@ for (z = 1; z < iCount + 1; z++) {
 							run("Gaussian Blur...", "sigma=" + radius + " stack");
 						}
 					}
+				}
+
+				// optional unsharp mask
+				if (UNS_SIZE > 0) {
+					ur = UNS_SIZE/SR_SIZE;
+					for (u = 0; u < UNS_MULT; u++) {
+						run("Unsharp Mask...", "radius=" + ur + " mask=" + UNS_WEIGHT + " stack");
+					}
+				}
+
+				// optional gamma
+				if (GAM != 1) {
+					run("Gamma...", "value=" + GAM + " stack");
 				}
 
 				if (P3D == true) {
@@ -841,13 +867,26 @@ function generateSlice(sd, vX) {
 	sc = round(sd / vX);
 	run("Reslice [/]...", "output=" + vX + " slice_count=" + sc + " flip");
 	ResID = getImageID();
-	// optional filtering
+	// optional gaussian blur
 	if (GAUSS > 0) {
 		radius = GAUSS/SR_SIZE;
 		for (g = 0; g < GAUSS_MULT; g++) {
 				run("Gaussian Blur 3D...", "x=" + radius + " y="+ radius + " z=" + radius);
 				 //run("Gaussian Blur...", "sigma=" + radius + " stack");
 		}
+	}
+
+	// optional unsharp mask
+	if (UNS_SIZE > 0) {
+		ur = UNS_SIZE/SR_SIZE;
+		for (u = 0; u < UNS_MULT; u++) {
+			run("Unsharp Mask...", "radius=" + ur + " mask=" + UNS_WEIGHT + " stack");
+		}
+	}
+
+	// optional gamma
+	if (GAM != 1) {
+		run("Gamma...", "value=" + GAM + " stack");
 	}
 
 	return inTitle;
@@ -889,16 +928,16 @@ function optimizeContrast() {
 function ColorZ(imgID, Z_LUT) {
 
 	setBatchMode(true);
-	
+
 	selectImage(imgID);
 	getDimensions(iw, ih, ich, isl, ifr);
-	
+
 	run("Duplicate...", "title=Out duplicate");
 	run("RGB Color");
 	outsID = getImageID();
 
 	newImage("L", "32-bit ramp", ih, iw, 1);
-	lutID = getImageID();	
+	lutID = getImageID();
 	run(Z_LUT);
 	run("Rotate 90 Degrees Left");
 	run("RGB Color");
@@ -906,14 +945,14 @@ function ColorZ(imgID, Z_LUT) {
 
 
 	for (s = 1; s <= isl; s++) {
-	
+
 		selectImage(imgID);
 		setSlice(s);
 		run("Duplicate...", "title=D");
 		dupID = getImageID();
 		run("RGB Color");
 		run("RGB Stack");
-	
+
 		imageCalculator("Multiply create 32-bit stack", "D","L");
 		run("Make Composite", "display=Composite");
 		compID = getImageID();
@@ -926,25 +965,25 @@ function ColorZ(imgID, Z_LUT) {
 		run("Select All");
 		run("Copy");
 
-	
+
 		selectImage(outsID);
 		setSlice(s);
 		run("Paste");
 		run("Select None");
-	
+
 		selectImage(dupID);
 		close();
-	
+
 		selectImage(compID);
 		close();
-	
+
 		selectImage(outID);
 		close();
 	}
 
 	selectImage(lutID);
 	close();
-	
+
 	setBatchMode("exit and display");
 
 	return(outsID);

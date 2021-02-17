@@ -24,7 +24,7 @@ macro "Generate Reconstructions" {
 	RECON_TITLE = "Normalized Gaussian";
 	// Index of column containing Z coordinates in TS3D files
 	colZ = 3;
-	LUT_ARRAY = newArray("Rainbow RGB", "Jet", "Turbo", "ametrine", "ThunderSTORM", "3color-RMB", "3color-CGY");
+	LUT_ARRAY = newArray("Rainbow RGB", "Jet", "Turbo", "ametrine", "ThunderSTORM", "ZOLA", "3color-RMB", "3color-CGY", "2C Cyan-Green", "2C Yellow-Red", "2C Green-Cyan", "2C Red-Yellow");
 
 // Default values for the Options Panel
 	CAM_SIZE_DEF = 160;
@@ -50,12 +50,17 @@ macro "Generate Reconstructions" {
 	Z_UN_DEF = 0;
 	Z_COLOR_ARRAY = newArray("No color", "Colorized 2D", "Colorized 2D weighted", "Colorized 3D");
 	Z_COLOR_DEF = "Colorized 2D";
-	Z_LUT_DEF = "Rainbow RGB"; // LUT for color-coded 3D, other good ones: Jet, ametrine, ThunderSTORM
-	to16_DEF = false;
-	AD_CONT_DEF = true;
-	SAT_LEV_DEF = 0.1;
-	GAUSS_DEF = 8;
-	GAUSS_MULT_DEF = 1;
+	Z_LUT_DEF = "ZOLA"; // LUT for color-coded 3D, other good ones: Jet, ametrine, ThunderSTORM
+	GAUSS_DEF = 0; // gaussian blur radius (none if 0)
+	GAUSS_MULT_DEF = 1; // multiple gaussian blur passes
+	UNS_SIZE_DEF = 0; // unsharp mask radius (none if 0)
+	UNS_WEIGHT_DEF = 0.3; // unsharp mask weight
+	UNS_MULT_DEF = 1; // multiple unsharp mask passes
+	GAM_DEF = 1; // gamma (none if 1)
+	to16_DEF = false; // convert from 32-bit to 16-bit (for grayscale images)
+	AD_CONT_DEF = true; // adjust contrast (color and 16-bit only)
+	SAT_LEV_DEF = 0.1; // saturation level for contrast adjustment
+
 
 //*************** Dialog 1 : get the input images folder path ***************
 
@@ -103,6 +108,10 @@ macro "Generate Reconstructions" {
 		Dialog.addMessage(" ");
 		Dialog.addNumber("Gaussian blur (0 for no filter)", GAUSS_DEF, 0, 3, "nm");
 		Dialog.addNumber("Apply blur ", GAUSS_MULT_DEF, 0, 3, "times");
+		Dialog.addNumber("Unsharp mask (0 for no filter)", UNS_SIZE_DEF, 0, 3, "nm");
+		Dialog.addNumber("Mask weight (0-1)", UNS_WEIGHT_DEF, 2, 3, "");
+		Dialog.addNumber("Apply unsharp", UNS_MULT_DEF, 0, 3, "times");
+		Dialog.addNumber("Gamma (1 for none)", GAM_DEF, 2, 3, "");
 		Dialog.addCheckbox("Convert to 16-bit (non-colorized only)", to16_DEF);
 		Dialog.addCheckbox("Adjust contrast (colorized & 16-bit only)", AD_CONT_DEF);
 		Dialog.addNumber("Saturated pixels", SAT_LEV_DEF, 2, 3, "%");
@@ -132,13 +141,18 @@ macro "Generate Reconstructions" {
 		Z_LUT = Dialog.getChoice();
 		GAUSS = Dialog.getNumber();
 		GAUSS_MULT = parseInt(Dialog.getNumber());
+		UNS_SIZE = Dialog.getNumber();
+		UNS_WEIGHT = Dialog.getNumber();
+		UNS_MULT = Dialog.getNumber();
+		GAM = Dialog.getNumber();
 		to16 = Dialog.getCheckbox();
 		AD_CONT = Dialog.getCheckbox();
 		SAT_LEV = Dialog.getNumber();
+
 	}
 
  	// called from macro:
-	// arguments (INPUT_DIR, CAM_SIZE, SR_SIZE, XMIN, YMIN, XWIDTH, YWIDTH, XY_UN, P3D, Z_SPACE, Z_MIN, Z_MAX, Z_AUTO, Z_SAT, Z_UN, Z_COLOR, Z_LUT, GAUSS, to16, AD_CONT, SAT_LEV)
+	// arguments (INPUT_DIR, CAM_SIZE, SR_SIZE, XMIN, YMIN, XWIDTH, YWIDTH, XY_AUTO, XY_ORI, XY_ZERO, XY_UN, P3D, Z_SPACE, Z_MIN, Z_MAX, Z_AUTO, Z_SAT, Z_UN, Z_COLOR, Z_LUT, GAM, GAUSS, UNS_SIZE, UNS_WEIGHT, UNS_MULT, to16, AD_CONT, SAT_LEV)
 	else {
 		CAM_SIZE = parseInt(argarray[1]);
 		SR_SIZE = parseInt(argarray[2]);
@@ -146,24 +160,28 @@ macro "Generate Reconstructions" {
 		YMIN = parseInt(argarray[4]);
 		XWIDTH = parseInt(argarray[5]);
 		YWIDTH = parseInt(argarray[6]);
-		XY_UN = parseInt(argarray[7]);
-		P3D = argarray[8];
-		Z_SPACE = parseInt(argarray[9]);
-		Z_MIN = parseInt(argarray[10]);
-		Z_MAX = parseInt(argarray[11]);
-		Z_AUTO = argarray[12];
-		Z_SAT = parseInt(argarray[13]);
-		Z_UN = parseInt(argarray[14]);
-		Z_COLOR = argarray[15];
-		Z_LUT = argarray[16];
-		GAUSS = parseInt(argarray[17]);
-		GAUSS_MULT = parseInt(argarray[18]);
-		to16 = argarray[19];
-		AD_CONT = argarray[20];
-		SAT_LEV = argarray[21];
-		XY_AUTO = argarray[22];
-		XY_ORI = false;
-		XY_ZERO = true;
+		XY_AUTO = argarray[7];
+		XY_ZERO = argarray[8];
+		XY_ORI = argarray[7];
+		XY_UN = parseInt(argarray[10]);
+		P3D = argarray[11];
+		Z_SPACE = parseInt(argarray[12]);
+		Z_MIN = parseInt(argarray[13]);
+		Z_MAX = parseInt(argarray[14]);
+		Z_AUTO = argarray[15];
+		Z_SAT = parseInt(argarray[16]);
+		Z_UN = parseInt(argarray[17]);
+		Z_COLOR = argarray[18];
+		Z_LUT = argarray[19];
+		GAUSS = parseInt(argarray[20]);
+		GAUSS_MULT = parseInt(argarray[21]);
+		UNS_SIZE = parseInt(argarray[22]);
+		UNS_WEIGHT = parseFloat(argarray[23]);
+		UNS_MULT = parseFloat(argarray[24]);
+		GAM = parseFloat(argarray[25]);
+		to16 = argarray[26];
+		AD_CONT = argarray[27];
+		SAT_LEV = argarray[28];
 	}
 
 //*************** Prepare Processing (get names, open images, make output folder) ***************
@@ -191,6 +209,16 @@ macro "Generate Reconstructions" {
 	else {
 		OUT_PARAM = "xy" + SR_SIZE + "z" + Z_SPACE;
 	}
+	if (GAM !=1) {
+		OUT_PARAM += "_g" + toString(GAM, 1);
+	}
+	if (GAUSS > 0) {
+		OUT_PARAM += "_b" + toString(GAUSS, 0) + "-" + GAUSS_MULT;
+	}
+	if (UNS_SIZE > 0) {
+		OUT_PARAM += "_u" + toString(UNS_SIZE, 0) + "-" + UNS_MULT;
+	}
+
 
 	//Create the output folder path
 	OUTPUT_DIR = replace(INPUT_DIR, "Locs", "Recs");
@@ -253,7 +281,7 @@ macro "Generate Reconstructions" {
 	// Detect number of files
 	FileTotal = 0;
 	for (n = 0; n < ALL_NAMES.length; n++) {
-		if (endsWith(ALL_NAMES[n], ".csv") == true || endsWith(ALL_NAMES[n], ".tsf") == true) {
+		if (endsWith(ALL_NAMES[n], ".csv") == true) {
 			FileTotal++;
 		}
 	}
@@ -261,7 +289,7 @@ macro "Generate Reconstructions" {
 	// Loop on all TS loc files
 	FileCount = 0;
 	for (n = 0; n < ALL_NAMES.length; n++) {
-		if (endsWith(ALL_NAMES[n], ".csv") == true || endsWith(ALL_NAMES[n], ".tsf") == true) {
+		if (endsWith(ALL_NAMES[n], ".csv") == true) {
 
 			FileCount++;
 			// Get the file path
@@ -282,10 +310,6 @@ macro "Generate Reconstructions" {
 				else
 					print("      2D file detected");
 			}
-			if (FILE_EXT == ".tsf") {
-				image3D = 1;
-				print("       tsf file detected");
-			}
 
 			// Only process 2D files in 2D mode (3D mode just ignores them)
 			if ( (image3D == 0 && P3D == false) || (image3D == 1) ) {
@@ -297,8 +321,6 @@ macro "Generate Reconstructions" {
 				// Open the loc file
 				if (FILE_EXT == ".csv")
 					run("Import results", "append=false startingframe=1 rawimagestack= filepath=[" + FILE_PATH + "] livepreview=false fileformat=[CSV (comma separated)]");
-				if (FILE_EXT == ".tsf")
-					run("Import results", "append=false startingframe=1 rawimagestack= filepath=[" + FILE_PATH + "] livepreview=false fileformat=[Tagged spot file]");
 
 				// Detect XY range if auto-range (necessarily after CSV opening)
 				if (XY_AUTO == true){
@@ -384,13 +406,26 @@ macro "Generate Reconstructions" {
 				if (GAUSS > 0) {
 					radius = GAUSS/SR_SIZE;
 					for (g = 0; g < GAUSS_MULT; g++) {
-						if (P3D == true && Z_COLOR == "No color") {
+						if (P3D == true) {
 							run("Gaussian Blur 3D...", "x=" + radius + " y="+ radius + " z=" + radius);
 						}
 						else {
 							run("Gaussian Blur...", "sigma=" + radius + " stack");
 						}
 					}
+				}
+
+				// optional unsharp mask
+				if (UNS_SIZE > 0) {
+					ur = UNS_SIZE/SR_SIZE;
+					for (u = 0; u < UNS_MULT; u++) {
+						run("Unsharp Mask...", "radius=" + ur + " mask=" + UNS_WEIGHT + " stack");
+					}
+				}
+
+				// optional gamma
+				if (GAM != 1) {
+					run("Gamma...", "value=" + GAM + " stack");
 				}
 
 				// Colorized output 3D
@@ -420,7 +455,7 @@ macro "Generate Reconstructions" {
 				}
 
 				else if (nSlices > 1 && Z_COLOR == "Colorized 2D") {
-					
+
 					if (AD_CONT == true) run("Enhance Contrast...", "saturated=" + SAT_LEV + " process_all use");
 					run("Temporal-Color Code", "lut=[" + Z_LUT + "] projection=SUM start=1 end=" + nSlices + "");
 					colorID = getImageID();

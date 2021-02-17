@@ -96,7 +96,7 @@ function SplitLocsROI(inPath, outDir, roiName, roi, ps, savein, saveout){
 
 	var outName2 = inName.replace("_TS", outSuffix2 + "_TS");
 	var outPath2 = outDir + outName2;
-	var outFile2 = new File(outPath2);	
+	var outFile2 = new File(outPath2);
 
 	if (saveout == true) {
 		if (!outFile2.exists()) {
@@ -124,14 +124,14 @@ function SplitLocsROI(inPath, outDir, roiName, roi, ps, savein, saveout){
 
 		countloc ++;
 
-		if (roi.containsPoint(xOut, yOut) == true) {
+		if (savein == true && roi.containsPoint(xOut, yOut) == true) {
 			countloc1 = countloc1 + 1;
 			if (savein == true) {
 				bw1.write(inLine);
 				bw1.newLine();
 			}
 		}
-		else {
+		if (saveout == true && roi.containsPoint(xOut, yOut) == false) {
 			countloc2 = countloc2 + 1;
 			if (saveout == true) {
 				bw2.write(inLine);
