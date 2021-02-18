@@ -58,7 +58,7 @@ macro "Generate Reconstructions" {
 	UNS_MULT_DEF = 1; // multiple unsharp mask passes
 	GAM_DEF = 1; // gamma (none if 1)
 	to16_DEF = false; // convert from 32-bit to 16-bit (for grayscale images)
-	AD_CONT_DEF = false; // adjust contrast (color and 16-bit only)
+	AD_CONT_DEF = true; // adjust contrast (color and 16-bit only)
 	SAT_LEV_DEF = 0.1; // saturation level for contrast adjustment
 
 
@@ -426,9 +426,7 @@ macro "Generate Reconstructions" {
 				// optional gamma
 				if (GAM != 1) {
 					run("Gamma...", "value=" + GAM + " stack");
-					// resetMinAndMax();
 				}
-				
 
 				// Colorized output 3D
 				if (nSlices > 1 && Z_COLOR == "Colorized 3D") {
@@ -447,7 +445,6 @@ macro "Generate Reconstructions" {
 				else if (nSlices > 1 && Z_COLOR == "Colorized 2D Weighted") {
 
 					if (AD_CONT == true) run("Enhance Contrast...", "saturated=" + SAT_LEV + " process_all use");
-					resetMinAndMax();
 					run("Temporal-Color Code", "lut=[" + Z_LUT + "] projection=WeightedSUM start=1 end=" + nSlices + "");
 					colorID = getImageID();
 					run("Select None");
@@ -460,7 +457,6 @@ macro "Generate Reconstructions" {
 				else if (nSlices > 1 && Z_COLOR == "Colorized 2D") {
 
 					if (AD_CONT == true) run("Enhance Contrast...", "saturated=" + SAT_LEV + " process_all use");
-					resetMinAndMax();
 					run("Temporal-Color Code", "lut=[" + Z_LUT + "] projection=SUM start=1 end=" + nSlices + "");
 					colorID = getImageID();
 					run("Select None");

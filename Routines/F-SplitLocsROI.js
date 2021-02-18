@@ -44,14 +44,16 @@ function SplitLocsROI(inPath, outDir, roiName, roi, ps, savein, saveout){
 	var inSep = ","; // input separator
 	var sep = ","; // output separator
 
-	var outSuffix1 = "_in(" + roiName +")";
-	var outSuffix2 = "_out(" + roiName + ")";
+	var outSuffixIn = "_in(" + roiName +")";
+	var outSuffixOut = "_out(" + roiName + ")";
 
 	// Fields of the input header
 
-	var outHeaderList = ["\"frame\"","\"x [nm]\"","\"y [nm]\"","\"z [nm]\"","\"intensity [photon]\"","\"offset [photon]\"","\"uncertainty_xy [nm]\"","\"uncertainty_z [nm]\"", "\"chi2\""];
-	var xHeader = outHeaderList[1];
-	var yHeader = outHeaderList[2];
+	//var outHeaderList = ["\"frame\"","\"x [nm]\"","\"y [nm]\"","\"z [nm]\"","\"intensity [photon]\"","\"offset [photon]\"","\"uncertainty_xy [nm]\"","\"uncertainty_z [nm]\"", "\"chi2\""];
+	//var xHeader = outHeaderList[1];
+	//var yHeader = outHeaderList[2];
+	var xHeader = "x [nm]";
+	var yHeader = "y [nm]";
 
 
 	// Define input files, folder, open it etc.
@@ -73,9 +75,12 @@ function SplitLocsROI(inPath, outDir, roiName, roi, ps, savein, saveout){
 	var yIndex = arrayFind(inHeaderArray, yHeader);
 
 	// Generate output names and paths, open file writers
-	var outName1 = inName.replace("_TS", outSuffix1 + "_TS");
-	var outPath1 = outDir + outName1;
-	var outFile1 = new File(outPath1);
+	var outNameIn = inName.replace("_TS", outSuffixIn + "_TS");
+	if (outNameIn == inName) {
+		outNameIn = inName.replace(".csv", outSuffixIn + ".csv");
+	}
+	var outPathIn = outDir + outNameIn;
+	var outFileIn = new File(outPathIn);
 
 	// Write the header
 	var outHeader = inHeader;
@@ -83,34 +88,36 @@ function SplitLocsROI(inPath, outDir, roiName, roi, ps, savein, saveout){
 	var countloc = 0;
 	var countloc1 = 0;
 	var countloc2 = 0;
-		
+
 	if (savein == true) {
-		if (!outFile1.exists()) {
-			outFile1.createNewFile();
-			// IJ.log("out file 1 path: " + outPath1);
+		if (!outFileIn.exists()) {
+			outFileIn.createNewFile();
+			// IJ.log("out file 1 path: " + outPathIn);
 		}
-		var bw1 = new BufferedWriter(new FileWriter(outFile1));
-		bw1.write(outHeader);
-		bw1.newLine();
+		var bwIn = new BufferedWriter(new FileWriter(outFileIn));
+		bwIn.write(outHeader);
+		bwIn.newLine();
 	}
 
-	var outName2 = inName.replace("_TS", outSuffix2 + "_TS");
-	var outPath2 = outDir + outName2;
-	var outFile2 = new File(outPath2);
+	var outNameOut = inName.replace("_TS", outSuffixOut + "_TS");
+	if (outNameOut == inName) {
+		outNameOut = inName.replace(".csv", outSuffixOut + ".csv");
+	}
+	var outPathOut = outDir + outNameOut;
+	var outFileOut = new File(outPathOut);
 
-	if (saveout == true) {
-		if (!outFile2.exists()) {
-			outFile2.createNewFile();
-			// IJ.log("out file 2 path: " + outPath2);
+	if (saveout == true) {		
+		if (!outFileOut.exists()) {
+			outFileOut.createNewFile();	
 		}
-		var bw2 = new BufferedWriter(new FileWriter(outFile2));
-		bw2.write(outHeader);
-		bw2.newLine();
+		var bwOut = new BufferedWriter(new FileWriter(outFileOut));
+		bwOut.write(outHeader);
+		bwOut.newLine();
 	}
 
-	// IJ.log("      outName (inside ROI): " + outName1);
-	// IJ.log("      outName (outside ROI): " + outName2);
-	
+	// IJ.log("      outName (inside ROI): " + outNameIn);
+	// IJ.log("      outName (outside ROI): " + outNameOut);
+
 
 	// Write the output file line by line
 	while ((inLine = br.readLine()) != null) {
@@ -124,58 +131,58 @@ function SplitLocsROI(inPath, outDir, roiName, roi, ps, savein, saveout){
 
 		countloc ++;
 
-		if (savein == true && roi.containsPoint(xOut, yOut) == true) {
+		if (roi.containsPoint(xOut, yOut) == true) {
 			countloc1 = countloc1 + 1;
 			if (savein == true) {
-				bw1.write(inLine);
-				bw1.newLine();
+				bwIn.write(inLine);
+				bwIn.newLine();
 			}
 		}
-		if (saveout == true && roi.containsPoint(xOut, yOut) == false) {
+		else {
 			countloc2 = countloc2 + 1;
 			if (saveout == true) {
-				bw2.write(inLine);
-				bw2.newLine();
+				bwOut.write(inLine);
+				bwOut.newLine();
 			}
 		}
 
 	}
-	
+
 	br.close();
-	
-	
-	if (savein == true) {	
-		bw1.close();
+
+
+	if (savein == true) {
+		bwIn.close();
 		// Rename file 1 with its line count
 		var countK1 = Math.round(countloc1 / 1000);
 		// IJ.log(countloc1);
-		var outName1b = inName.replace(new RegExp("(_([0-9])+K)+_"), outSuffix1 + "_" + countK1 + "K_");
-		if (outName1b == inName) outName1b = inNameExt[0] + outSuffix1 + "_" + countK1 + "K." + inNameExt[1];
-		var newFile1 = new File(outFile1.getParent(), outName1b);
-		outFile1.renameTo(newFile1);
-		outString1 = ("file " + outName1b);
+		var outNameInb = inName.replace(new RegExp("(_([0-9])+K)+_"), outSuffixIn + "_" + countK1 + "K_");
+		if (outNameInb == inName) outNameInb = inNameExt[0] + outSuffixIn + "_" + countK1 + "K." + inNameExt[1];
+		var newFileIn = new File(outFileIn.getParent(), outNameInb);
+		outFileIn.renameTo(newFileIn);
+		outStringIn = ("file " + outNameInb);
 	}
 
-	else outString1 = "not saved";
+	else outStringIn = "not saved";
 
 
 	if (saveout == true) {
-		bw2.close();
+		bwOut.close();
 		// Rename file 1 with its line count
 		var countK2 = Math.round(countloc2 / 1000);
 		// IJ.log(countloc2);
-		var outName2b = inName.replace(new RegExp("(_([0-9])+K)+_"), outSuffix2 + "_" + countK2 + "K_");
-		if (outName2b == inName) outName2b = inNameExt[0] + outSuffix2 + "_" + countK2 + "K." + inNameExt[1];
-		var newFile2 = new File(outFile2.getParent(), outName2b);
-		outFile2.renameTo(newFile2);
-		outString2 = ("file " + outName2b);
+		var outNameOutb = inName.replace(new RegExp("(_([0-9])+K)+_"), outSuffixOut + "_" + countK2 + "K_");
+		if (outNameOutb == inName) outNameOutb = inNameExt[0] + outSuffixOut + "_" + countK2 + "K." + inNameExt[1];
+		var newFileOut = new File(outFileOut.getParent(), outNameOutb);
+		outFileOut.renameTo(newFileOut);
+		outStringOut = ("file " + outNameOutb);
 	}
 
-	else outString2 = "not saved";
+	else outStringOut = "not saved";
 
-	IJ.log("      Finished splitting " + countloc + " localizations based on " + roiName + ":"); 
-	IJ.log("      " + countloc1 + " inside ("+ outString1 + ")");
-	IJ.log("      " + countloc2 + " outside (" + outString2 + ")");
+	IJ.log("      Finished splitting " + countloc + " localizations based on " + roiName + ":");
+	IJ.log("      " + countloc1 + " inside ("+ outStringIn + ")");
+	IJ.log("      " + countloc2 + " outside (" + outStringOut + ")");
 
 }
 

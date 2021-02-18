@@ -111,7 +111,7 @@ if (gd.wasOKed()) {
 	for (r = 0; r < nroi; r++) {
 		// get current ROI, name, associated slice
 		var currentRoi = ra[r];
-		var currentRoiName = rm.getName(r);	
+		var currentRoiName = rm.getName(r);
 		var currentSlice = 	currentRoi.getPosition();
 		// Get label (name of image file) associated with slice
 		if (sliceNumber > 1) var currentTifName = stackLabels[currentSlice - 1];

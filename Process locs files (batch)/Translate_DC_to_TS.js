@@ -7,7 +7,7 @@ importClass(Packages.ij.IJ);
 importClass(Packages.ij.gui.GenericDialog);
 
 // Default values
-var isBatchdef = 0;
+var isBatchdef = 1;
 var pxSizeDef = 160; //  pixel size on camera image in nm (default is 160 nm for NSTORM)
 var compFDef = 1.0391934; // compensate distortion from the 3D astigmatic lens (default for NSTORM X = 1.036875 * Y but adjusted to stick with NSTORM processing)
 var rotXYDef = true; // "rotate right" the coordinates to align default output of DECODE with default output of TS/SMAP (default true)
