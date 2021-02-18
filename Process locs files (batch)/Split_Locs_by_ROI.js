@@ -122,7 +122,7 @@ if (gd.wasOKed()) {
 		var currentLocPath = inDirectory + currentLocName;
 
 		// Perform splitting with associated routine function
-		SplitLocsROI(currentLocPath, outDirectory, currentRoiName, currentRoi, pxSize, saveInside, saveOutside);
+		SplitLocsROI(currentLocPath, outDirectory, imp, currentRoiName, currentRoi, pxSize, saveInside, saveOutside);
 	}
 
 	// Stops timer

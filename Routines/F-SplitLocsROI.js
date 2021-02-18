@@ -1,5 +1,4 @@
 importClass(Packages.ij.ImagePlus);
-
 importClass(Packages.java.io.File);
 importClass(Packages.java.io.FileReader);
 importClass(Packages.java.io.FileWriter);
@@ -7,6 +6,7 @@ importClass(Packages.java.io.BufferedReader);
 importClass(Packages.java.io.BufferedWriter);
 importClass(Packages.ij.IJ);
 importClass(Packages.ij.gui.Roi);
+importClass(Packages.ij.process.ByteProcessor);
 importClass(Packages.java.lang.Double);
 
 
@@ -38,7 +38,7 @@ SplitLocsROI(inPathTest, outDirTest, RoiNameTest, RoiTest, psTest, saveinTest, s
 // savein: save a loc file containing the localizations inside the ROI
 // saveout: save a loc file containing the localizations outside the ROI
 
-function SplitLocsROI(inPath, outDir, roiName, roi, ps, savein, saveout){
+function SplitLocsROI(inPath, outDir, improi, roiName, roi, ps, savein, saveout){
 
 	// Separators
 	var inSep = ","; // input separator
@@ -46,6 +46,9 @@ function SplitLocsROI(inPath, outDir, roiName, roi, ps, savein, saveout){
 
 	var outSuffixIn = "_in(" + roiName +")";
 	var outSuffixOut = "_out(" + roiName + ")";
+
+	improi.setRoi(roi);
+	var maskroi = improi.createRoiMask();
 
 	// Fields of the input header
 
@@ -126,12 +129,14 @@ function SplitLocsROI(inPath, outDir, roiName, roi, ps, savein, saveout){
 		var inCells = inLine.split(inSep);
 
 
-		var xOut = (parseFloat(inCells[xIndex]) / ps);
-		var yOut = (parseFloat(inCells[yIndex]) / ps);
-
+		var xOut = Math.floor(parseFloat(inCells[xIndex]) / ps);
+		var yOut = Math.floor(parseFloat(inCells[yIndex]) / ps);
+		
 		countloc ++;
 
-		if (roi.containsPoint(xOut, yOut) == true) {
+		val = maskroi.getPixelInterpolated(xOut, yOut);
+
+		if (val == 255) {
 			countloc1 = countloc1 + 1;
 			if (savein == true) {
 				bwIn.write(inLine);
