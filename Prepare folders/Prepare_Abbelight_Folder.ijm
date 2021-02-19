@@ -5,23 +5,25 @@
 // Here is the structure of an experiment from the Abbelight scope:
 //
 // Experiment folder
-// |
-// |– Condition 1 folder (named "Experience0")
-// |  |
-// |  |– Name.txt (contains the string that defines the condition, such as "ctrl_PFA_NB100", will optionnally be looked for and apprended to the condition number in file names)
+// |– Experience0: condition #1 folder
+// |  |– Name.txt (contains string that defines the condition, such as "condition_name", will optionnally be looked for and apprended to file names)
 // |  |– Log.txt (contains the log of paramters the condition, will optionnally be looked for and grouped)
-// |  |– Acquisition 1 folder (named "CellZone0")
-// |  |– Acquisition 2 folder (named "CellZone1")
-// |  |– ...
-// |  |
-// |– Condition 2 folder ("Experience1")
-// |  |
+// |  |– CellZone0: acquisition #1 folder
+// |  |  |– here are you files: tif, csv, files for condition #1 - acquisition #1
+// |  |  |– ...
+// |  |– CellZone1: acquisition #2 folder
+// |  |  |– here are you files: tif, csv, files for condition #1 - acquisition #2
+// |  |  |– ...
+// |– Experience1: condition #2 folder
 // |  |– Name.txt
 // |  |– Log.txt
-// |  |– Acquisition 1 folder ("CellZone0")
-// |  |– Acquisition 2 folder ("CellZone1")
+// |  |– CellZone0: acquisition #1 folder
+// |  |  |– here are you files: tif, csv, files for condition #2 - acquisition #1
+// |  |  |– ...
+// |  |– CellZone1: acquisition #2 folder
+// |  |  |– here are you files: tif, csv, files for condition #2 - acquisition #2
+// |  |  |– ...
 // |  |– ...
-// |  |
 // |...
 //
 // This macro will move files from the above folders and group them by categories based on identification strings (regular expressions)
@@ -32,42 +34,39 @@
 // So for the above structure, the output structure will be:
 //
 // Experiment folder
-// |
-// |– Condition 1 folder (named "Experience0")
-// |  |
-// |  |– Name.txt (contains the string that defines the condition, such as "condition_name", will optionnally be looked for and apprended to the condition number in file names)
-// |  |
-// |– Condition 2 folder ("Experience1")
-// |  |
+// |– Experience0
 // |  |– Name.txt
-// |  |
+// |  |– Log.txt
+// |  |– CellZone0
+// |  |  |– files are not there anymore!
+// |  |– CellZone1
+// |  |– ...
+// |– Experience1
+// |  |– Name.txt
+// |  |– Log.txt
+// |  |– CellZone0
+// |  |– CellZone1
+// |  |– ...
 // |...
 // |
 // |– grouped Cat 1 folder (csv)
-// |
-// |– C00_(condition name)_N00_locfile.csv
-// |– C00_(condition name)_N01_locfile.csv
-// |– ...
-// |– C01_(condition name)_N00_locfile.csv
-// |– C01_(condition name)_N01_locfile.csv
-// |– ...
-// |
+// |  |– C00_(condition name)_N00_locfile.csv: csv files for condition #1, acquisition #1
+// |  |– C00_(condition name)_N01_locfile.csv: csv files for condition #1, acquisition #2
+// |  |– ...
+// |  |– C01_(condition name)_N00_locfile.csv: csv files for condition #2, acquisition #1
+// |  |– C01_(condition name)_N01_locfile.csv: csv files for condition #2, acquisition #2
+// |  |– ...
 // |– grouped Cat 2 folder (tif)
-// |
-// |– C00_(condition name)_N00_image.tif
-// |– C00_(condition name)_N01_image.tif
-// |– ...
-// |– C01_(condition name)_N00_image.tif
-// |– C01_(condition name)_N01_image.tif
-// |– ...
-// |
+// |  |– C00_(condition name)_N00_image.tif: tif files for condition #1, acquisition #1
+// |  |- C00_(condition name)_N01_image.tif: tif files for condition #1, acquisition #2
+// |  |- ...
+// |  |- C01_(condition name)_N00_image.tif: tif files for condition #2, acquisition #1
+// |  |- C01_(condition name)_N01_image.tif: tif files for condition #2, acquisition #2
+// |  |- ...
 // |– grouped Log folder (optionnal)
-// |
-// |– C00_log.txt
-// |– C01_log.txt
+// |  |– C00_log.txt: log file for condition #1
+// |  |– C01_log.txt: log file for condition #2
 // |– ...
-// |
-// |
 
 
 macro "Prepare_Abbelight_Folder" {
