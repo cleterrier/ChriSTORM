@@ -36,14 +36,12 @@
 // Experiment folder
 // |– Experience0
 // |  |– Name.txt
-// |  |– Log.txt
 // |  |– CellZone0
 // |  |  |– files are not there anymore!
 // |  |– CellZone1
 // |  |– ...
 // |– Experience1
 // |  |– Name.txt
-// |  |– Log.txt
 // |  |– CellZone0
 // |  |– CellZone1
 // |  |– ...
