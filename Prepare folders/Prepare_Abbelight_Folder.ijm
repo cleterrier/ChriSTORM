@@ -31,7 +31,7 @@
 //
 // So for the above structure, the output structure will be:
 //
-// Experiment folder (such as "TESTNB#1")
+// Experiment folder
 // |
 // |– Condition 1 folder (named "Experience0")
 // |  |
