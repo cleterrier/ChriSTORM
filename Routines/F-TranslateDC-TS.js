@@ -14,14 +14,18 @@ importClass(Packages.java.lang.Double);
 // outDir: output directory path
 // ps: pixel size on camera image in nm (default is 160 nm for NSTORM)
 // cf: compensate distortion from the 3D astigmatic lens (default for NSTORM X = 1.036875 * Y)
-// rf : "rotate right" the coordinates to align default output of DECODE with default output of TS/SMAP (boolean, default true)
+// rf: rotate 90°right (boolean, default true)
+// fY: flip Y coodrindates. DECODE inverts X and Y so by default locs should be rotated 90° right + flipped Y (boolean, default true)
 // sX: width of camera image in pixels (default is 256 for NSTORM);
 // sY: height of camera image in pixels (default is 256 for NSTORM);
 // fz: flip Z coordinates
 // cz: compensate Z coordinates for index mismatch (default is 0.8)
 // su: scale uncertainties (as done by Ries lab for SMAP output, default is 0.4)
 
-function TranslateDCTS(inPath, outDir, ps, cf, rf, sX, sY, fz, cz, su){
+function TranslateDCTS(inPath, outDir, ps, cf, rf, fY, sX, sY, fz, cz, su){
+
+	// Header length (new in DECODE 0.10)
+	var headLength = 3;
 
 	// Separators
 	var inSep = ","; // input separator
@@ -53,6 +57,11 @@ function TranslateDCTS(inPath, outDir, ps, cf, rf, sX, sY, fz, cz, su){
 	var br = new BufferedReader(new FileReader(inFile));
 
 	IJ.log("    inName: " + inName);
+	
+	// Pass the header lines
+	for (l = 0; l < headLength; l++) {
+		br.readLine();
+	}
 
 	// Get the header line and find index of Z, intensity, background and x coordinate columns
 	var inHeader = br.readLine();
@@ -103,17 +112,24 @@ function TranslateDCTS(inPath, outDir, ps, cf, rf, sX, sY, fz, cz, su){
 		// Processing of individual values from input file lines, split by inSep
 		var inCells = inLine.split(inSep);
 
-		var fOut = inCells[fIndex] + 1;
+		var fOut = (parseInt(inCells[fIndex]) + 1).toFixed(0);
 
-		if (rf == true){ // this "rotates right" to align default output of DECODE with default output of TS/SMAP
+		if (rf == true && fY == true) { // this aligns the default output of DECODE with the default output of TS/SMAP
+			var xOut = (parseFloat(inCells[yIndex]) * cf * ps).toFixed(1);
+			var yOut = (parseFloat(inCells[xIndex]) * ps).toFixed(1);
+		}			
+		else if (rf == true && fY == false){ 
 			var xOut = ((sX - parseFloat(inCells[yIndex])) * ps * cf).toFixed(1);
 			var yOut = (parseFloat(inCells[xIndex]) * ps).toFixed(1);
 		}
-		else {
+		else if (rf == false && fY == true) {
+			var xOut = (parseFloat(inCells[xIndex]) * cf * ps).toFixed(1);
+			var yOut = ((sY- parseFloat(inCells[yIndex])) * ps).toFixed(1);
+		}
+		else if (rf == false && fY == false) {
 			var xOut = (parseFloat(inCells[xIndex]) * cf * ps).toFixed(1);
 			var yOut = (parseFloat(inCells[yIndex]) * ps).toFixed(1);
 		}
-
 
 		var unxOut = (parseFloat(inCells[unxIndex]) * ps);
 		var unyOut = (parseFloat(inCells[unyIndex]) * ps);

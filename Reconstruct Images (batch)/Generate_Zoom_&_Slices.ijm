@@ -65,6 +65,7 @@ macro "Generate Zooms & Slices" {
 	SLICE_LONG_DEF = true;
 	SLICE_PROJ_A = newArray("None", "Maximum", "Sum");
 	SLICE_PROJ_DEF = "Sum"; // true
+	SLICE_COLOR_DEF = false;
 	XY_VIEW_DEF = 0; // 2500 nm
 
 	FILT_DEF = false;
@@ -184,6 +185,7 @@ macro "Generate Zooms & Slices" {
 	Dialog.addNumber("Slice thickness (0 for line ROI thickness", SLICE_THICK_DEF, 0, 4, "nm");
 	Dialog.addCheckbox("Slice in both directions", SLICE_LONG_DEF);
 	Dialog.addChoice("Slice project", SLICE_PROJ_A, SLICE_PROJ_DEF);
+	Dialog.addCheckbox("Slice colorized", SLICE_COLOR_DEF);
 	Dialog.addNumber("XY view min size (0 for smallest)", XY_VIEW_DEF, 0, 4, "nm"); // Minimum box size around slice
 	Dialog.addMessage("");
 	Dialog.addCheckbox("Density filter", FILT_DEF);
@@ -206,6 +208,7 @@ macro "Generate Zooms & Slices" {
 	SLICE_THICK = Dialog.getNumber();
 	SLICE_LONG = Dialog.getCheckbox();
 	SLICE_PROJ = Dialog.getChoice();
+	SLICE_COLOR = Dialog.getCheckbox();
 	XY_VIEW = Dialog.getNumber();
 
 	FILT = Dialog.getCheckbox();
@@ -550,33 +553,38 @@ for (z = 1; z < iCount + 1; z++) {
 				// Build the visualization string
 				VISU_STRING = VISU_STRING_XY + VISU_STRING_Z + VISU_STRING_RANGE;
 
-				// Launch the visualization
+				// Launch the visualization to generate the tile
 				selectWindow(RESULTS_TITLE);
 				run("Visualization", VISU_STRING);
 				rename("ROIoutput");
 
-
+				// Add scale of the tile
 				outIm = outProcess(OUT_TITLE);
 				zoomTitle = getTitle();
 
 				if (ROILINE == true) {
+
+				// generate the equivalent line ROI on the tile
 					SCALE = RECON_PX / SR_SIZE;
 					BIG_LINEOUT = getBigCoor(SMALL_LINEOUT, SCALE, roiX, roiY);
 					makeLine(BIG_LINEOUT[0], BIG_LINEOUT[1], BIG_LINEOUT[2], BIG_LINEOUT[3]);
+				
+				// Generation of the slice
 					if (SLICES == true) {
 						generateSlice(SLICE_THICK/1000, SR_SIZE/1000);
 						sliceID = getImageID();
 						run("Flip Horizontally", "stack");
-					//	optimizeContrast();
 
+				// Generation of the long slice
 						if (SLICE_LONG == true) {
 							run("Reslice [/]...", "start=Left rotate");
 							slicelongID = getImageID();
-
 						}
-
+									
+		// Slice projection, renaming and saving
 						selectImage(sliceID);
-
+						
+						// Non-colorized projection
 						if (SLICE_PROJ != "None") {
 							if (SLICE_PROJ == "Maximum") SL_STRING = "[Max Intensity]";
 							else if (SLICE_PROJ == "Sum") SL_STRING = "[Sum Slices]";
@@ -588,7 +596,8 @@ for (z = 1; z < iCount + 1; z++) {
 							sliceID = ZpID;
 						}
 
-						if (Z_COLOR == true) {
+						// Colorized projection
+						if (SLICE_COLOR == true) {
 							slicecID = ColorZ(sliceID, Z_LUT);
 							selectImage(sliceID);
 							close();
@@ -596,27 +605,25 @@ for (z = 1; z < iCount + 1; z++) {
 							sliceID = slicecID;
 						}
 
-						optimizeContrast();
-
-						// Name for the slice image
+						// Slice rename
 						if (nLocs > 10000) ADD_TITLE = "_" + nLocK2 + "K";
 						else  ADD_TITLE = "_" + nLocK + "K";
 						ADD_TITLE = ADD_TITLE + "_(" + XMIN + "," + YMIN + ")";
 						NEW_TITLE = zoomTitle + "_slice";
 						NEW_TITLE = replace(NEW_TITLE, "(_([0-9])+K)+_TS", ADD_TITLE + "_TS");
-						// NEW_TITLE = NEW_TITLE + "_C=" + (z-1);
 
-						// Save slice image
+						// Slice save
 						SaveSlicePath = SliceFolder + File.separator + NEW_TITLE + ".tif";
 						print("        Slice image:" + SaveSlicePath);
 						save(SaveSlicePath);
 						selectImage(sliceID);
 						if (CLOSE == true) close();
 
+		// Long slice projection, renaming and saving
 						if (SLICE_LONG == true) {
-
 					 		selectImage(slicelongID);
-
+					 		
+							// Non-colorized projection
 							if (SLICE_PROJ != "None") {
 								if (SLICE_PROJ == "Maximum") SL_STRING = "[Max Intensity]";
 								else if (SLICE_PROJ == "Sum") SL_STRING = "[Sum Slices]";
@@ -629,7 +636,8 @@ for (z = 1; z < iCount + 1; z++) {
 								slicelongID = LZpID;
 							}
 
-							if (Z_COLOR == true) {
+							// Colorized projection
+							if (SLICE_COLOR == true) {
 								slicelongcID = ColorZ(slicelongID, Z_LUT);
 								selectImage(slicelongID);
 								close();
@@ -637,9 +645,7 @@ for (z = 1; z < iCount + 1; z++) {
 								slicelongID = slicelongcID;
 							}
 
-							optimizeContrast();
-
-							// Name for the slice image
+							// Long slice rename
 							if (nLocs > 10000) ADD_TITLE = "_" + nLocK2 + "K";
 							else  ADD_TITLE = "_" + nLocK + "K";
 							ADD_TITLE = ADD_TITLE + "_(" + XMIN + "," + YMIN + ")";
@@ -647,7 +653,7 @@ for (z = 1; z < iCount + 1; z++) {
 							NEW_TITLE = replace(NEW_TITLE, "(_([0-9])+K)+_TS", ADD_TITLE + "_TS");
 							// NEW_TITLE = NEW_TITLE + "_C=" + (z-1);
 
-							// Save slice image
+							// Long slice save
 							SaveSliceLongPath = SliceLongFolder + File.separator + NEW_TITLE + ".tif";
 							print("        Slice Long image:" + SaveSliceLongPath);
 							save(SaveSliceLongPath);
@@ -655,24 +661,20 @@ for (z = 1; z < iCount + 1; z++) {
 							if (CLOSE == true) close();
 						}
 					}
-					selectImage(outIm);
 				}
 
-				// optional gaussian blur
+		// Tile processing on the 32-bit stack (gaussian, unsharp mask, gamma, contrast adjustment)				
+				selectImage(outIm);
+
+				// Optional gaussian blur
 				if (GAUSS > 0) {
-					selectImage(outIm);
 					radius = GAUSS/SR_SIZE;
 					for (g = 0; g < GAUSS_MULT; g++) {
-						if (P3D == true) {
-							run("Gaussian Blur 3D...", "x=" + radius + " y="+ radius + " z=" + radius);
-						}
-						else {
-							run("Gaussian Blur...", "sigma=" + radius + " stack");
-						}
+						run("Gaussian Blur...", "sigma=" + radius + " stack");
 					}
 				}
 
-				// optional unsharp mask
+				// Optional unsharp mask
 				if (UNS_SIZE > 0) {
 					ur = UNS_SIZE/SR_SIZE;
 					for (u = 0; u < UNS_MULT; u++) {
@@ -680,44 +682,61 @@ for (z = 1; z < iCount + 1; z++) {
 					}
 				}
 
-				// optional gamma
+				// Optional gamma
 				if (GAM != 1) {
 					run("Gamma...", "value=" + GAM + " stack");
 				}
 
+				// Optional contrast adjustment
+				if (AD_CONT == true) {
+					if (AD_CONT == true) {
+						run("Enhance Contrast...", "saturated=" + SAT_LEV + " normalize process_all use");
+						run("Enhance Contrast", "saturated=0.01");
+						getMinAndMax(cmin, cmax);
+						setMinAndMax(cmin, 1);					
+					}
+				}
+
+		// Tile projection, renaming and saving
 				if (P3D == true) {
 					selectImage(outIm);
 					nOutS = nSlices;
+					
+					// Colorized case
 					if (Z_COLOR == true) {
 						if (Z_PROJ == "Sum (32-bit or color)") PROJ_STRING = "SUM";
 						else if (Z_PROJ == "Maximum (32-bit or color)") PROJ_STRING = "MAX";
 						else if (Z_PROJ == "Weighted sum (color)") PROJ_STRING = "WeightedSUM";
 						else if (Z_PROJ == "None") PROJ_STRING = "None";
 						run("Temporal-Color Code", "lut=[" + Z_LUT + "] projection=" + PROJ_STRING + " start=1 end=" + nOutS + "");
+						run("Set Scale...", "distance=1 known=" + SR_SIZE / 1000 + " unit=um");
 						projID = getImageID();
 						rename(zoomTitle);
-						// optimizeContrast();
 						selectImage(outIm);
 						close();
 						selectImage(projID);
 					}
+					
+					// Non-colorized case
 					else if (Z_PROJ != "None" && Z_COLOR == false){
 						if (Z_PROJ == "Maximum (32-bit or color)") PROJ_STRING = "[Maximum Intensity]";
 						else PROJ_STRING = "[Sum Slices]";
 						run("Z Project...", "projection=" + PROJ_STRING);
 						projID = getImageID();
 						rename(zoomTitle);
-						// optimizeContrast();
 						selectImage(outIm);
 						close();
 						selectImage(projID);
 					}
+					
 					else {
 						selectImage(outIm);
 						rename(zoomTitle);
 					}
 				}
 
+
+				// Draw line ROI on tile
 				if (ROILINE == true) {
 					BIG_LINEIN = getBigCoor(SMALL_LINEIN, SCALE, roiX, roiY);
 					makeLine(BIG_LINEIN[0], BIG_LINEIN[1], BIG_LINEIN[2], BIG_LINEIN[3]);
@@ -726,22 +745,21 @@ for (z = 1; z < iCount + 1; z++) {
 					run("Select None");
 				}
 
-				optimizeContrast();
 
-				// Adjust image size so that all have same size (does not work very well)
+				// Adjust tile size so that all have same size (does not work very well)
 				if (XY_VIEW > 0) {
 					magS = floor(XY_VIEW / SR_SIZE);
 					run("Canvas Size...", "width=" + magS + " height=" + magS + " position=Center zero");
 				}
 
-				// Name for the zoom image
+				// Tile rename
 				if (nLocs > 10000) ADD_TITLE = "_" + nLocK2 + "K";
 				else  ADD_TITLE = "_" + nLocK + "K";
 				ADD_TITLE = ADD_TITLE + "_(" + XMIN + "," + YMIN + ")";
 				NEW_TITLE = replace(zoomTitle, "(_([0-9])+K)+_TS", ADD_TITLE + "_TS");
 				// NEW_TITLE = NEW_TITLE + "_C=" + (z-1);
 
-				// Save zoom image
+				// Tile save
 				SaveZoomPath = ZoomFolder + File.separator + NEW_TITLE + ".tif";
 				print("        Box image:" + SaveZoomPath);
 				save(SaveZoomPath);
@@ -783,6 +801,7 @@ for (z = 1; z < iCount + 1; z++) {
 
 	selectImage(imID);
 	run ("Select None");
+	
 	// Restore Settings
 	restoreSettings();
 
@@ -867,16 +886,22 @@ function generateSlice(sd, vX) {
 	sc = round(sd / vX);
 	run("Reslice [/]...", "output=" + vX + " slice_count=" + sc + " flip");
 	ResID = getImageID();
-	// optional gaussian blur
+
+	// Process the slice (gaussian blur, unsharp mask, gamma, contrast adjustment) on the 32-bit stack
+	// Optional gaussian blur
 	if (GAUSS > 0) {
 		radius = GAUSS/SR_SIZE;
 		for (g = 0; g < GAUSS_MULT; g++) {
+			if (P3D == true) {
 				run("Gaussian Blur 3D...", "x=" + radius + " y="+ radius + " z=" + radius);
-				 //run("Gaussian Blur...", "sigma=" + radius + " stack");
+			}
+			else {
+				run("Gaussian Blur...", "sigma=" + radius + " stack");
+			}
 		}
 	}
 
-	// optional unsharp mask
+	// Optional unsharp mask
 	if (UNS_SIZE > 0) {
 		ur = UNS_SIZE/SR_SIZE;
 		for (u = 0; u < UNS_MULT; u++) {
@@ -884,20 +909,28 @@ function generateSlice(sd, vX) {
 		}
 	}
 
-	// optional gamma
+	// Optional gamma
 	if (GAM != 1) {
 		run("Gamma...", "value=" + GAM + " stack");
 	}
+
+	// resetMinAndMax();
+			
+	// Optional contrast adjustment
+	if (AD_CONT == true) {
+		run("Enhance Contrast...", "saturated=" + SAT_LEV + " normalize process_all use");
+		run("Enhance Contrast", "saturated=0.01");
+		getMinAndMax(cmin, cmax);
+		setMinAndMax(cmin, 1);					
+	}	
 
 	return inTitle;
 
 }
 
 function outProcess(outTitle){
-
 	// Set scale
 	setVoxelSize(SR_SIZE/1000, SR_SIZE/1000, Z_SPACE/1000, "um");
-
 	rename(OUT_TITLE);
 	outID = getImageID();
 	return outID;
@@ -908,21 +941,6 @@ function cleanTitle(s){
 	if (a > 0) sc = substring(s, 0, a);
 	else sc = s;
 	return sc;
-}
-
-function optimizeContrast() {
-	if (Z_COLOR == false) {
-		getStatistics(OutArea, OutMean, OutMin, OutMax);
-		setMinAndMax(0, OutMax);
-		// run("16-bit");
-		// setMinAndMax(0, 65535);
-		if (AD_CONT == true) {
-		run("Enhance Contrast...", "saturated=" + SAT_LEV + " normalize");
-		// setMinAndMax(0,65535);
-		}
-	}
-	else if (AD_CONT == true) run("Enhance Contrast...", "saturated=" + SAT_LEVEL);
-	return;
 }
 
 function ColorZ(imgID, Z_LUT) {

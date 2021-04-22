@@ -29,9 +29,9 @@ macro "Generate Reconstructions" {
 // Default values for the Options Panel
 	CAM_SIZE_DEF = 160;
 	//CG_DEF = 63.6; // camera gain old images
-	CG_DEF = 12.48; // camera gain new images
+	//CG_DEF = 12.48; // camera gain new images
 	//EM_DEF = 300; // EM gain old images
-	EM_DEF = 100; // EM gain new images
+	//EM_DEF = 100; // EM gain new images
 	SR_SIZE_DEF = 16;
 	XMIN_DEF = 0;
 	YMIN_DEF = 0;
@@ -42,7 +42,7 @@ macro "Generate Reconstructions" {
 	XY_ORI_DEF = false;
 	XY_UN_DEF = 0;
 	P3D_DEF = false;
-	Z_SPACE_DEF = 20;
+	Z_SPACE_DEF = 32;
 	Z_MIN_DEF = -400;
 	Z_MAX_DEF = 400;
 	Z_AUTO_DEF = false;
@@ -50,7 +50,7 @@ macro "Generate Reconstructions" {
 	Z_UN_DEF = 0;
 	Z_COLOR_ARRAY = newArray("No color", "Colorized 2D", "Colorized 2D weighted", "Colorized 3D");
 	Z_COLOR_DEF = "Colorized 2D";
-	Z_LUT_DEF = "ZOLA"; // LUT for color-coded 3D, other good ones: Jet, ametrine, ThunderSTORM
+	Z_LUT_DEF = "Rainbow RGB"; // LUT for color-coded 3D, other good ones: Jet, ametrine, ThunderSTORM
 	GAUSS_DEF = 0; // gaussian blur radius (none if 0)
 	GAUSS_MULT_DEF = 1; // multiple gaussian blur passes
 	UNS_SIZE_DEF = 0; // unsharp mask radius (none if 0)
@@ -58,7 +58,7 @@ macro "Generate Reconstructions" {
 	UNS_MULT_DEF = 1; // multiple unsharp mask passes
 	GAM_DEF = 1; // gamma (none if 1)
 	to16_DEF = false; // convert from 32-bit to 16-bit (for grayscale images)
-	AD_CONT_DEF = false; // adjust contrast (color and 16-bit only)
+	AD_CONT_DEF = true; // adjust contrast (color and 16-bit only)
 	SAT_LEV_DEF = 0.1; // saturation level for contrast adjustment
 
 
@@ -114,7 +114,7 @@ macro "Generate Reconstructions" {
 		Dialog.addNumber("Gamma (1 for none)", GAM_DEF, 2, 3, "");
 		Dialog.addCheckbox("Convert to 16-bit (non-colorized only)", to16_DEF);
 		Dialog.addCheckbox("Adjust contrast (colorized & 16-bit only)", AD_CONT_DEF);
-		Dialog.addNumber("Saturated pixels", SAT_LEV_DEF, 2, 3, "%");
+		Dialog.addNumber("Saturated pixels", SAT_LEV_DEF, 2, 3, "");
 		Dialog.show();
 
 		// Feeding variables from dialog choices
@@ -273,8 +273,8 @@ macro "Generate Reconstructions" {
 	}
 
 	// Initialize the camera setup
-	run("Camera setup", "isemgain=true pixelsize=" + CAM_SIZE + " photons2adu=" + CG_DEF +" quantumefficiency=0.89 offset=100 gainem=" + EM_DEF);
-
+//	run("Camera setup", "isemgain=true pixelsize=" + CAM_SIZE + " photons2adu=" + CG_DEF +" quantumefficiency=0.89 offset=100 gainem=" + EM_DEF);
+	run("Camera setup", "pixelsize=" + CAM_SIZE);
 
 //*************** Process Images ***************
 
@@ -386,11 +386,11 @@ macro "Generate Reconstructions" {
 						Z_SPACE = round((Z_MAX - Z_MIN)  / Z_N); // Here we modify Z_SPACE!
 
 						VISU_STRING_RANGE = " zrange=" + Z_MIN + ":" + Z_SPACE + ":" + Z_MAX;
-						print("      auto Z range: " + Zmini + " to " + Zmaxi + " nm, slices " + Z_MIN + " to " + Z_MAX + " nm (" + Z_SPACE + " nm spacing)" );
+						print("      auto Z range: " + Zmini + " to " + Zmaxi + " nm");
 					}
 				} // end of IF loop auto-Z range
 
-
+				print("      Z range: " + Z_MIN + " to " + Z_MAX + " nm (" + Z_SPACE + " nm spacing)" );
 
 				// Finalize the Visualization arguments string
 				VISU_STRING = VISU_STRING_XY + VISU_STRING_Z + VISU_STRING_RANGE;
@@ -406,12 +406,7 @@ macro "Generate Reconstructions" {
 				if (GAUSS > 0) {
 					radius = GAUSS/SR_SIZE;
 					for (g = 0; g < GAUSS_MULT; g++) {
-						if (P3D == true) {
-							run("Gaussian Blur 3D...", "x=" + radius + " y="+ radius + " z=" + radius);
-						}
-						else {
-							run("Gaussian Blur...", "sigma=" + radius + " stack");
-						}
+						run("Gaussian Blur...", "sigma=" + radius + " stack");
 					}
 				}
 
@@ -426,14 +421,17 @@ macro "Generate Reconstructions" {
 				// optional gamma
 				if (GAM != 1) {
 					run("Gamma...", "value=" + GAM + " stack");
-					// resetMinAndMax();
 				}
-				
+
 
 				// Colorized output 3D
 				if (nSlices > 1 && Z_COLOR == "Colorized 3D") {
-
-					if (AD_CONT == true) run("Enhance Contrast...", "saturated=" + SAT_LEV + " process_all use");
+					if (AD_CONT > 0) {
+						run("Enhance Contrast...", "saturated=" + SAT_LEV + " normalize process_all use");
+						run("Enhance Contrast", "saturated=" + SAT_LEV);
+						getMinAndMax(cmin, cmax);
+						setMinAndMax(cmin, 1);
+					}			
 					run("Temporal-Color Code", "lut=[" + Z_LUT + "] projection=None start=1 end=" + nSlices + "");
 					colorID = getImageID();
 					run("Select None");
@@ -445,9 +443,12 @@ macro "Generate Reconstructions" {
 
 				// Colorized output 2D
 				else if (nSlices > 1 && Z_COLOR == "Colorized 2D Weighted") {
-
-					if (AD_CONT == true) run("Enhance Contrast...", "saturated=" + SAT_LEV + " process_all use");
-					resetMinAndMax();
+					if (AD_CONT == true) {
+						run("Enhance Contrast...", "saturated=" + SAT_LEV + " normalize process_all use");
+						run("Enhance Contrast", "saturated=" + SAT_LEV);
+						getMinAndMax(cmin, cmax);
+						setMinAndMax(cmin, 1);
+					}
 					run("Temporal-Color Code", "lut=[" + Z_LUT + "] projection=WeightedSUM start=1 end=" + nSlices + "");
 					colorID = getImageID();
 					run("Select None");
@@ -458,10 +459,14 @@ macro "Generate Reconstructions" {
 				}
 
 				else if (nSlices > 1 && Z_COLOR == "Colorized 2D") {
-
-					if (AD_CONT == true) run("Enhance Contrast...", "saturated=" + SAT_LEV + " process_all use");
-					resetMinAndMax();
+					if (AD_CONT == true) {
+						run("Enhance Contrast...", "saturated=" + SAT_LEV + " normalize process_all use");
+						run("Enhance Contrast", "saturated=" + SAT_LEV);
+						getMinAndMax(cmin, cmax);
+						setMinAndMax(cmin, 1);				
+					}
 					run("Temporal-Color Code", "lut=[" + Z_LUT + "] projection=SUM start=1 end=" + nSlices + "");
+					run("Set Scale...", "distance=1 known=" + SR_SIZE / 1000 + " unit=um");
 					colorID = getImageID();
 					run("Select None");
 					selectImage(colorID);
@@ -472,13 +477,13 @@ macro "Generate Reconstructions" {
 
 				// Grayscale 16-bit output
 				else if (to16 == true) {
-					run("16-bit");
-					// ScaleMax = 65535;
-					// setMinAndMax(0, ScaleMax);
 					if (AD_CONT == true) {
 						run("Enhance Contrast...", "saturated=" + SAT_LEV + " normalize process_all use");
-						// setMinAndMax(0, ScaleMax);
+						run("Enhance Contrast", "saturated=" + SAT_LEV);
+						getMinAndMax(cmin, cmax);
+						setMinAndMax(cmin, 1);					
 					}
+					run("16-bit");
 					outID = getImageID();
 					rename(OUT_TITLE);
 				}
