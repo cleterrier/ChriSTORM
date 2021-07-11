@@ -21,10 +21,9 @@ macro "Generate Reconstructions" {
 
 // Titles of the Thunderstorm windows for catching them
 	RESULTS_TITLE = "ThunderSTORM: results";
-	RECON_TITLE = "Normalized Gaussian";
 	// Index of column containing Z coordinates in TS3D files
 	colZ = 3;
-	LUT_ARRAY = newArray("Rainbow RGB", "Jet", "Turbo", "ametrine", "ThunderSTORM", "ZOLA", "3color-RMB", "3color-CGY", "2C Cyan-Green", "2C Yellow-Red", "2C Green-Cyan", "2C Red-Yellow");
+	LUT_ARRAY = newArray("Rainbow RGB", "Jet", "Turbo", "ametrine", "ThunderSTORM", "ZOLA", "ZOLANDER", "3color-RMB", "3color-CGY", "2C Cyan-Green", "2C Yellow-Red", "2C Green-Cyan", "2C Red-Yellow");
 
 // Default values for the Options Panel
 	CAM_SIZE_DEF = 160;
@@ -32,6 +31,8 @@ macro "Generate Reconstructions" {
 	//CG_DEF = 12.48; // camera gain new images
 	//EM_DEF = 300; // EM gain old images
 	//EM_DEF = 100; // EM gain new images
+	REC_METH_ARRAY = newArray("Histograms", "Normalized Gaussian");
+	REC_METH_DEF = "Normalized Gaussian"; // Reconstruction method
 	SR_SIZE_DEF = 16;
 	XMIN_DEF = 0;
 	YMIN_DEF = 0;
@@ -46,7 +47,8 @@ macro "Generate Reconstructions" {
 	Z_MIN_DEF = -400;
 	Z_MAX_DEF = 400;
 	Z_AUTO_DEF = false;
-	Z_SAT_DEF = 50; // restriction of 3D span on top and bottom (in nm)
+	Z_SATDO_DEF = 50; // restriction of 3D span at bottom (in nm)
+	Z_SATUP_DEF = 50; // restriction of 3D span on top (in nm)
 	Z_UN_DEF = 0;
 	Z_COLOR_ARRAY = newArray("No color", "Colorized 2D", "Colorized 2D weighted", "Colorized 3D");
 	Z_COLOR_DEF = "Colorized 2D";
@@ -58,7 +60,7 @@ macro "Generate Reconstructions" {
 	UNS_MULT_DEF = 1; // multiple unsharp mask passes
 	GAM_DEF = 1; // gamma (none if 1)
 	to16_DEF = false; // convert from 32-bit to 16-bit (for grayscale images)
-	AD_CONT_DEF = true; // adjust contrast (color and 16-bit only)
+	AD_CONT_DEF = false; // adjust contrast (color and 16-bit only)
 	SAT_LEV_DEF = 0.1; // saturation level for contrast adjustment
 
 
@@ -86,6 +88,7 @@ macro "Generate Reconstructions" {
 	//	Dialog.addNumber("Converter gain", CG_DEF, 2, 4, "phot/ADU");
 	//	Dialog.addNumber("EM gain", EM_DEF, 0, 4, "");
 	//	Dialog.addMessage("");
+		Dialog.addChoice("Reconstruction", REC_METH_ARRAY, REC_METH_DEF);
 		Dialog.addNumber("Final pixel size", SR_SIZE_DEF, 0, 3, "nm");
 		Dialog.addNumber("Start reconstruction at X=", XMIN_DEF, 0, 4, "pixels");
 		Dialog.addNumber("Start reconstruction at Y=", YMIN_DEF, 0, 4, "pixels");
@@ -101,7 +104,8 @@ macro "Generate Reconstructions" {
 		Dialog.addNumber("Z min", Z_MIN_DEF, 0, 4, "nm");
 		Dialog.addNumber("Z max", Z_MAX_DEF, 0, 4, "nm");
 		Dialog.addCheckbox("Auto Z-range", Z_AUTO_DEF);
-		Dialog.addNumber("Restrict Z-range by", Z_SAT_DEF, 0, 4, "nm");
+		Dialog.addNumber("Restrict Z-range bottom by", Z_SATDO_DEF, 0, 4, "nm");
+		Dialog.addNumber("Restrict Z-range top by", Z_SATUP_DEF, 0, 4, "nm");
 		Dialog.addNumber("Force Z uncertainty (0 to keep)", Z_UN_DEF, 0, 3, "nm");
 		Dialog.addChoice("Z colorized", Z_COLOR_ARRAY, Z_COLOR_DEF);
 		Dialog.addChoice("Color LUT", LUT_ARRAY, Z_LUT_DEF);
@@ -109,9 +113,9 @@ macro "Generate Reconstructions" {
 		Dialog.addNumber("Gaussian blur (0 for no filter)", GAUSS_DEF, 0, 3, "nm");
 		Dialog.addNumber("Apply blur ", GAUSS_MULT_DEF, 0, 3, "times");
 		Dialog.addNumber("Unsharp mask (0 for no filter)", UNS_SIZE_DEF, 0, 3, "nm");
-		Dialog.addNumber("Mask weight (0-1)", UNS_WEIGHT_DEF, 2, 3, "");
+		Dialog.addNumber("Mask weight (0-1)", UNS_WEIGHT_DEF, 2, 4, "");
 		Dialog.addNumber("Apply unsharp", UNS_MULT_DEF, 0, 3, "times");
-		Dialog.addNumber("Gamma (1 for none)", GAM_DEF, 2, 3, "");
+		Dialog.addNumber("Gamma (1 for none)", GAM_DEF, 2, 4, "");
 		Dialog.addCheckbox("Convert to 16-bit (non-colorized only)", to16_DEF);
 		Dialog.addCheckbox("Adjust contrast (colorized & 16-bit only)", AD_CONT_DEF);
 		Dialog.addNumber("Saturated pixels", SAT_LEV_DEF, 2, 3, "");
@@ -121,6 +125,7 @@ macro "Generate Reconstructions" {
 		CAM_SIZE = Dialog.getNumber();
 	//	CG = Dialog.getNumber();
 	//	EM = Dialog.getNumber();
+		REC_METH = Dialog.getChoice();
 		SR_SIZE = Dialog.getNumber();
 		XMIN = Dialog.getNumber();
 		YMIN = Dialog.getNumber();
@@ -135,7 +140,8 @@ macro "Generate Reconstructions" {
 		Z_MIN = Dialog.getNumber();
 		Z_MAX = Dialog.getNumber();
 		Z_AUTO = Dialog.getCheckbox();
-		Z_SAT = Dialog.getNumber();
+		Z_SATDO = Dialog.getNumber();
+		Z_SATUP = Dialog.getNumber();
 		Z_UN = Dialog.getNumber();
 		Z_COLOR = Dialog.getChoice();
 		Z_LUT = Dialog.getChoice();
@@ -152,36 +158,38 @@ macro "Generate Reconstructions" {
 	}
 
  	// called from macro:
-	// arguments (INPUT_DIR, CAM_SIZE, SR_SIZE, XMIN, YMIN, XWIDTH, YWIDTH, XY_AUTO, XY_ORI, XY_ZERO, XY_UN, P3D, Z_SPACE, Z_MIN, Z_MAX, Z_AUTO, Z_SAT, Z_UN, Z_COLOR, Z_LUT, GAM, GAUSS, UNS_SIZE, UNS_WEIGHT, UNS_MULT, to16, AD_CONT, SAT_LEV)
+	// arguments (INPUT_DIR, CAM_SIZE, REC_METH, SR_SIZE, XMIN, YMIN, XWIDTH, YWIDTH, XY_AUTO, XY_ORI, XY_ZERO, XY_UN, P3D, Z_SPACE, Z_MIN, Z_MAX, Z_AUTO, Z_SATDO, Z_SATUP, Z_UN, Z_COLOR, Z_LUT, GAM, GAUSS, UNS_SIZE, UNS_WEIGHT, UNS_MULT, to16, AD_CONT, SAT_LEV)
 	else {
 		CAM_SIZE = parseInt(argarray[1]);
-		SR_SIZE = parseInt(argarray[2]);
-		XMIN = parseInt(argarray[3]);
-		YMIN = parseInt(argarray[4]);
-		XWIDTH = parseInt(argarray[5]);
-		YWIDTH = parseInt(argarray[6]);
-		XY_AUTO = argarray[7];
-		XY_ZERO = argarray[8];
-		XY_ORI = argarray[7];
-		XY_UN = parseInt(argarray[10]);
-		P3D = argarray[11];
-		Z_SPACE = parseInt(argarray[12]);
-		Z_MIN = parseInt(argarray[13]);
-		Z_MAX = parseInt(argarray[14]);
-		Z_AUTO = argarray[15];
-		Z_SAT = parseInt(argarray[16]);
-		Z_UN = parseInt(argarray[17]);
-		Z_COLOR = argarray[18];
-		Z_LUT = argarray[19];
-		GAUSS = parseInt(argarray[20]);
-		GAUSS_MULT = parseInt(argarray[21]);
-		UNS_SIZE = parseInt(argarray[22]);
-		UNS_WEIGHT = parseFloat(argarray[23]);
-		UNS_MULT = parseFloat(argarray[24]);
-		GAM = parseFloat(argarray[25]);
-		to16 = argarray[26];
-		AD_CONT = argarray[27];
-		SAT_LEV = argarray[28];
+		REC_METH = parseInt(argarray[2]);
+		SR_SIZE = parseInt(argarray[3]);
+		XMIN = parseInt(argarray[4]);
+		YMIN = parseInt(argarray[5]);
+		XWIDTH = parseInt(argarray[6]);
+		YWIDTH = parseInt(argarray[7]);
+		XY_AUTO = argarray[8];
+		XY_ZERO = argarray[9];
+		XY_ORI = argarray[10];
+		XY_UN = parseInt(argarray[11]);
+		P3D = argarray[12];
+		Z_SPACE = parseInt(argarray[13]);
+		Z_MIN = parseInt(argarray[14]);
+		Z_MAX = parseInt(argarray[15]);
+		Z_AUTO = argarray[16];
+		Z_SATUP = parseInt(argarray[17]);
+		Z_SATDO = parseInt(argarray[18]);
+		Z_UN = parseInt(argarray[19]);
+		Z_COLOR = argarray[20];
+		Z_LUT = argarray[21];
+		GAUSS = parseInt(argarray[22]);
+		GAUSS_MULT = parseInt(argarray[23]);
+		UNS_SIZE = parseInt(argarray[24]);
+		UNS_WEIGHT = parseFloat(argarray[25]);
+		UNS_MULT = parseFloat(argarray[26]);
+		GAM = parseFloat(argarray[27]);
+		to16 = argarray[28];
+		AD_CONT = argarray[29];
+		SAT_LEV = argarray[30];
 	}
 
 //*************** Prepare Processing (get names, open images, make output folder) ***************
@@ -189,25 +197,37 @@ macro "Generate Reconstructions" {
 	//Time counter
 	startTime = getTime();
 
+	// Store the output image window and reconstruction string, initialize the output parameters string
+	if (REC_METH == "Histograms") {
+		RECON_TITLE = "Histograms";
+		RECON_STRING = "[Histograms] avg=0";
+		OUT_PARAM = "H";
+	}
+	else {
+		RECON_TITLE = "Normalized Gaussian";
+		RECON_STRING = "[Normalized Gaussian]";
+		OUT_PARAM = "G";
+	}
+
 	// Get all file names
 	ALL_NAMES = getFileList(INPUT_DIR);
 	Array.sort(ALL_NAMES);
 
 	//Create the output folder name
 	if (P3D == false) {
-		OUT_PARAM = "xy" + SR_SIZE;
+		OUT_PARAM += "xy" + SR_SIZE;
 	}
 	else if (Z_COLOR == "Colorized 2D"){
-		OUT_PARAM = "xy" + SR_SIZE + "zc";
+		OUT_PARAM += "xy" + SR_SIZE + "zc";
 	}
 	else if (Z_COLOR == "Colorized 2D weighted"){
-		OUT_PARAM = "xy" + SR_SIZE + "zw";
+		OUT_PARAM += "xy" + SR_SIZE + "zw";
 	}
 	else if (Z_COLOR == "Colorized 3D"){
-		OUT_PARAM = "xy" + SR_SIZE + "z" + Z_SPACE + "c";
+		OUT_PARAM += "xy" + SR_SIZE + "z" + Z_SPACE + "c";
 	}
 	else {
-		OUT_PARAM = "xy" + SR_SIZE + "z" + Z_SPACE;
+		OUT_PARAM += "xy" + SR_SIZE + "z" + Z_SPACE;
 	}
 	if (GAM !=1) {
 		OUT_PARAM += "_g" + toString(GAM, 1);
@@ -227,15 +247,15 @@ macro "Generate Reconstructions" {
 		File.makeDirectory(OUTPUT_DIR);
 	}
 	print("Output folder: " + OUTPUT_DIR);
-
-
+	
+	
 	// Prepare the visualization arguments(Visu string)
 	Magnif = CAM_SIZE / SR_SIZE;
 
 	if (XY_UN == 0) FORCE_STRING = "dxforce=false dx=20.0";
 	else FORCE_STRING = "dxforce=true dx=" + XY_UN;
 
-	VISU_STRING_XY = "imleft=" + XMIN + " imtop=" + YMIN + " imwidth=" + XWIDTH + " imheight=" + YWIDTH + " renderer=[Normalized Gaussian] magnification=" + Magnif + " " + FORCE_STRING + " ";
+	VISU_STRING_XY = "imleft=" + XMIN + " imtop=" + YMIN + " imwidth=" + XWIDTH + " imheight=" + YWIDTH + " renderer=" + RECON_STRING + " magnification=" + Magnif + " " + FORCE_STRING + " ";
 
 	// Prepare the Z part of the Visu string
 	// Case of a 2D image
@@ -380,8 +400,8 @@ macro "Generate Reconstructions" {
 						Z_MIN = (floor(Zmini / Z_SPACE)) * Z_SPACE;
 						Z_MAX = (floor(Zmaxi / Z_SPACE) + 1) * Z_SPACE;
 					*/
-						Z_MIN = round(Zmini + Z_SAT);
-						Z_MAX = round(Zmaxi - Z_SAT);
+						Z_MIN = round(Zmini + Z_SATDO);
+						Z_MAX = round(Zmaxi - Z_SATUP);
 						Z_N = round((Z_MAX - Z_MIN) / Z_SPACE);
 						Z_SPACE = round((Z_MAX - Z_MIN)  / Z_N); // Here we modify Z_SPACE!
 
@@ -431,7 +451,8 @@ macro "Generate Reconstructions" {
 						run("Enhance Contrast", "saturated=" + SAT_LEV);
 						getMinAndMax(cmin, cmax);
 						setMinAndMax(cmin, 1);
-					}			
+					}
+					run("8-bit");
 					run("Temporal-Color Code", "lut=[" + Z_LUT + "] projection=None start=1 end=" + nSlices + "");
 					colorID = getImageID();
 					run("Select None");
@@ -450,6 +471,7 @@ macro "Generate Reconstructions" {
 						setMinAndMax(cmin, 1);
 					}
 					run("Temporal-Color Code", "lut=[" + Z_LUT + "] projection=WeightedSUM start=1 end=" + nSlices + "");
+					run("Set Scale...", "distance=1 known=" + SR_SIZE / 1000 + " unit=um");
 					colorID = getImageID();
 					run("Select None");
 					selectImage(colorID);
@@ -465,6 +487,7 @@ macro "Generate Reconstructions" {
 						getMinAndMax(cmin, cmax);
 						setMinAndMax(cmin, 1);				
 					}
+					run("8-bit");
 					run("Temporal-Color Code", "lut=[" + Z_LUT + "] projection=SUM start=1 end=" + nSlices + "");
 					run("Set Scale...", "distance=1 known=" + SR_SIZE / 1000 + " unit=um");
 					colorID = getImageID();
@@ -514,7 +537,7 @@ macro "Generate Reconstructions" {
 }
 
 // function to test if a file is 2D or 3D (independantly of its name)
-function test3D(path, ind){
+function test3D_old(path, ind){
 	// Get the first 5000 bytes of the csv file
 	dipString = File.openAsRawString(path, 5000);
 	dipLines = split(dipString, "\n");
@@ -538,4 +561,15 @@ function test3D(path, ind){
 		return 0;
 	else
 		return 1;
+}
+
+function test3D(path, ind){
+	
+	name = File.getName(path);
+	t3D = indexOf(name, "TS3D.");
+	
+	if (t3D > -1)
+		return 1;
+	else
+		return 0;
 }

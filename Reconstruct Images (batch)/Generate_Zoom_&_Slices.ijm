@@ -14,7 +14,7 @@ macro "Generate Zooms & Slices" {
 	// Titles of the Thunderstorm windows for catching them
 	RESULTS_TITLE = "ThunderSTORM: results";
 	RECON_TITLE = "ROIoutput";
-	LUT_ARRAY = newArray("Rainbow RGB", "Jet", "Turbo", "ametrine", "ThunderSTORM", "ZOLA", "3color-RMB", "3color-CGY", "2C Cyan-Green", "2C Yellow-Red", "2C Green-Cyan", "2C Red-Yellow");
+	LUT_ARRAY = newArray("Rainbow RGB", "Jet", "Turbo", "ametrine", "ThunderSTORM", "ZOLA", "ZOLANDER", "3color-RMB", "3color-CGY", "2C Cyan-Green", "2C Yellow-Red", "2C Green-Cyan", "2C Red-Yellow");
 
 	// log
 	print("\n\n***** Generate Zooms & Slices started *****");
@@ -708,6 +708,7 @@ for (z = 1; z < iCount + 1; z++) {
 						else if (Z_PROJ == "Maximum (32-bit or color)") PROJ_STRING = "MAX";
 						else if (Z_PROJ == "Weighted sum (color)") PROJ_STRING = "WeightedSUM";
 						else if (Z_PROJ == "None") PROJ_STRING = "None";
+						if (PROJ_STRING != WeightedSUM) run("8-bit");
 						run("Temporal-Color Code", "lut=[" + Z_LUT + "] projection=" + PROJ_STRING + " start=1 end=" + nOutS + "");
 						run("Set Scale...", "distance=1 known=" + SR_SIZE / 1000 + " unit=um");
 						projID = getImageID();

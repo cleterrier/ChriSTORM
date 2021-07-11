@@ -119,6 +119,7 @@ macro "Workflow" {
 
 	// Generate_Reconstructions macro arguments
 	CAM_SIZE = 160;
+	REC_METH = "Normalized Gaussian"; 
 	//SR_SIZE = 16;
 	XMIN = 0;
 	YMIN = 0;
@@ -133,7 +134,8 @@ macro "Workflow" {
 	Z_MIN = -400;
 	Z_MAX = 400;
 	Z_AUTO = true;
-	Z_SAT = 50;
+	Z_SATDO = 50;
+	Z_SATUP = 50;
 	Z_UN = 0;
 	Z_COLOR = "Colorized 2D";
 	//Z_LUT = "Jet";
@@ -165,14 +167,14 @@ macro "Workflow" {
 	// Generate Recs (2D)
 	if (REC_2D == true) {
 		Gen_Recon_path = plugin_path + File.separator + "NeuroCyto" + File.separator + "ChriSTORM" + File.separator + "Reconstruct Images (batch)" + File.separator+ "Generate_Reconstructions.ijm";
-		Gen_Recon_args = out_path + "," + CAM_SIZE + "," + SR_SIZE + "," + XMIN + "," + YMIN + "," + XWIDTH + "," + YWIDTH + "," + XY_AUTO + ","  + XY_ZERO + "," + XY_ORI + "," + XY_UN + "," + P3D + "," + Z_SPACE + "," + Z_MIN + "," + Z_MAX + "," + Z_AUTO + "," + Z_SAT + "," + Z_UN + "," + Z_COLOR + "," + Z_LUT + "," + GAUSS + "," + GAUSS_MULT + "," + UNS_SIZE + "," + UNS_WEIGHT + "," + UNS_MULT + "," + GAM + ","  + to16 + "," + AD_CONT + "," + SAT_LEV;
+		Gen_Recon_args = out_path + "," + CAM_SIZE + ","+ REC_METH + "," + SR_SIZE + "," + XMIN + "," + YMIN + "," + XWIDTH + "," + YWIDTH + "," + XY_AUTO + ","  + XY_ZERO + "," + XY_ORI + "," + XY_UN + "," + P3D + "," + Z_SPACE + "," + Z_MIN + "," + Z_MAX + "," + Z_AUTO + "," + Z_SATDO + "," + Z_SATUP + "," + Z_UN + "," + Z_COLOR + "," + Z_LUT + "," + GAUSS + "," + GAUSS_MULT + "," + UNS_SIZE + "," + UNS_WEIGHT + "," + UNS_MULT + "," + GAM + ","  + to16 + "," + AD_CONT + "," + SAT_LEV;
 		out_path2 = runMacro(Gen_Recon_path, Gen_Recon_args);
 	}
 
 	// Optional Generate Recs (Zc)
 	if (REC_3D == true) {
 		P3D = true;
-		Gen_Recon_args = out_path + "," + CAM_SIZE + "," + SR_SIZE + "," + XMIN + "," + YMIN + "," + XWIDTH + "," + YWIDTH + "," + XY_AUTO + ","  + XY_ZERO + "," + XY_ORI + "," + XY_UN + "," + P3D + "," + Z_SPACE + "," + Z_MIN + "," + Z_MAX + "," + Z_AUTO + "," + Z_SAT + "," + Z_UN + "," + Z_COLOR + "," + Z_LUT + "," + GAUSS + "," + GAUSS_MULT + "," + UNS_SIZE + "," + UNS_WEIGHT + "," + UNS_MULT + "," + GAM + ","  + to16 + "," + AD_CONT + "," + SAT_LEV;
+		Gen_Recon_args = out_path + "," + CAM_SIZE + ","+ REC_METH  + "," + SR_SIZE + "," + XMIN + "," + YMIN + "," + XWIDTH + "," + YWIDTH + "," + XY_AUTO + ","  + XY_ZERO + "," + XY_ORI + "," + XY_UN + "," + P3D + "," + Z_SPACE + "," + Z_MIN + "," + Z_MAX + "," + Z_AUTO + "," + Z_SATDO + "," + Z_SATUP + "," + Z_UN + "," + Z_COLOR + "," + Z_LUT + "," + GAUSS + "," + GAUSS_MULT + "," + UNS_SIZE + "," + UNS_WEIGHT + "," + UNS_MULT + "," + GAM + ","  + to16 + "," + AD_CONT + "," + SAT_LEV;
 		out_path2 = runMacro(Gen_Recon_path, Gen_Recon_args);
 	}
 
