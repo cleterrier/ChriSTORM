@@ -10,30 +10,11 @@ importClass(Packages.java.io.BufferedWriter);
 importClass(Packages.ij.IJ);
 importClass(Packages.java.lang.Double);
 
-function NStxtTranslate(inPath, outDir, outFormat, UseXYDriftCor, UseWarped, UseZDriftCor, factZ, PpC, XCorr) {
+function NStxtTranslate(inPath, outDir, outFormat, UseXYDriftCor, UseWarped, UseZDriftCor, factZ, XCorr) {
 	
 	// Factor to convert sigma into FWHM
 	var FWHM = 2.355;	
-	// PpC is used for consistency check and background (now an input parameter)
-	// var PpC = 0.1248;	
-	// Need to estimate background properly independantly. Usually 80-100
-	// but not important to use ThunderSTORM just for reconstruction
-	// var PpC = 0.122;
-	var BgdADU = 100;
-	var BgdPhot = Math.round(BgdADU * PpC * 100) / 100;
-	// Add support for the Z uncertainty (in TS daily buil 05 may 2014)
-	var FixUncZ = false;
-	// fixed sigma for Z uncertainty (if fixed)
-	var fixZ = 20;
 	var SampleMax = 100;
-
-	var XFactor = 1.01615;
-	
-//	var PixelPitch = 160;
-//	var ExposTime = 0.016;
-//	var CpP = 1 / PpC;
-//	var BgdCor = (BgdPhot / PixelPitch) * (BgdPhot / PixelPitch);
-//	var EMfactor = 1.83;
 	
 	// N-STORM txt file format header (new format)
 	var inHeaderNS = ["Channel Name", "X", "Y", "Xc", "Yc", "Height", "Area", "Width", "Phi", "Ax", "BG", "I", "Frame", "Length", "Link", "Valid", "Z", "Zc", "Photons", "Lateral Localization Accuracy", "Xw", "Yw", "Xwc", "Ywc"];
@@ -114,11 +95,11 @@ function NStxtTranslate(inPath, outDir, outFormat, UseXYDriftCor, UseWarped, Use
 	if (outFormat == "TS") {
 		var sep = ",";
 		if (zAccu == 0){// 2D case
-			var outHeader = ["\"frame\"","\"x [nm]\"","\"y [nm]\"","\"sigma [nm]\"","\"intensity [photon]\"","\"offset [photon]\"","\"bkgstd [photon]\"","\"uncertainty_xy [nm]\"", "\"detections\""];
+			var outHeader = ["\"frame\"","\"x [nm]\"","\"y [nm]\"","\"sigma [nm]\"","\"intensity [photon]\"","\"uncertainty_xy [nm]\"", "\"detections\""];
 			var outSuffix = "_TS2D";
 		}
 		else {
-			var outHeader = ["\"frame\"","\"x [nm]\"","\"y [nm]\"","\"z [nm]\"","\"sigma1 [nm]\"","\"sigma2 [nm]\"","\"intensity [photon]\"","\"offset [photon]\"","\"bkgstd [photon]\"","\"uncertainty_xy [nm]\"", "\"uncertainty_z [nm]\"", "\"detections\""];
+			var outHeader = ["\"frame\"","\"x [nm]\"","\"y [nm]\"","\"z [nm]\"","\"sigma1 [nm]\"","\"sigma2 [nm]\"","\"intensity [photon]\"","\"uncertainty_xy [nm]\"", "\"uncertainty_z [nm]\"", "\"detections\""];
 			var outSuffix = "_TS3D";
 		}
 		var includeHeader = true;	
@@ -156,44 +137,24 @@ function NStxtTranslate(inPath, outDir, outFormat, UseXYDriftCor, UseWarped, Use
 			
 				// sigma
 				var sigma = (parseFloat(inCells[iW]) / 2).toFixed(1);
-
-				// "offset" in TS is assimilated to backgroung in N-STORM
-				var offset =  Math.round(parseFloat(inCells[iBg]) * PpC);
-	
-				/*
-				// Check (only at first line) if the PpC is good between N-STORM file and script
-				if (m == 1) {
-					var i1 = parseFloat(inCells[iA]) * PpC;
-					var i2 = parseFloat(inCells[iP]);
-					var testPhot = Math.sqrt((i1 - i2) * (i1 - i2)) / i1;
-					if (testPhot > 0.1) IJ.log(" WARNING! INCONSISTENT PHOTON COUNT");
-				}
-				*/
-
 				// peak height
 				var intens = Math.round(parseFloat(inCells[iP]));
 				// localization uncertainty for XY (sigma)
 				var uncXY = (parseFloat(inCells[iU])).toFixed(2);
-
 				// Build results line
 				if (zAccu == 0){ // 2D case
 					outLine = inCells[iF] + sep + inCells[iX] + sep + inCells[iY] + sep + sigma + sep;
-					outLine += intens + sep + offset + sep +  BgdPhot + sep + uncXY + sep + inCells[iL];
+					outLine += intens + sep + uncXY + sep + inCells[iL];
 				}
 				else { // 3D case
 					
 					// Compensate for deformation induced by astigmatic lens.
 					// Hardcoded is 2% compression, real is 3.7% compression
 					// Compensated by setting X pixel size to 163.3 nm instead of 160 nm by N-STORM software
-					// Measured compensation is 165.9 i.e. a difference of 165.9/163.3 of 1.01615
-
-					if (XCorr == true) {
-						var corrX = inCells[iX] * XFactor;
-					}
-
-					else {
-						corrX = inCells[iX];
-					}
+					// Measured compensation on NSTORM#1 is 165.9 i.e. a difference of 165.9/163.3 of 1.01615
+					// Measured compensation on NSTORM#2 is 0.955
+					
+					var corrX = inCells[iX] * XCorr;
 					
 					// peak width: TS has Wx and Wy (astigmatism-deformed PSF), but N-STORM has only one width W and an axial ratio Ax
 					// so we calculate Wx and Wy from W and Ax
@@ -205,12 +166,9 @@ function NStxtTranslate(inPath, outDir, outFormat, UseXYDriftCor, UseWarped, Use
 					outLine = inCells[iF] + sep + corrX + sep + inCells[iY] + sep + inCells[iZ] + sep + sigmaX + sep + sigmaY + sep;
 
 					// localization uncertainty for Z (sigma)
-					if (FixUncZ == true) 
-						var uncZ = fixZ.toFixed(2); // case of a fixed Z uncertainty
-					else 
-						var uncZ = (factZ * uncXY).toFixed(2);	// case of uncertainty proportionnal to the xy uncertainty
+					var uncZ = (factZ * uncXY).toFixed(2);	// case of uncertainty proportionnal to the xy uncertainty
 						
-					outLine += intens + sep + offset + sep +  BgdPhot + sep + uncXY + sep + uncZ + sep + inCells[iL];
+					outLine += intens + sep + uncXY + sep + uncZ + sep + inCells[iL];
 				}
 					
 			}

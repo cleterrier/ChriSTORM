@@ -59,7 +59,7 @@ macro "Generate Zooms & Slices" {
 	Z_PROJ_A = newArray("None", "Maximum (32-bit or color)", "Sum (32-bit or color)", "Weighted sum (color)");
 	Z_PROJ_DEF = "Sum (32-bit or color)";
 	Z_COLOR_DEF = false;
-	Z_LUT_DEF = "Rainbow RGB"; // LUT for color-coded 3D
+	Z_LUT_DEF = "ZOLANDER"; // LUT for color-coded 3D, other good ones: Rainbow RGB, Jet, ametrine, ThunderSTORM
 	SLICES_DEF = false;
 	SLICE_THICK_DEF = 400; // 800 nm
 	SLICE_LONG_DEF = true;
@@ -182,7 +182,7 @@ macro "Generate Zooms & Slices" {
 	//Creation of the dialog box
 	Dialog.create("Generate zooms & slices: options 2");
 	Dialog.addCheckbox("Generate slices (only for line ROIs)", SLICES_DEF);
-	Dialog.addNumber("Slice thickness (0 for line ROI thickness", SLICE_THICK_DEF, 0, 4, "nm");
+	Dialog.addNumber("Slice thickness (0 for line ROI thickness", SLICE_THICK_DEF, 0, 4, "locs");
 	Dialog.addCheckbox("Slice in both directions", SLICE_LONG_DEF);
 	Dialog.addChoice("Slice project", SLICE_PROJ_A, SLICE_PROJ_DEF);
 	Dialog.addCheckbox("Slice colorized", SLICE_COLOR_DEF);
@@ -288,7 +288,7 @@ macro "Generate Zooms & Slices" {
 
 	// Directory containing the localizations files for each ROI
 	if (LOCROI == true) {
-		LocROIFolder = HomeFolder + File.separator + SaveFolderLocROI + " " + ROI_PARAM;
+		LocROIFolder = HomeFolder + File.separator + SaveFolderLocROI;
 		if (File.exists(LocROIFolder) != 1) File.makeDirectory(LocROIFolder);
 		print("  ROI locs folder:" + LocROIFolder);
 	}
@@ -394,7 +394,7 @@ for (z = 1; z < iCount + 1; z++) {
 						if (stackType == "2C_zc")
 							Stack.setSlice(z);
 					}
-					if (nSlices > 1) prevHeader = getInfo("slice.label");
+					if (nSlices > 1) prevHeader = Property.getSliceLabel;
 					else prevHeader = replace(imTitle, ".tif", "");
 				}
 				roiManager("select", r);
@@ -467,7 +467,7 @@ for (z = 1; z < iCount + 1; z++) {
 
 			//***** Get path to loc file *****
 			// Get image title
-			if (nSlices > 1) imHeader = getInfo("slice.label");
+			if (nSlices > 1) imHeader = Property.getSliceLabel;
 			else imHeader = replace(imTitle, ".tif", "");
 			LocFile = getLocs(imHeader, LocFolderPath);
 			print("        Image title: " + imHeader);
@@ -481,7 +481,7 @@ for (z = 1; z < iCount + 1; z++) {
 				run("Import results", "append=false startingframe=1 rawimagestack= filepath=[" + LocFile + "] livepreview=false fileformat=[CSV (comma separated)]");
 
 			// Count the locs before filtering
-			nLocsBF = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); rows = rt.getRowCount();");
+			nLocsBF = parseInt(eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); rows = rt.getRowCount();"));
 			nLocK2BF = replace(d2s(nLocsBF / 1000, 2), ".", ",");
 			LocNum = "        Locs number in whole image: " + nLocK2BF + "K";
 
@@ -491,7 +491,7 @@ for (z = 1; z < iCount + 1; z++) {
 			run("Show results table", "action=filter formula=[" + XY_RANGE + "]");
 
 			// Count the locs after spatial filtering
-			nLocs = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); rows = rt.getRowCount();");
+			nLocs = parseInt(eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); rows = rt.getRowCount();"));
 			nLocK = round(nLocs / 1000);
 			nLocK2 = replace(d2s(nLocs / 1000, 2), ".", ",");
 			LocNum = LocNum + "  |  in ROI: " + nLocK2 + "K";
@@ -606,7 +606,7 @@ for (z = 1; z < iCount + 1; z++) {
 						}
 
 						// Slice rename
-						if (nLocs > 10000) ADD_TITLE = "_" + nLocK2 + "K";
+						if (nLocs < 10000) ADD_TITLE = "_" + nLocK2 + "K";
 						else  ADD_TITLE = "_" + nLocK + "K";
 						ADD_TITLE = ADD_TITLE + "_(" + XMIN + "," + YMIN + ")";
 						NEW_TITLE = zoomTitle + "_slice";
@@ -646,7 +646,7 @@ for (z = 1; z < iCount + 1; z++) {
 							}
 
 							// Long slice rename
-							if (nLocs > 10000) ADD_TITLE = "_" + nLocK2 + "K";
+							if (nLocs < 10000) ADD_TITLE = "_" + nLocK2 + "K";
 							else  ADD_TITLE = "_" + nLocK + "K";
 							ADD_TITLE = ADD_TITLE + "_(" + XMIN + "," + YMIN + ")";
 							NEW_TITLE = zoomTitle + "_slicelong";
@@ -708,7 +708,7 @@ for (z = 1; z < iCount + 1; z++) {
 						else if (Z_PROJ == "Maximum (32-bit or color)") PROJ_STRING = "MAX";
 						else if (Z_PROJ == "Weighted sum (color)") PROJ_STRING = "WeightedSUM";
 						else if (Z_PROJ == "None") PROJ_STRING = "None";
-						if (PROJ_STRING != WeightedSUM) run("8-bit");
+						if (PROJ_STRING != "WeightedSUM") run("8-bit");
 						run("Temporal-Color Code", "lut=[" + Z_LUT + "] projection=" + PROJ_STRING + " start=1 end=" + nOutS + "");
 						run("Set Scale...", "distance=1 known=" + SR_SIZE / 1000 + " unit=um");
 						projID = getImageID();
@@ -754,10 +754,10 @@ for (z = 1; z < iCount + 1; z++) {
 				}
 
 				// Tile rename
-				if (nLocs > 10000) ADD_TITLE = "_" + nLocK2 + "K";
+				if (nLocs < 10000) ADD_TITLE = "_" + nLocK2 + "K";
 				else  ADD_TITLE = "_" + nLocK + "K";
 				ADD_TITLE = ADD_TITLE + "_(" + XMIN + "," + YMIN + ")";
-				NEW_TITLE = replace(zoomTitle, "(_([0-9])+K)+_TS", ADD_TITLE + "_TS");
+				NEW_TITLE = replace(zoomTitle, "_([0-9])+,*([0-9])*K_", ADD_TITLE + "_");
 				// NEW_TITLE = NEW_TITLE + "_C=" + (z-1);
 
 				// Tile save
@@ -772,14 +772,26 @@ for (z = 1; z < iCount + 1; z++) {
 				selectWindow(RESULTS_TITLE);
 
 				// New name
-				if (nLocs > 10000) ADD_TITLE = "_" + nLocK2 + "K";
-				else  ADD_TITLE = "_" + nLocK + "K";
-				ADD_TITLE = ADD_TITLE + "_(" + XMIN + "," + YMIN + ")";
-				NEW_TITLE = replace(OUT_TITLE, "(_([0-9])+K)+_TS", ADD_TITLE + "_TS");
+				if (nLocs < 10000) ADD_TITLE1 = "_" + nLocK2 + "K";
+				else  ADD_TITLE1 = "_" + nLocK + "K";
+
+				// Replace loc number
+				NEW_TITLE = replace(OUT_TITLE, "_([0-9])+,*([0-9])*K_", ADD_TITLE1 + "_");
+				
+				// Add X and Y coordinates
+				ADD_TITLE2 = "_(" + XMIN + "," + YMIN + ")";
+				NEW_TITLE2 = replace(NEW_TITLE, "_TS", ADD_TITLE2 + "_TS");
+
+				if (NEW_TITLE2 == NEW_TITLE) 
+					NEW_TITLE2 = replace(NEW_TITLE, ".tif", ADD_TITLE2 + ".tif");
+
+				// Replace tif by csv
+				NEW_TITLE3 = replace(NEW_TITLE2, ".tif", ".csv");
+				
 				// NEW_TITLE = NEW_TITLE + "_C=" + (z-1);
 
 				// Export localizations within ROI in a csv file
-				LocROIPath = LocROIFolder + File.separator + NEW_TITLE + ".csv";
+				LocROIPath = LocROIFolder + File.separator + NEW_TITLE3;
 				run("Export results", "filepath=[" + LocROIPath + "] fileformat=[CSV (comma separated)] chi2=false saveprotocol=false");
 
 			}
