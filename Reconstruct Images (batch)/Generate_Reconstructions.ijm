@@ -47,19 +47,29 @@ macro "Generate Reconstructions" {
 	Z_MIN_DEF = -400;
 	Z_MAX_DEF = 400;
 	Z_AUTO_DEF = false;
+	Z_NAME_DEF = false;
 	Z_SATDO_DEF = 50; // restriction of 3D span at bottom (in nm)
 	Z_SATUP_DEF = 50; // restriction of 3D span on top (in nm)
 	Z_UN_DEF = 0;
-	Z_COLOR_ARRAY = newArray("No color", "Colorized 2D", "Colorized 2D weighted", "Colorized 3D");
-	Z_COLOR_DEF = "Colorized 2D";
-	Z_LUT_DEF = "Rainbow RGB"; // LUT for color-coded 3D, other good ones: Jet, ametrine, ThunderSTORM
+	
+	Z_PROJ_A = newArray("None", "Maximum (32-bit or color)", "Sum (32-bit or color)", "Weighted sum (color)");
+	Z_PROJ_DEF = "Sum (32-bit or color)";
+	Z_COLOR_DEF = false;
+	Z_LUT_DEF = "ZOLANDER"; // LUT for color-coded 3D, other good ones: Rainbow RGB, Jet, ametrine, ThunderSTORM
+	
+	FILT_DEF = false;
+	FILT_RAD_DEF = 50;
+	FILT_NUMB_DEF = 5;
+	FILT_DIM_A = newArray("2D", "3D");
+	FILT_DIM_DEF = "2D";
+	
+	
 	GAUSS_DEF = 0; // gaussian blur radius (none if 0)
 	GAUSS_MULT_DEF = 1; // multiple gaussian blur passes
 	UNS_SIZE_DEF = 0; // unsharp mask radius (none if 0)
 	UNS_WEIGHT_DEF = 0.3; // unsharp mask weight
 	UNS_MULT_DEF = 1; // multiple unsharp mask passes
 	GAM_DEF = 1; // gamma (none if 1)
-	to16_DEF = false; // convert from 32-bit to 16-bit (for grayscale images)
 	AD_CONT_DEF = false; // adjust contrast (color and 16-bit only)
 	SAT_LEV_DEF = 0.1; // saturation level for contrast adjustment
 
@@ -79,11 +89,14 @@ macro "Generate Reconstructions" {
 	print("Input folder: " + INPUT_DIR);
 
 
-//*************** Dialog 2 : options ***************
+
 
 	if (called == false) {
+
+		//*************** Dialog 2a : options 1 ***************
+		
 		//Creation of the dialog box
-		Dialog.create("Generate reconstructions: options");
+		Dialog.create("Generate reconstructions: options 1");
 		Dialog.addNumber("Raw pixel size", CAM_SIZE_DEF, 0, 3, "nm");
 	//	Dialog.addNumber("Converter gain", CG_DEF, 2, 4, "phot/ADU");
 	//	Dialog.addNumber("EM gain", EM_DEF, 0, 4, "");
@@ -104,21 +117,14 @@ macro "Generate Reconstructions" {
 		Dialog.addNumber("Z min", Z_MIN_DEF, 0, 4, "nm");
 		Dialog.addNumber("Z max", Z_MAX_DEF, 0, 4, "nm");
 		Dialog.addCheckbox("Auto Z-range", Z_AUTO_DEF);
+		Dialog.addCheckbox("Add Z-range to name", Z_NAME_DEF);
 		Dialog.addNumber("Restrict Z-range bottom by", Z_SATDO_DEF, 0, 4, "nm");
 		Dialog.addNumber("Restrict Z-range top by", Z_SATUP_DEF, 0, 4, "nm");
 		Dialog.addNumber("Force Z uncertainty (0 to keep)", Z_UN_DEF, 0, 3, "nm");
-		Dialog.addChoice("Z colorized", Z_COLOR_ARRAY, Z_COLOR_DEF);
+		Dialog.addChoice("Z project", Z_PROJ_A, Z_PROJ_DEF);
+		Dialog.addCheckbox("Z colorized", Z_COLOR_DEF);
 		Dialog.addChoice("Color LUT", LUT_ARRAY, Z_LUT_DEF);
 		Dialog.addMessage(" ");
-		Dialog.addNumber("Gaussian blur (0 for no filter)", GAUSS_DEF, 0, 3, "nm");
-		Dialog.addNumber("Apply blur ", GAUSS_MULT_DEF, 0, 3, "times");
-		Dialog.addNumber("Unsharp mask (0 for no filter)", UNS_SIZE_DEF, 0, 3, "nm");
-		Dialog.addNumber("Mask weight (0-1)", UNS_WEIGHT_DEF, 2, 4, "");
-		Dialog.addNumber("Apply unsharp", UNS_MULT_DEF, 0, 3, "times");
-		Dialog.addNumber("Gamma (1 for none)", GAM_DEF, 2, 4, "");
-		Dialog.addCheckbox("Convert to 16-bit (non-colorized only)", to16_DEF);
-		Dialog.addCheckbox("Adjust contrast (colorized & 16-bit only)", AD_CONT_DEF);
-		Dialog.addNumber("Saturated pixels", SAT_LEV_DEF, 2, 3, "");
 		Dialog.show();
 
 		// Feeding variables from dialog choices
@@ -140,25 +146,52 @@ macro "Generate Reconstructions" {
 		Z_MIN = Dialog.getNumber();
 		Z_MAX = Dialog.getNumber();
 		Z_AUTO = Dialog.getCheckbox();
+		Z_NAME = Dialog.getCheckbox();
 		Z_SATDO = Dialog.getNumber();
 		Z_SATUP = Dialog.getNumber();
 		Z_UN = Dialog.getNumber();
-		Z_COLOR = Dialog.getChoice();
+		Z_PROJ = Dialog.getChoice();
+		Z_COLOR = Dialog.getCheckbox();
 		Z_LUT = Dialog.getChoice();
+
+		//*************** Dialog 2b : options 2 ***************
+
+		//Creation of the dialog box
+		Dialog.create("Generate Reconstructions: options 2");
+		Dialog.addCheckbox("Density filter", FILT_DEF);
+		Dialog.addNumber("Filter radius", FILT_RAD_DEF, 0, 3, "nm");
+		Dialog.addNumber("Locs number", FILT_NUMB_DEF, 0, 3, "locs");
+		Dialog.addChoice("Filter dimension", FILT_DIM_A, FILT_DIM_DEF);
+		Dialog.addMessage(" ");
+		Dialog.addNumber("Gaussian blur (0 for no filter)", GAUSS_DEF, 0, 3, "nm");
+		Dialog.addNumber("Apply blur ", GAUSS_MULT_DEF, 0, 3, "times");
+		Dialog.addNumber("Unsharp mask (0 for no filter)", UNS_SIZE_DEF, 0, 3, "nm");
+		Dialog.addNumber("Mask weight (0-1)", UNS_WEIGHT_DEF, 2, 4, "");
+		Dialog.addNumber("Apply unsharp", UNS_MULT_DEF, 0, 3, "times");
+		Dialog.addNumber("Gamma (1 for none)", GAM_DEF, 2, 4, "");
+		Dialog.addMessage(" ");
+		Dialog.addCheckbox("Adjust contrast (colorized & 16-bit only)", AD_CONT_DEF);
+		Dialog.addNumber("Saturated pixels", SAT_LEV_DEF, 2, 5, "%");
+		Dialog.show();
+	
+		// Feeding variables from dialog choices	
+		FILT = Dialog.getCheckbox();
+		FILT_RAD = Dialog.getNumber();
+		FILT_NUMB = Dialog.getNumber();
+		FILT_DIM = Dialog.getChoice();
 		GAUSS = Dialog.getNumber();
 		GAUSS_MULT = parseInt(Dialog.getNumber());
 		UNS_SIZE = Dialog.getNumber();
 		UNS_WEIGHT = Dialog.getNumber();
 		UNS_MULT = Dialog.getNumber();
 		GAM = Dialog.getNumber();
-		to16 = Dialog.getCheckbox();
 		AD_CONT = Dialog.getCheckbox();
 		SAT_LEV = Dialog.getNumber();
 
 	}
-
+	
  	// called from macro:
-	// arguments (INPUT_DIR, CAM_SIZE, REC_METH, SR_SIZE, XMIN, YMIN, XWIDTH, YWIDTH, XY_AUTO, XY_ORI, XY_ZERO, XY_UN, P3D, Z_SPACE, Z_MIN, Z_MAX, Z_AUTO, Z_SATDO, Z_SATUP, Z_UN, Z_COLOR, Z_LUT, GAM, GAUSS, UNS_SIZE, UNS_WEIGHT, UNS_MULT, to16, AD_CONT, SAT_LEV)
+	// arguments (INPUT_DIR, CAM_SIZE, REC_METH, SR_SIZE, XMIN, YMIN, XWIDTH, YWIDTH, XY_AUTO, XY_ORI, XY_ZERO, XY_UN, P3D, Z_SPACE, Z_MIN, Z_MAX, Z_AUTO, Z_NAME, Z_SATDO, Z_SATUP, Z_UN, Z_PROJ, Z_COLOR, Z_LUT, FILT, FILT_RAD, FILT_NUMB, FILT_DIM, GAUSS, GAUSS_MULT, UNS_SIZE, UNS_WEIGHT, UNS_MULT, GAM, AD_CONT, SAT_LEV)
 	else {
 		CAM_SIZE = parseInt(argarray[1]);
 		REC_METH = parseInt(argarray[2]);
@@ -176,20 +209,25 @@ macro "Generate Reconstructions" {
 		Z_MIN = parseInt(argarray[14]);
 		Z_MAX = parseInt(argarray[15]);
 		Z_AUTO = argarray[16];
-		Z_SATUP = parseInt(argarray[17]);
-		Z_SATDO = parseInt(argarray[18]);
-		Z_UN = parseInt(argarray[19]);
-		Z_COLOR = argarray[20];
-		Z_LUT = argarray[21];
-		GAUSS = parseInt(argarray[22]);
-		GAUSS_MULT = parseInt(argarray[23]);
-		UNS_SIZE = parseInt(argarray[24]);
-		UNS_WEIGHT = parseFloat(argarray[25]);
-		UNS_MULT = parseFloat(argarray[26]);
-		GAM = parseFloat(argarray[27]);
-		to16 = argarray[28];
-		AD_CONT = argarray[29];
-		SAT_LEV = argarray[30];
+		Z_NAME = argarray[17];
+		Z_SATUP = parseInt(argarray[18]);
+		Z_SATDO = parseInt(argarray[19]);
+		Z_UN = parseInt(argarray[20]);
+		Z_PROJ = argarray[21];
+		Z_COLOR = argarray[22];
+		Z_LUT = argarray[23];
+		FILT = argarray[24];
+		FILT_RAD = parseFloat(argarray[25]);
+		FILT_NUMB = parseInt(argarray[26]);
+		FILT_DIM = argarray[27];
+		GAUSS = parseInt(argarray[28]);
+		GAUSS_MULT = parseInt(argarray[29]);
+		UNS_SIZE = parseInt(argarray[30]);
+		UNS_WEIGHT = parseFloat(argarray[31]);
+		UNS_MULT = parseFloat(argarray[32]);
+		GAM = parseFloat(argarray[33]);
+		AD_CONT = argarray[34];
+		SAT_LEV = argarray[35];
 	}
 
 //*************** Prepare Processing (get names, open images, make output folder) ***************
@@ -217,20 +255,16 @@ macro "Generate Reconstructions" {
 	if (P3D == false) {
 		OUT_PARAM += "xy" + SR_SIZE;
 	}
-	else if (Z_COLOR == "Colorized 2D"){
-		OUT_PARAM += "xy" + SR_SIZE + "zc";
-	}
-	else if (Z_COLOR == "Colorized 2D weighted"){
-		OUT_PARAM += "xy" + SR_SIZE + "zw";
-	}
-	else if (Z_COLOR == "Colorized 3D"){
+	else if (Z_COLOR == true){
 		OUT_PARAM += "xy" + SR_SIZE + "z" + Z_SPACE + "c";
+		if (Z_PROJ != "None") OUT_PARAM += "p";
 	}
 	else {
 		OUT_PARAM += "xy" + SR_SIZE + "z" + Z_SPACE;
+		if (Z_PROJ != "None") OUT_PARAM += "p";
 	}
-	if (GAM !=1) {
-		OUT_PARAM += "_g" + toString(GAM, 1);
+	if (FILT == true) {
+		OUT_PARAM += "_f" + toString(FILT_RAD, 0) + "-" + toString(FILT_NUMB, 0) + "-" + FILT_DIM;
 	}
 	if (GAUSS > 0) {
 		OUT_PARAM += "_b" + toString(GAUSS, 0) + "-" + GAUSS_MULT;
@@ -238,7 +272,9 @@ macro "Generate Reconstructions" {
 	if (UNS_SIZE > 0) {
 		OUT_PARAM += "_u" + toString(UNS_SIZE, 0) + "-" + UNS_MULT;
 	}
-
+	if (GAM !=1) {
+		OUT_PARAM += "_g" + toString(GAM, 1);
+	}
 
 	//Create the output folder path
 	OUTPUT_DIR = replace(INPUT_DIR, "Locs", "Recs");
@@ -260,8 +296,7 @@ macro "Generate Reconstructions" {
 	// Prepare the Z part of the Visu string
 	// Case of a 2D image
 	if (P3D == false) {
-		Z_COLOR = "No color";
-		// Careful as of daily build 17/05/15, "colorizez" is now "colorize"
+		Z_COLOR = false;
 		VISU_STRING_Z = "colorize=false threed=false";
 		VISU_STRING_RANGE = "";
 	}
@@ -336,11 +371,16 @@ macro "Generate Reconstructions" {
 
 				LAST_DOT = lastIndexOf(FILE_NAME, ".");
 				OUT_TITLE = substring(FILE_NAME, 0, LAST_DOT);
-				OUT_PATH = OUTPUT_DIR + OUT_TITLE + ".tif";
 
 				// Open the loc file
 				if (FILE_EXT == ".csv")
 					run("Import results", "append=false startingframe=1 rawimagestack= filepath=[" + FILE_PATH + "] livepreview=false fileformat=[CSV (comma separated)]");
+					nLocs = parseInt(eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); rows = rt.getRowCount();"));
+
+				// Optional Density filter (will not run on dummy image that have less than 100 locs)
+				if (FILT == true){	
+					if (nLocs>100) run("Show results table", "action=density neighbors=" + FILT_NUMB + " dimensions=" + FILT_DIM + " radius=" + FILT_RAD);
+				}
 
 				// Detect XY range if auto-range (necessarily after CSV opening)
 				if (XY_AUTO == true){
@@ -406,11 +446,20 @@ macro "Generate Reconstructions" {
 						Z_SPACE = round((Z_MAX - Z_MIN)  / Z_N); // Here we modify Z_SPACE!
 
 						VISU_STRING_RANGE = " zrange=" + Z_MIN + ":" + Z_SPACE + ":" + Z_MAX;
-						print("      auto Z range: " + Zmini + " to " + Zmaxi + " nm");
+						print("      detected Z range: " + Zmini + " to " + Zmaxi + " nm");
 					}
 				} // end of IF loop auto-Z range
 
-				print("      Z range: " + Z_MIN + " to " + Z_MAX + " nm (" + Z_SPACE + " nm spacing)" );
+				// Logs the used Z range and rename the output file if Z range in name option is selected
+				if (P3D == true) {
+					print("      Z range: " + Z_MIN + " to " + Z_MAX + " nm (" + Z_SPACE + " nm spacing)" );
+					if (Z_NAME == true) {
+						Z_NAME_STRING = "z(" + Z_MIN + "," + Z_MAX + ")_";
+						STRING_PLACE = indexOf(OUT_TITLE, "TS3D");
+						if (STRING_PLACE > -1) OUT_TITLE = replace(OUT_TITLE, "TS3D", Z_NAME_STRING + "TS3D");
+						else OUT_TITLE = replace(OUT_TITLE, ".tif", Z_NAME_STRING + ".tif");
+					}
+				}
 
 				// Finalize the Visualization arguments string
 				VISU_STRING = VISU_STRING_XY + VISU_STRING_Z + VISU_STRING_RANGE;
@@ -421,6 +470,54 @@ macro "Generate Reconstructions" {
 				run("Visualization", VISU_STRING);
 				setVoxelSize(SR_SIZE/1000, SR_SIZE/1000, Z_SPACE/1000, "um");
 				visID = getImageID();
+				nOutS = nSlices;
+
+				// Optional contrast adjustment
+				if (AD_CONT > 0) {
+					run("Enhance Contrast...", "saturated=" + SAT_LEV + " normalize process_all use");
+					run("Enhance Contrast", "saturated=" + SAT_LEV);
+					getMinAndMax(cmin, cmax);
+					setMinAndMax(cmin, 1);
+				}
+				
+				if (P3D == true) {
+				// Colorized case
+					if (Z_COLOR == true) {
+						if (Z_PROJ == "Sum (32-bit or color)") PROJ_STRING = "SUM";
+						else if (Z_PROJ == "Maximum (32-bit or color)") PROJ_STRING = "MAX";
+						else if (Z_PROJ == "Weighted sum (color)") PROJ_STRING = "WeightedSUM";
+						else if (Z_PROJ == "None") PROJ_STRING = "None";
+						if (PROJ_STRING != "WeightedSUM") run("8-bit");
+						run("Temporal-Color Code", "lut=[" + Z_LUT + "] projection=" + PROJ_STRING + " start=1 end=" + nOutS + "");
+						run("Set Scale...", "distance=1 known=" + SR_SIZE / 1000 + " unit=um");
+						colorID = getImageID();
+						run("Select None");
+						selectImage(colorID);
+						rename(OUT_TITLE);
+						selectImage(visID);
+						close();
+					}
+					
+					// Non-colorized case
+					else if (Z_PROJ != "None" && Z_COLOR == false){
+						if (Z_PROJ == "Maximum (32-bit or color)") PROJ_STRING = "[Maximum Intensity]";
+						else PROJ_STRING = "[Sum Slices]";
+						run("Z Project...", "projection=" + PROJ_STRING);
+						run("Set Scale...", "distance=1 known=" + SR_SIZE / 1000 + " unit=um");
+						colorID = getImageID();
+						run("Select None");
+						selectImage(colorID);
+						rename(OUT_TITLE);
+						selectImage(visID);
+						close();
+					}
+					
+					else {
+						selectImage(visID);
+						run("Set Scale...", "distance=1 known=" + SR_SIZE / 1000 + " unit=um");
+						rename(OUT_TITLE);
+					}
+				}
 
 				// optional filtering
 				if (GAUSS > 0) {
@@ -441,77 +538,10 @@ macro "Generate Reconstructions" {
 				// optional gamma
 				if (GAM != 1) {
 					run("Gamma...", "value=" + GAM + " stack");
-				}
-
-
-				// Colorized output 3D
-				if (nSlices > 1 && Z_COLOR == "Colorized 3D") {
-					if (AD_CONT > 0) {
-						run("Enhance Contrast...", "saturated=" + SAT_LEV + " normalize process_all use");
-						run("Enhance Contrast", "saturated=" + SAT_LEV);
-						getMinAndMax(cmin, cmax);
-						setMinAndMax(cmin, 1);
-					}
-					run("8-bit");
-					run("Temporal-Color Code", "lut=[" + Z_LUT + "] projection=None start=1 end=" + nSlices + "");
-					colorID = getImageID();
-					run("Select None");
-					selectImage(colorID);
-					rename(OUT_TITLE);
-					selectImage(visID);
-					close();
-				}
-
-				// Colorized output 2D
-				else if (nSlices > 1 && Z_COLOR == "Colorized 2D Weighted") {
-					if (AD_CONT == true) {
-						run("Enhance Contrast...", "saturated=" + SAT_LEV + " normalize process_all use");
-						run("Enhance Contrast", "saturated=" + SAT_LEV);
-						getMinAndMax(cmin, cmax);
-						setMinAndMax(cmin, 1);
-					}
-					run("Temporal-Color Code", "lut=[" + Z_LUT + "] projection=WeightedSUM start=1 end=" + nSlices + "");
-					run("Set Scale...", "distance=1 known=" + SR_SIZE / 1000 + " unit=um");
-					colorID = getImageID();
-					run("Select None");
-					selectImage(colorID);
-					rename(OUT_TITLE);
-					selectImage(visID);
-					close();
-				}
-
-				else if (nSlices > 1 && Z_COLOR == "Colorized 2D") {
-					if (AD_CONT == true) {
-						run("Enhance Contrast...", "saturated=" + SAT_LEV + " normalize process_all use");
-						run("Enhance Contrast", "saturated=" + SAT_LEV);
-						getMinAndMax(cmin, cmax);
-						setMinAndMax(cmin, 1);				
-					}
-					run("8-bit");
-					run("Temporal-Color Code", "lut=[" + Z_LUT + "] projection=SUM start=1 end=" + nSlices + "");
-					run("Set Scale...", "distance=1 known=" + SR_SIZE / 1000 + " unit=um");
-					colorID = getImageID();
-					run("Select None");
-					selectImage(colorID);
-					rename(OUT_TITLE);
-					selectImage(visID);
-					close();
-				}
-
-				// Grayscale 16-bit output
-				else if (to16 == true) {
-					if (AD_CONT == true) {
-						run("Enhance Contrast...", "saturated=" + SAT_LEV + " normalize process_all use");
-						run("Enhance Contrast", "saturated=" + SAT_LEV);
-						getMinAndMax(cmin, cmax);
-						setMinAndMax(cmin, 1);					
-					}
-					run("16-bit");
-					outID = getImageID();
-					rename(OUT_TITLE);
-				}
-
+				}		
+				
 				// Save and close reconstruction
+				OUT_PATH = OUTPUT_DIR + OUT_TITLE + ".tif";
 				save(OUT_PATH);
 				close();
 				print("      Output file:", OUT_TITLE + ".tif");
