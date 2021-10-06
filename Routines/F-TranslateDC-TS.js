@@ -34,7 +34,7 @@ function TranslateDCTS(inPath, outDir, ps, cf, rf, fY, sX, sY, fz, cz, su){
 	// Fields of the input header
 
 	var inHeaderList = ["x","y","z","phot","frame_ix","id","prob","bg","phot_cr","bg_cr","phot_sig","bg_sig","xy_unit","x_cr","y_cr","z_cr","x_sig","y_sig","z_sig"];
-	var outHeader3DList = ["\"frame\"","\"x [nm]\"","\"y [nm]\"","\"z [nm]\"","\"intensity [photon]\"","\"uncertainty_xy [nm]\"","\"uncertainty_z [nm]\"", "\"chi2\""];
+	var outHeader3DList = ["\"frame\"","\"x [nm]\"","\"y [nm]\"","\"z [nm]\"","\"intensity [photon]\"","\"offset [photon]\"","\"uncertainty_xy [nm]\"","\"uncertainty_z [nm]\"", "\"chi2\""];
 
 	// Correspondance
 	/*
@@ -75,7 +75,7 @@ function TranslateDCTS(inPath, outDir, ps, cf, rf, fY, sX, sY, fz, cz, su){
 	var unxIndex = arrayFind(inHeaderArray, inHeaderList[16]);
 	var unyIndex = arrayFind(inHeaderArray, inHeaderList[17]);
 	var intIndex = arrayFind(inHeaderArray, inHeaderList[3]);
-//	var bgIndex = arrayFind(inHeaderArray, inHeaderList[7]);
+	var bgIndex = arrayFind(inHeaderArray, inHeaderList[7]);
 	var chi2Index = arrayFind(inHeaderArray, inHeaderList[6]);
 	var zIndex = arrayFind(inHeaderArray, inHeaderList[2]);
 	var unzIndex = arrayFind(inHeaderArray, inHeaderList[18]);
@@ -136,7 +136,7 @@ function TranslateDCTS(inPath, outDir, ps, cf, rf, fY, sX, sY, fz, cz, su){
 		var unxyOut = (su * Math.sqrt((unxOut * unxOut)  + (unyOut * unyOut))).toFixed(1);
 
 		var intOut = (parseFloat(inCells[intIndex])).toFixed(0);
-//		var offOut = (parseFloat(inCells[bgIndex])).toFixed(0);
+		var offOut = (parseFloat(inCells[bgIndex])).toFixed(0);
 		var chi2Out = (parseFloat(inCells[chi2Index])).toFixed(2);
 
 		if (fz == true) zfactor = -1 * cz; else zfactor = cz;
@@ -144,7 +144,7 @@ function TranslateDCTS(inPath, outDir, ps, cf, rf, fY, sX, sY, fz, cz, su){
 		var unzOut = (su * parseFloat(inCells[unzIndex])).toFixed(1);
 
 		// Assemble output line
-		var outLineArray = [fOut, xOut, yOut, zOut, intOut, unxyOut, unzOut, chi2Out];
+		var outLineArray = [fOut, xOut, yOut, zOut, intOut, offOut, unxyOut, unzOut, chi2Out];
 		var outLine = makeLineFromArray(outLineArray, sep);
 
 		// Write new line

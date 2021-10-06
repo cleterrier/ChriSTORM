@@ -60,7 +60,7 @@ macro "Generate Reconstructions" {
 	UNS_MULT_DEF = 1; // multiple unsharp mask passes
 	GAM_DEF = 1; // gamma (none if 1)
 	to16_DEF = false; // convert from 32-bit to 16-bit (for grayscale images)
-	AD_CONT_DEF = false; // adjust contrast (color and 16-bit only)
+	AD_CONT_DEF = true; // adjust contrast (color and 16-bit only)
 	SAT_LEV_DEF = 0.1; // saturation level for contrast adjustment
 
 
@@ -451,8 +451,7 @@ macro "Generate Reconstructions" {
 						run("Enhance Contrast", "saturated=" + SAT_LEV);
 						getMinAndMax(cmin, cmax);
 						setMinAndMax(cmin, 1);
-					}
-					run("8-bit");
+					}			
 					run("Temporal-Color Code", "lut=[" + Z_LUT + "] projection=None start=1 end=" + nSlices + "");
 					colorID = getImageID();
 					run("Select None");
@@ -471,7 +470,6 @@ macro "Generate Reconstructions" {
 						setMinAndMax(cmin, 1);
 					}
 					run("Temporal-Color Code", "lut=[" + Z_LUT + "] projection=WeightedSUM start=1 end=" + nSlices + "");
-					run("Set Scale...", "distance=1 known=" + SR_SIZE / 1000 + " unit=um");
 					colorID = getImageID();
 					run("Select None");
 					selectImage(colorID);
@@ -487,7 +485,6 @@ macro "Generate Reconstructions" {
 						getMinAndMax(cmin, cmax);
 						setMinAndMax(cmin, 1);				
 					}
-					run("8-bit");
 					run("Temporal-Color Code", "lut=[" + Z_LUT + "] projection=SUM start=1 end=" + nSlices + "");
 					run("Set Scale...", "distance=1 known=" + SR_SIZE / 1000 + " unit=um");
 					colorID = getImageID();
@@ -537,7 +534,7 @@ macro "Generate Reconstructions" {
 }
 
 // function to test if a file is 2D or 3D (independantly of its name)
-function test3D_old(path, ind){
+function test3D(path, ind){
 	// Get the first 5000 bytes of the csv file
 	dipString = File.openAsRawString(path, 5000);
 	dipLines = split(dipString, "\n");
@@ -561,15 +558,4 @@ function test3D_old(path, ind){
 		return 0;
 	else
 		return 1;
-}
-
-function test3D(path, ind){
-	
-	name = File.getName(path);
-	t3D = indexOf(name, "TS3D.");
-	
-	if (t3D > -1)
-		return 1;
-	else
-		return 0;
 }
