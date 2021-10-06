@@ -48,8 +48,7 @@ macro "Prepare_NSTORM_Folder" {
 	for (n = 0; n < ALL_NAMES.length; n++) {
 //		Put loc files in TEMP_DIR/LOC folder, removing "_list.bin" snippet
 		if (indexOf(ALL_NAMES[n], ".txt") > 0) {
-			LOC_NAME2 = replace(ALL_NAMES[n], "_list.*.bin.txt", ".txt");
-//			LOC_NAME2 = replace(ALL_NAMES[n], "_list.bin.txt", ".txt");
+			LOC_NAME2 = replace(ALL_NAMES[n], "_list.bin.txt", ".txt");
 			LOC_PLACE1 = INPUT_DIR + ALL_NAMES[n];
 			LOC_PLACE2 = LOC_DIR + LOC_NAME2;
 			res = File.rename(LOC_PLACE1, LOC_PLACE2);

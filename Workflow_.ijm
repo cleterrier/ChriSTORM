@@ -8,18 +8,18 @@ macro "Workflow" {
 	MODE_DEF = "Custom";
 	SEQ_DEF = false;
 	USE_DRIFT_DEF = true;
-	XCORR_DEF = 1.01615; // for NSTORM#1, 0.955 for NSTORM#2
 	BATCH_PROC_DEF = true;
 	EXCL_STRING_DEF = "_ZR_";
 	CORR_DRIFT_DEF = true;
 	EXP_STRING_DEF = "intensity>700 & intensity<50000 & detections<5";
 	REC_2D_DEF = true;
 	REC_3D_DEF = true;
-	CAM_SIZE_DEF = 160;
 	SR_SIZE_DEF = 16;
 	GAUSS_DEF = 0;
 	LUTS = newArray("Rainbow RGB", "Jet", "Turbo", "ametrine", "ThunderSTORM", "ZOLA", "3color-RMB", "3color-CGY", "2C Cyan-Green", "2C Yellow-Red", "2C Green-Cyan", "2C Red-Yellow");
-	LUT_DEF = "ZOLANDER";;
+	LUT_DEF = "ZOLA";
+	PROJA = newArray("No color", "Colorized 2D", "Colorized 2D weighted", "Colorized 3D");
+	PROJ_DEF = "Colorized 2D";
 
 	// Get input directory (Locs text files from N-STORM)
 	inputDir = getDirectory("Choose a Locs directory");
@@ -31,8 +31,6 @@ macro "Workflow" {
 	Dialog.addMessage("Translate localizations options");
 	Dialog.addCheckbox("Sequential PAINT channels import", SEQ_DEF);
 	Dialog.addCheckbox("Use drift-corrected coordinates", USE_DRIFT_DEF);
-	Dialog.addNumber("Astigmatic compression correction (1 for none)", XCORR_DEF, 5, 7, "");
-	Dialog.addMessage("(3D only, 1.01615 for NSTORM#1, 0.955 for NSTORM#2)");
 	Dialog.addMessage("Process localizations options");
 	Dialog.addCheckbox("Batch process localizations", BATCH_PROC_DEF);
 	Dialog.addString("Exclude name containing", EXCL_STRING_DEF);
@@ -42,10 +40,10 @@ macro "Workflow" {
 	Dialog.addMessage("Reconstructions options");
 	Dialog.addCheckbox("2D reconstructions", REC_2D_DEF);
 	Dialog.addCheckbox("3D reconstructions", REC_3D_DEF);
-	Dialog.addNumber("Camera pixel size", CAM_SIZE_DEF, 0, 3, "nm");
 	Dialog.addNumber("SR pixel size", SR_SIZE_DEF, 0, 3, "nm");
 	Dialog.addNumber("Gaussian filter", GAUSS_DEF, 0, 3, "nm");
 	Dialog.addChoice("3D LUT", LUTS, LUT_DEF);
+	Dialog.addChoice("Projection mode", PROJA, PROJ_DEF);
 
 
 	Dialog.show();
@@ -53,7 +51,6 @@ macro "Workflow" {
 	// Feeding variables from dialog choices
 	SEQ = Dialog.getCheckbox();
 	USE_DRIFT = Dialog.getCheckbox();
-	NStoTS_xcorr = Dialog.getNumber();
 	BATCH_PROC = Dialog.getCheckbox();
 	EXCL_STRING = Dialog.getString();
 	if (lengthOf(EXCL_STRING)>0) EXCL = true;
@@ -65,10 +62,10 @@ macro "Workflow" {
 	else EXP_FILT = false;
 	REC_2D = Dialog.getCheckbox();
 	REC_3D = Dialog.getCheckbox();
-	CAM_SIZE = Dialog.getNumber();
 	SR_SIZE = Dialog.getNumber();
 	GAUSS = Dialog.getNumber();
 	Z_LUT = Dialog.getChoice();
+	PROJ = Dialog.getChoice();
 
 	if (MODE == "STORM (intensity 700-50000 det<5)") {
 		EXP_STRING = "intensity>700 & intensity<50000 & detections<5";
@@ -80,14 +77,14 @@ macro "Workflow" {
 
 
 	// Batch_NS_Into_TS script arguments
-//	NStoTS_ppc = 0.1248; // case for Andor EMCCD
-//	NStoTS_ppc = 0.23; // case for Hamamatsu sCMOS
 	NStoTS_seq = SEQ;
 	NStoTS_xydrift = USE_DRIFT;
 	NStoTS_warp = true;
 	NStoTS_zdrift = true;
 	NStoTS_zfactor = 2;
-//	NStoTS_xcorr = 1.01615;
+	NStoTS_ppc = 0.1248; // case for Andor EMCCD
+//	NStoTS_ppc = 0.49; // case for Hamamatsu sCMOS
+	NStoTS_xcorr = true;
 
 	// Batch_Process_Locs macro arguments
 	// File chooser
@@ -95,6 +92,7 @@ macro "Workflow" {
 	CHOOSE_STRING = "";
 //	EXCL = true;
 //	EXCL_STRING = "_ZR_";
+	COUNT = true;
 	// Drift correction
 //	CORR_DRIFT = true;
 	BIN = 12; // number of frames per sub-reconstruction used for autocorrelation
@@ -120,7 +118,7 @@ macro "Workflow" {
 	DENS_DIM = "2D";
 
 	// Generate_Reconstructions macro arguments
-	//CAM_SIZE = 160;
+	CAM_SIZE = 160;
 	REC_METH = "Normalized Gaussian"; 
 	//SR_SIZE = 16;
 	XMIN = 0;
@@ -139,35 +137,29 @@ macro "Workflow" {
 	Z_SATDO = 50;
 	Z_SATUP = 50;
 	Z_UN = 0;
-	Z_PROJ = "Sum (32-bit or color)";
-	Z_COLOR = true;
-	//Z_LUT = "ZOLANDER";
-	FILT = false;
-	FILT_RAD = 50;
-	FILT_NUMB = 5;
-	FILT_DIM = "2D";
+	Z_COLOR = "Colorized 2D";
+	//Z_LUT = "Jet";
 	//GAUSS = 0;
 	GAUSS_MULT = 1;
+	to16 = false;
+	AD_CONT = true;
+	SAT_LEV = 0.1;
+	GAM = 1;
 	UNS_SIZE = 0;
 	UNS_WEIGHT = 0.3;
 	UNS_MULT = 1;
-	GAM = 1;
-	AD_CONT = true;
-	SAT_LEV = 0.1;
-
-	
 
 
 	// NS to TS
 	NStoTS_path = plugin_path + File.separator + "NeuroCyto" + File.separator + "ChriSTORM" + File.separator + "Process locs files (batch)" + File.separator+ "Batch_NS_Into_TS.js";
-	NStoTS_args = "" + inputDirF + "," + NStoTS_seq  + "," + NStoTS_xydrift + "," + NStoTS_warp + "," + NStoTS_zdrift + "," + NStoTS_zfactor + "," + NStoTS_xcorr;
+	NStoTS_args = "" + inputDirF + "," + NStoTS_seq  + "," + NStoTS_xydrift + "," + NStoTS_warp + "," + NStoTS_zdrift + "," + NStoTS_zfactor + "," + NStoTS_ppc + "," + NStoTS_xcorr;
 	out_path = runMacro(NStoTS_path, NStoTS_args);
 
 
 	// Optional Batch Proc
 	if (BATCH_PROC == true) {
 		BatchProc_path = plugin_path + File.separator + "NeuroCyto" + File.separator + "ChriSTORM" + File.separator + "Process locs files (batch)" + File.separator+ "Batch_Process_Locs.ijm";
-		BatchProc_args = out_path + "," + CHOOSE + "," + CHOOSE_STRING + "," + EXCL + "," + EXCL_STRING + "," + CORR_DRIFT + "," + BIN + "," + MAG + "," + SM + "," + MERGE + "," + DIST + "," + MAXF + "," + OFF + "," + PHOT_FILT + "," + PHOT_MIN + "," + PHOT_MAX + "," + EXP_FILT + "," + EXP_STRING + "," + DENS_FILT + "," + DENS_RAD + "," + DENS_NUMB + "," + DENS_DIM;
+		BatchProc_args = out_path + "," + CHOOSE + "," + CHOOSE_STRING + "," + EXCL + "," + EXCL_STRING + "," + COUNT + "," + CORR_DRIFT + "," + BIN + "," + MAG + "," + SM + "," + MERGE + "," + DIST + "," + MAXF + "," + OFF + "," + PHOT_FILT + "," + PHOT_MIN + "," + PHOT_MAX + "," + EXP_FILT + "," + EXP_STRING + "," + DENS_FILT + "," + DENS_RAD + "," + DENS_NUMB + "," + DENS_DIM;
 		out_path = runMacro(BatchProc_path, BatchProc_args);
 	}
 
@@ -175,7 +167,7 @@ macro "Workflow" {
 	// Generate Recs (2D)
 	if (REC_2D == true) {
 		Gen_Recon_path = plugin_path + File.separator + "NeuroCyto" + File.separator + "ChriSTORM" + File.separator + "Reconstruct Images (batch)" + File.separator+ "Generate_Reconstructions.ijm";
-		Gen_Recon_args = out_path + "," + CAM_SIZE + ","+ REC_METH + "," + SR_SIZE + "," + XMIN + "," + YMIN + "," + XWIDTH + "," + YWIDTH + "," + XY_AUTO + ","  + XY_ZERO + "," + XY_ORI + "," + XY_UN + "," + P3D + "," + Z_SPACE + "," + Z_MIN + "," + Z_MAX + "," + Z_AUTO + "," + Z_NAME + "," + Z_SATDO + "," + Z_SATUP + "," + Z_UN + "," + Z_PROJ + "," + Z_COLOR + "," + Z_LUT + "," +  FILT + "," + FILT_RAD + "," + FILT_NUMB + "," + FILT_DIM + "," + GAUSS + "," + GAUSS_MULT + "," + UNS_SIZE + "," + UNS_WEIGHT + "," + UNS_MULT + "," + GAM + "," + AD_CONT + "," + SAT_LEV;
+		Gen_Recon_args = out_path + "," + CAM_SIZE + ","+ REC_METH + "," + SR_SIZE + "," + XMIN + "," + YMIN + "," + XWIDTH + "," + YWIDTH + "," + XY_AUTO + ","  + XY_ZERO + "," + XY_ORI + "," + XY_UN + "," + P3D + "," + Z_SPACE + "," + Z_MIN + "," + Z_MAX + "," + Z_AUTO + "," + Z_SATDO + "," + Z_SATUP + "," + Z_UN + "," + Z_COLOR + "," + Z_LUT + "," + GAUSS + "," + GAUSS_MULT + "," + UNS_SIZE + "," + UNS_WEIGHT + "," + UNS_MULT + "," + GAM + ","  + to16 + "," + AD_CONT + "," + SAT_LEV;
 		out_path2 = runMacro(Gen_Recon_path, Gen_Recon_args);
 	}
 

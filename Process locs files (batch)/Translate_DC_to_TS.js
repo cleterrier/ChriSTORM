@@ -9,7 +9,7 @@ importClass(Packages.ij.gui.GenericDialog);
 // Default values
 var isBatchdef = 1;
 var pxSizeDef = 160; //  pixel size on camera image in nm (default is 160 nm for NSTORM)
-var compFDef = 1.03919; // compensate distortion from the 3D astigmatic lens (default for NSTORM X = 1.036875 * Y but adjusted to stick with NSTORM processing)
+var compFDef = 1.0391934; // compensate distortion from the 3D astigmatic lens (default for NSTORM X = 1.036875 * Y but adjusted to stick with NSTORM processing)
 var rotXYDef = true; // rotate 90° right (default true)
 var flipYDef = true; // flip Y coordinates (default true) - with the rotate 90° right, this aligns the default output of DECODE with the default output of TS/SMAP
 var sizeXDef = 256; // width of camera image in pixels (default is 256 for NSTORM);
@@ -53,7 +53,7 @@ IJ.log("Input name:" + name);
 var gd = new GenericDialog(procName + ": options");
 gd.addCheckbox("Batch mode", isBatchdef);
 gd.addNumericField("Camera pixel size", pxSizeDef, 1, 6, "nm");
-gd.addNumericField("Astigmatism compensation (1 for none)", compFDef, 5, 7, "");
+gd.addNumericField("Astigmatism compensation (1 for none)", compFDef, 6, 6, "X");
 gd.addCheckbox("Rotate image right", rotXYDef);
 gd.addCheckbox("Flip Y coordinates", flipYDef);
 gd.addNumericField("   Camera image width", sizeXDef, 0, 6, "px");
