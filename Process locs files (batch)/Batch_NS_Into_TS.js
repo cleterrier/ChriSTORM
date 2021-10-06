@@ -32,8 +32,7 @@ var xydrift_def = true;
 var warp_def = true;
 var zdrift_def = true;
 var zfactor_def = 2;
-var ppc_def = 0.1248;
-var xcorr_def = true;
+var xcorr_def = 1.01615;
 
 
 // Get input directory (dialog or argument)
@@ -55,16 +54,15 @@ if (called == false) {
 	gd.addCheckbox("Use warp-corrected coordinates", warp_def);
 	gd.addCheckbox("Use drift-corrected Z coordinates", zdrift_def);
 	gd.addNumericField("Z uncertainty factor", zfactor_def, 1, 3, "* XY uncertainty");
-	gd.addNumericField("Photons per count", ppc_def, 4, 6, "ph/ADU");
-	gd.addCheckbox("Correct astigmatism compression", xcorr_def);
+	gd.addNumericField("Astigmatic compression correction (1 for none)", xcorr_def, 5, 7, "" );
+	gd.addMessage("(3D only, 1.01615 for NSTORM#1, 0.955 for NSTORM#2)");
 	gd.showDialog();
 	var seq = gd.getNextBoolean();
 	var xydrift = gd.getNextBoolean();
 	var warp = gd.getNextBoolean();
 	var zdrift = gd.getNextBoolean();
 	var zfactor = gd.getNextNumber();
-	var ppc = gd.getNextNumber();
-	var xcorr = gd.getNextBoolean();
+	var xcorr = gd.getNextNumber();
 }
 else {
 	seq = argarray[1];
@@ -72,8 +70,7 @@ else {
 	warp = argarray[3];
 	zdrift = argarray[4];
 	zfactor = argarray[5];
-	ppc = argarray[6];
-	xcorr = argarray[7];
+	xcorr = argarray[6];
 }
 
 if (gd.wasOKed() || called == true) {
@@ -175,14 +172,14 @@ if (gd.wasOKed() || called == true) {
 	var fileQueueT = getExtFiles(inDirTranslate, "txt");
 	for (var f = 0; f < fileQueueT.length; f++) {
 		inPath = fileQueueT[f];
-		NStxtTranslate(inPath, outDirTranslate, outFormat, xydrift, warp, zdrift, zfactor, ppc, xcorr);
+		NStxtTranslate(inPath, outDirTranslate, outFormat, xydrift, warp, zdrift, zfactor, xcorr);
 	}
 
 	// End
 	var stopTime = new Date().getTime();
 	var Time = stopTime - startTime;
 	IJ.log("\n*** Batch N-STORM into ThunderSTORM ended after " + Time / 1000 + " s ***\n\n\n");
-	out = outDirTranslate;
+	if (called == true) out = outDirTranslate;
 
 }
 

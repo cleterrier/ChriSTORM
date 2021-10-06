@@ -37,8 +37,6 @@ macro "Batch Process Localizations" {
 	EXC_DEF = true;
 	EXC_STRING_DEF = "_ZR_";
 
-	COUNT_DEF = true;
-
 	// Drift correction
 	CORR_DRIFT_DEF = true;
 	BIN_DEF = 12; // number of frames per sub-reconstruction used for autocorrelation
@@ -94,7 +92,6 @@ macro "Batch Process Localizations" {
 		Dialog.addString("Name contains", CHOOSE_STRING_DEF);
 		Dialog.addCheckbox("Exclude files based on name", EXC_DEF);
 		Dialog.addString("Name contains", EXC_STRING_DEF);
-		Dialog.addCheckbox("Reset Loc Counter", COUNT_DEF);
 		Dialog.addMessage("");
 		Dialog.addCheckbox("Correct drift", CORR_DRIFT_DEF);
 		Dialog.addNumber("Number of bins for sub-images", BIN_DEF, 0, 5, "");
@@ -126,8 +123,6 @@ macro "Batch Process Localizations" {
 		EXC = Dialog.getCheckbox();
 		EXC_STRING = Dialog.getString();
 
-		RESET = Dialog.getCheckbox();
-
 		CORR_DRIFT = Dialog.getCheckbox();
 		BIN = Dialog.getNumber();
 		MAG = Dialog.getNumber();
@@ -152,30 +147,29 @@ macro "Batch Process Localizations" {
 	}
 
 	// called from macro:
-	// arguments (INPUT_DIR, CHOOSE, CHOOSE_STRING, EXC, EXC_STRING, CORR_DRIFT, BIN, MAG, SM, MERGE, DIST, MAXF, OFF, PHOT_FILT, PHOT_MIN, PHOT_MAX, EXP_FILT, EXP_STRING, DENS_FILT, DENS_RAD, DENS_NUMB, DENS_DIM, TSF)
+	// arguments (INPUT_DIR, CHOOSE, CHOOSE_STRING, EXC, EXC_STRING, CORR_DRIFT, BIN, MAG, SM, MERGE, DIST, MAXF, OFF, PHOT_FILT, PHOT_MIN, PHOT_MAX, EXP_FILT, EXP_STRING, DENS_FILT, DENS_RAD, DENS_NUMB, DENS_DIM)
 	else {
 		CHOOSE = argarray[1];
 		CHOOSE_STRING = argarray[2];
 		EXC = argarray[3];
 		EXC_STRING = argarray[4];
-		RESET = argarray[5];
-		CORR_DRIFT = argarray[6];
-		BIN = argarray[7];
-		MAG = argarray[8];
-		SM = argarray[9];
-		MERGE = argarray[10];
-		DIST = argarray[11];
-		MAXF = argarray[12];
-		OFF = argarray[13];
-		PHOT_FILT = argarray[14];
-		PHOT_MIN = argarray[15];
-		PHOT_MAX = argarray[16];
-		EXP_FILT = argarray[17];
-		EXP_STRING = argarray[18];
-		DENS_FILT = argarray[19];
-		DENS_RAD = argarray[20];
-		DENS_NUMB = argarray[21];
-		DENS_DIM = argarray[22];
+		CORR_DRIFT = argarray[5];
+		BIN = argarray[6];
+		MAG = argarray[7];
+		SM = argarray[8];
+		MERGE = argarray[9];
+		DIST = argarray[10];
+		MAXF = argarray[11];
+		OFF = argarray[12];
+		PHOT_FILT = argarray[13];
+		PHOT_MIN = argarray[14];
+		PHOT_MAX = argarray[15];
+		EXP_FILT = argarray[16];
+		EXP_STRING = argarray[17];
+		DENS_FILT = argarray[18];
+		DENS_RAD = argarray[19];
+		DENS_NUMB = argarray[20];
+		DENS_DIM = argarray[21];
 	}
 
 //*************** Prepare processing ***************
@@ -286,44 +280,25 @@ macro "Batch Process Localizations" {
 				// Export the corrected locs into an output file
 
 				// Count the new Loc number
-				nLocs = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); rows = rt.getRowCount();");
+				nLocs = parseInt(eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); rows = rt.getRowCount();"));
 				nLocK = round(nLocs / 1000);
+				nLocK2 = replace(d2s(nLocs / 1000, 2), ".", ",");
+				
 				// OUT_TITLE = replace(OUT_TITLE, "([0-9])+K_", nLocK + "K_");
 
 				//if (CORR_DRIFT == true) {
 				//	ADD_TITLE = ADD_TITLE + "DC";
 				//}
 
-				ADD_TITLE = "_" + nLocK + "K";
-
-				if (indexOf(OUT_TITLE, "_TS2D.") > 0 || indexOf(OUT_TITLE, "_TS3D.") > 0) {
-
-					if (RESET == true) {
-						NEW_TITLE = replace(OUT_TITLE, "(_([0-9])+K)+_", ADD_TITLE + "_");
-					}
-					else {
-						NEW_TITLE = replace(OUT_TITLE, "_TS", ADD_TITLE + "_TS");
-					}
+				// Replace localization number if present in the name
+				if (nLocs < 10000){
+					ADD_TITLE = "_" + nLocK2 + "K";
 				}
-
 				else {
-					NEW_TITLE = replace(OUT_TITLE, LOC_SUFFIX, ADD_TITLE + LOC_SUFFIX1);
+					ADD_TITLE = "_" + nLocK + "K";
 				}
+				NEW_TITLE = replace(OUT_TITLE, "_([0-9])+,*([0-9])*K_", ADD_TITLE + "_");
 
-
-/*
- 				else {
-					if (RESET == true) {
-						NEW_TITLE = replace(OUT_TITLE, "(_([0-9])+K)+", ADD_TITLE);
-					}
-					else {
-						insert = lastIndexOf(OUT_TITLE, "K_");
-						NEW_TIT1 = substring(OUT_TITLE, 0, insert+1);
-						NEW_TIT2 = substring(OUT_TITLE, insert+1, lengthOf(OUT_TITLE));
-						NEW_TITLE = NEW_TIT1 + ADD_TITLE + NEW_TIT2;
-					}
-				}
-*/
 
 				OUT_PATH = OUTPUT_DIR + NEW_TITLE;
 				run("Export results", "filepath=[" + OUT_PATH + "] fileformat=[CSV (comma separated)] chi2=false saveprotocol=false");
