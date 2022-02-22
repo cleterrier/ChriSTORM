@@ -476,7 +476,6 @@ macro "Generate Reconstructions" {
 				selectWindow(RESULTS_TITLE);
 				run("Visualization", VISU_STRING);
 				setVoxelSize(SR_SIZE/1000, SR_SIZE/1000, Z_SPACE/1000, "um");
-				run("Remove Slice Labels");
 				visID = getImageID();
 				nOutS = nSlices;
 

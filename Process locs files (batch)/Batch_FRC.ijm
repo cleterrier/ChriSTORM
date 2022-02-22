@@ -3,16 +3,16 @@
 // Performs FRC computation on this image pair (classic FRC curve and/or spatial FRC map)
 // Requires ThunderSTORM (I use the "Hohlbein Lab" update site)
 // BIOP FRC requires BIOP plugins ("PTBIOP" update site)
-// NanoJ FRC Map requires NanoJ-SQUIRREL ("NanoJ-Core" and "NanoJ-SQUIRREL" update sites) 
+// NanoJ FRC Map requires NanoJ-SQUIRREL ("NanoJ-Core" and "NanoJ-SQUIRREL" update sites)
 
 macro "Batch FRC" {
 
 	// Save Settings
 	saveSettings();
 
-//*************** Initialize variables ***************	
+//*************** Initialize variables ***************
 
-	
+
 	// Detect if called from macro
 	arg = getArgument();
 	if (lengthOf(arg)>0) {
@@ -25,11 +25,11 @@ macro "Batch FRC" {
 
 	LOC_SUFFIX = ".csv";
 	OUT_PARAM = "FRC";
-	
+
 	// Camera setup variables
 //	CAM_SIZE = 160;
 //	CG = 12.48; // camera gain new images
-//	EM = 100; // EM gain new images	
+//	EM = 100; // EM gain new images
 
 	// File chooser
 	CHOOSE_DEF = false;
@@ -40,7 +40,7 @@ macro "Batch FRC" {
 
 
 	// Split mode
-	SPLIT_ARRAY = newArray("localizations", "frame", "100 frames");
+	SPLIT_ARRAY = newArray("localizations", "frame", "100 frames", "intensity", "half");
 	SPLIT_DEF = SPLIT_ARRAY[2];
 
 	// Keep split localization files
@@ -51,17 +51,22 @@ macro "Batch FRC" {
 	CAMX_DEF = 256;
 	CAMY_DEF = 256;
 	CAMPIX_DEF = 160;
-	
-	// Magnification (size of pixel on widefield image / size of pixel on paired SR images) 
-	PIX_DEF = 8;	
+
+	// Magnification (size of pixel on widefield image / size of pixel on paired SR images)
+	PIX_DEF = 12;
 
 	// Compute FRC
 	FRC_DEF = true;
 	NFRC_DEF = true;
 	BLOCK_DEF = 10;
+	PANEL_DEF = true;
+	PBLOCK_DEF = 64;
+	PBGD_DEF = 3;
+	PSKIP_DEF = 2;
 
-	
-//*************** Get input folder ***************	
+
+
+//*************** Get input folder ***************
 
 	// Get input directory (dialog or argument)
 	if (called == false) {
@@ -70,15 +75,15 @@ macro "Batch FRC" {
 	else {
 		INPUT_DIR = argarray[0];
 	}
-	
+
 	print("\n\n\n*** Batch FRC started ***");
 	print("");
 	print("Input folder: " + INPUT_DIR);
 
 
-//*************** Dialog ***************	
+//*************** Dialog ***************
 
-	if (called == false) {	
+	if (called == false) {
 		//Creation of the dialog box
 		Dialog.create("Batch FRC: options");
 		Dialog.addCheckbox("Choose files based on name", CHOOSE_DEF);
@@ -96,16 +101,20 @@ macro "Batch FRC" {
 		Dialog.addCheckbox("Compute BIOP FRC", FRC_DEF);
 		Dialog.addCheckbox("Compute NanoJ FRC Map", NFRC_DEF);
 		Dialog.addNumber("FRC map blocks per axis", BLOCK_DEF, 0, 5, "blocks");
+		Dialog.addCheckbox("Compute PANELJ Map", PANEL_DEF);
+		Dialog.addNumber("PANELJ block size", PBLOCK_DEF, 0, 5, "pixels");
+		Dialog.addNumber("PANELJ background", PBGD_DEF, 0, 5, "8-bit AU");
+		Dialog.addNumber("PANELJ skip pixel", PSKIP_DEF, 0, 5, "pixels");
 
 		Dialog.show();
-		
+
 		// Feeding variables from dialog choices
 		CHOOSE = Dialog.getCheckbox();
 		CHOOSE_STRING = Dialog.getString();
 
 		EXC = Dialog.getCheckbox();
 		EXC_STRING = Dialog.getString();
-	
+
 		SPLIT_MODE = Dialog.getChoice();
 		KEEP = Dialog.getCheckbox();
 		KEEPIM = Dialog.getCheckbox();
@@ -113,18 +122,24 @@ macro "Batch FRC" {
 		CAMX = Dialog.getNumber();
 		CAMY = Dialog.getNumber();
 		CAMPIX = Dialog.getNumber();
-		
+
 		PIX = Dialog.getNumber();
-		
+
 		FRC = Dialog.getCheckbox();
 		NFRC = Dialog.getCheckbox();
 
 		BLOCK = Dialog.getNumber();
-	
+
+		PANEL = Dialog.getCheckbox();
+
+		PBLOCK = Dialog.getNumber();
+		PBGD = Dialog.getNumber();
+		PSKIP = Dialog.getNumber();
+
 	}
 
 	// called from macro:
-	// arguments (INPUT_DIR, CHOOSE, CHOOSE_STRING, EXC, EXC_STRING, SPLIT_MODE, KEEP, KEEPIM, PIX, CAMX, CAMY, CAMPIX, FRC, NFRC, BLOCK)
+	// arguments (INPUT_DIR, CHOOSE, CHOOSE_STRING, EXC, EXC_STRING, SPLIT_MODE, KEEP, KEEPIM, PIX, CAMX, CAMY, CAMPIX, FRC, NFRC, BLOCK, PANEL, PBLOCK, PBGD, PSKIP)
 	else {
 		CHOOSE = argarray[1];
 		CHOOSE_STRING = argarray[2];
@@ -134,19 +149,23 @@ macro "Batch FRC" {
 		KEEP = argarray[6];
 		KEEPIM = argarray[7];
 		PIX = argarray[8];
-		CAMX = argarray[9];	
+		CAMX = argarray[9];
 		CAMY = argarray[10];
-		CAMPIX = argarray[11];		
+		CAMPIX = argarray[11];
 		FRC = argarray[12];
 		NFRC = argarray[13];
 		BLOCK = argarray[14];
+		PANEL = argarray[14];
+		PBLOCK = argarray[15];
+		PBGD = argarray[16];
+		PSKIP = argarray[17];
 	}
-	
-//*************** Prepare processing ***************	
+
+//*************** Prepare processing ***************
 
 	//Time counter
 	startTime = getTime();
-	
+
 	// Get all file names
 	ALL_NAMES = getFileList(INPUT_DIR);
 	Array.sort(ALL_NAMES);
@@ -179,6 +198,11 @@ macro "Batch FRC" {
 		FILT_STRING1 = "frame%200<100";
 		FILT_STRING2 = "frame%200>99";
 	}
+	else if (SPLIT_MODE == "intensity") {
+		FILT_STRING1 = "intensity%2=0";
+		FILT_STRING2 = "intensity%2=1";
+	}
+
 
 	// Calculate Magnification for SR reconstructions
 	MAG = CAMPIX/PIX;
@@ -188,6 +212,13 @@ macro "Batch FRC" {
 		OUT_NFRC = "FRC Map Results";
 		Table.create(OUT_NFRC);
 	}
+
+	// Initialize results compilation table for PANELJ
+	if (PANEL == true) {
+		OUT_PANEL = "PANELJ Results";
+		Table.create(OUT_PANEL);
+	}
+
 
 //	run("Camera setup", "isemgain=true pixelsize=" + CAM_SIZE + " gainem=" + CG +" offset=85 photons2adu=" + EM);
 
@@ -202,7 +233,7 @@ macro "Batch FRC" {
 			ALL_TS[n] = true;
 			ALL_TYPES[n] = "[CSV (comma separated)]";
 		}
-			
+
 		if (ALL_TS[n] == true) {
 			if ((CHOOSE == false || indexOf(ALL_NAMES[n], CHOOSE_STRING) > -1) && (EXC == false || indexOf(ALL_NAMES[n], EXC_STRING) == -1)) {
 				FileTotal++;
@@ -219,19 +250,33 @@ macro "Batch FRC" {
 			if ((CHOOSE == false || indexOf(ALL_NAMES[n], CHOOSE_STRING) > -1) && (EXC == false || indexOf(ALL_NAMES[n], EXC_STRING) == -1)) {
 				// Image counter
 				FileCount++;
-				
+
 				// Get the file path
 				FILE_PATH = INPUT_DIR + ALL_NAMES[n];
-				
+
 				// Store components of the file name
 				FILE_NAME = File.getName(FILE_PATH);
-				
+
 				print("    Input file #" + FileCount + "/" + FileTotal + ": " + FILE_NAME);
 
-				
-				// Open the loc file	
+
+				// Open the loc file
 				run("Import results", "append=false startingframe=1 rawimagestack= filepath=[" + FILE_PATH + "] livepreview=false fileformat=" + ALL_TYPES[n]);
-	
+
+
+				if (SPLIT_MODE == "half") // If splitting half and half
+				{
+					// Count the nLoc number
+					nLocs = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); rows = rt.getRowCount();");
+					halfLocs = floor(nLocs/2);
+					halfLocs_S = toString(halfLocs);
+					// Define filters for half and half
+					FILT_STRING1 = "id<" + halfLocs_S;
+					FILT_STRING2 = "id>" + halfLocs_S;
+				}
+
+
+
 				// Filter even localizations (file 1)
 				run("Show results table", "action=filter formula=[" + FILT_STRING1 + "]");
 
@@ -245,13 +290,13 @@ macro "Batch FRC" {
 					OUT_TITLE1 = replace(OUT_TITLE1, ".csv", "_FRCa.csv");
 				}
 				// Save loc file 1
-				if (KEEP == true) {	
+				if (KEEP == true) {
 					OUT_PATH1 = OUTPUT_DIR + OUT_TITLE1;
 					run("Export results", "filepath=[" + OUT_PATH1 + "] fileformat=[CSV (comma separated)] saveprotocol=false");
 					print("      Output loc file 1:" + OUT_TITLE1);
 				}
 				// Generate image 1
-				run("Visualization", "imleft=0.0 imtop=0.0 imwidth=" + CAMX + " imheight=" + CAMY + " renderer=[Normalized Gaussian] dxforce=false pickedlut=[Rainbow RGB] magnification=" + MAG + " colorize=true dx=5.0 threed=false dzforce=false");			
+				run("Visualization", "imleft=0.0 imtop=0.0 imwidth=" + CAMX + " imheight=" + CAMY + " renderer=[Normalized Gaussian] dxforce=false pickedlut=[Rainbow RGB] magnification=" + MAG + " colorize=true dx=5.0 threed=false dzforce=false");
 				IM1_ID = getImageID();
 				// Save image 1
 				OUT_TITLEIM1 = replace(OUT_TITLE1, ".csv", ".tif");
@@ -261,9 +306,9 @@ macro "Batch FRC" {
 					save(OUT_PATHIM1);
 					print("      Output image 1:" + OUT_TITLEIM1);
 				}
-				
 
-				
+
+
 				// Filter odd localizations (file 2)
 				run("Show results table", "action=reset");
 				run("Show results table", "action=filter formula=[" + FILT_STRING2 + "]");
@@ -271,7 +316,7 @@ macro "Batch FRC" {
 				// Count the nLoc number
 				nLocs = eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); rows = rt.getRowCount();");
 				nLocK = round(nLocs / 1000);
-				
+
 				// Rename file 2
 				OUT_TITLE2 = FILE_NAME;
 				OUT_TITLE2 = replace(OUT_TITLE2, "([0-9])+K_", "FRCb_" + nLocK + "K_");
@@ -279,13 +324,13 @@ macro "Batch FRC" {
 					OUT_TITLE2 = replace(OUT_TITLE2, ".csv", "_FRCb.csv");
 				}
 				// Save loc file 2
-				if (KEEP == true) {	
+				if (KEEP == true) {
 					OUT_PATH2 = OUTPUT_DIR + OUT_TITLE2;
 					run("Export results", "filepath=[" + OUT_PATH2 + "] fileformat=[CSV (comma separated)] saveprotocol=false");
 					print("      Output loc file 2:" + OUT_TITLE2);
 				}
 				// Generate image 2
-				run("Visualization", "imleft=0.0 imtop=0.0 imwidth=" + CAMX + " imheight=" + CAMY + " renderer=[Normalized Gaussian] dxforce=false pickedlut=[Rainbow RGB] magnification=" + MAG + " colorize=true dx=5.0 threed=false dzforce=false");			
+				run("Visualization", "imleft=0.0 imtop=0.0 imwidth=" + CAMX + " imheight=" + CAMY + " renderer=[Normalized Gaussian] dxforce=false pickedlut=[Rainbow RGB] magnification=" + MAG + " colorize=true dx=5.0 threed=false dzforce=false");
 				IM2_ID = getImageID();
 				// Save image 2
 				OUT_TITLEIM2 = replace(OUT_TITLE2, ".csv", ".tif");
@@ -302,9 +347,9 @@ macro "Batch FRC" {
 
 				// BIOP FRC
 				if (FRC == true) {
-					
+
 					// Run FRC, get table title
-					run("FRC Calculation...", "image_1=" + OUT_TITLEIM1 + " image_2=" + OUT_TITLEIM2 + " resolution=[Fixed 1/7] display");				
+					run("FRC Calculation...", "image_1=" + OUT_TITLEIM1 + " image_2=" + OUT_TITLEIM2 + " resolution=[Fixed 1/7] display");
 					RES_TITLE = "FRC Results";
 
 					// Get FRC resolution column header from table
@@ -318,29 +363,22 @@ macro "Batch FRC" {
 					if  (isNaN(val) == true) print("      FRC failed: no intersection with threshold. Try generating SR images with smaller pixels.");
 					else print("      FRC performed: resolution is " + d2s(val*1000,1) + " nm.");
 
-					// Close images if no map after			
-					if (NFRC == false) {					
-						selectImage(IM1_ID);
-						close();
-						selectImage(IM2_ID);
-						close();	
-					}
-					// Rename if map after to be able to select via unique string with Images to Stack
-					else {
-						selectImage(IM1_ID);
-						rename(replace(OUT_TITLEIM1, "FRCa", "imFRCa"));
-						selectImage(IM2_ID);
-						rename(replace(OUT_TITLEIM2, "FRCb", "imFRCb"));
-					}
+				}
+
+				// If map or panel used, rename after to be able to select via unique string and make a 2-images stack with Images to Stack
+				if (NFRC == true && PANEL == true) {
+					selectImage(IM1_ID);
+					rename(replace(OUT_TITLEIM1, "FRCa", "imFRCa"));
+					selectImage(IM2_ID);
+					rename(replace(OUT_TITLEIM2, "FRCb", "imFRCb"));
+					// Make a 2-image stack with the SR pair
+					run("Images to Stack", "name=2Stack title=[imFRC] use");
+					STACK_ID = getImageID();
 				}
 
 				// NanoJ FRC Map
 				if (NFRC == true) {
 
-					// Make a 2-image stack with the SR pair
-					run("Images to Stack", "name=Stack title=[imFRC] use");
-					STACK_ID = getImageID();
-					
 					// Run FRC map, get table title
 					run("Calculate FRC-Map", "blocks=" + BLOCK + " pixel=" + PIX);
 					RESMAP_TITLE = "FRC-Resolution";
@@ -364,18 +402,59 @@ macro "Batch FRC" {
 
 					// Log min and max FRC values
 					print("      FRC map performed: resolution is between " + d2s(vala[3],1) + " nm and " + d2s(vala[2],1) + " nm.");
-					print("");
-					
+
 					// Rename FRC map image with unique name
 					selectWindow("FRC Map");
 					rename("FRC Map Of " + OUT_TITLEIM2);
+				}
+
+				// PANELJ FRC image
+				if (PANEL == true) {
+					run("rFRC resolution mapping", "block=" + PBLOCK + " background=" + PBGD + " skip=" + PSKIP + " pixel=" + PIX + " image=2Stack");
+					PANEL_TITLE = "rFRC-Mapping metrics - 0.143 hard threshold";
+
+					// Get table headers
+					if (FileCount == 1) {
+						HEADSPANEL_STRING = Table.headings(PANEL_TITLE);
+						HEADSPANEL = split(HEADSPANEL_STRING, "\t");
+					}
+
+					// Set image name in compilation table
+					Table.set("Label", FileCount-1, OUT_TITLEIM1, OUT_PANEL);
+
+					// Copy all columns from results table first line to complation table
+					vala = newArray(HEADSPANEL.length);
+					for (i=0; i<HEADSPANEL.length; i++) {
+						vala[i] = Table.get(HEADSPANEL[i], 0, PANEL_TITLE);
+						Table.set(HEADSPANEL[i], FileCount-1, vala[i], OUT_PANEL);
+					}
+					Table.update(OUT_PANEL);
+
+					// Log min and max FRC values
+					print("      PANELJ performed: mean resolution is " + d2s(vala[0],1) + " nm between " + d2s(vala[2],1) + " nm and " + d2s(vala[3],1) + " nm.");
+					print("");
+
+					// Rename FRC map image with unique name
+					selectWindow("rFRC Map - 0.143 hard threshold");
+					rename("PANELJ Of " + OUT_TITLEIM2);
+				}
+
+				print("");
+
+				// Close 2-image stack iof map or panel have been used
+				if (NFRC == true && PANEL == true) {
 					selectImage(STACK_ID);
 					close();
-
-					
 				}
-				
-			} // end of IF loop on include/exclude names	
+				// Else close the 2 images
+				else {
+					selectImage(IM1_ID);
+					close();
+					selectImage(IM2_ID);
+					close();
+				}
+
+			} // end of IF loop on include/exclude names
 		}	// end of IF loop on extensions
 	}	// end of FOR loop on n extensions
 
@@ -403,14 +482,26 @@ macro "Batch FRC" {
 	}
 
 
+	if (PANEL == true && FileCount > 1) {
+			run("Images to Stack", "name=[PANELJ stack] title=[PANELJ Of] use");
+			save(OUTPUT_DIR + "PANELJ.tif");
+			close();
+			selectWindow(PANEL_TITLE);
+			run("Close");
+			selectWindow(OUT_PANEL);
+			saveAs("results", OUTPUT_DIR + "PANELJ_Results.xls");
+			run("Close");
+	}
+
+
 	// Restore settings
-	restoreSettings();	
+	restoreSettings();
 	showStatus("Batch FRC finished");
-	
+
 	//Time counter
 	stopTime = getTime();
 	Time = stopTime - startTime;
-	
+
 	print("");
 	print("*** Batch FRC ends after " + Time / 1000 + " s ***\n\n\n");
 	if (called == true) return OUTPUT_DIR;

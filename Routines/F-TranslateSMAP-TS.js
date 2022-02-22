@@ -30,7 +30,7 @@ function TranslateSMAPTS(inPath, outDir, ps, cf, rf, sX, sY, fz, cz, su, ch){
 
 	// Fields of the input header
 
-	var inHeaderList = ["xnm","ynm","znm","frame","locprecnm","phot","bg","LLrel","PSFxnm","PSFxpix","PSFynm","PSFypix","channel","colorfield","filenumber","groupindex","iterations","locprecznm","logLikelihood","numberInGroup","photerr","xnmerr","xpix","xpixerr","ynmerr","ypix","ypixerr"];
+	var inHeaderList = ["xnm","ynm","znm","frame","locprecnm","phot","bg","LLrel","PSFxnm","PSFxpix","PSFynm","PSFypix","channel","colorfield","filenumber","groupindex","iterations","locprecznm","logLikelihood","numberInGroup","photerr","xnmerr","xpix","xpixerr","ynmerr","ypix","ypixerr", "phot1", "phot2", "phot1err", "phot2err", "bg1", "bg2", "bg1err", "bg2err"];
 	var outHeader3DList = ["\"frame\"","\"x [nm]\"","\"y [nm]\"","\"z [nm]\"","\"intensity [photon]\"","\"uncertainty_xy [nm]\"","\"uncertainty_z [nm]\""];
 
 	// Correspondance
@@ -73,11 +73,17 @@ function TranslateSMAPTS(inPath, outDir, ps, cf, rf, sX, sY, fz, cz, su, ch){
 	var zIndex = arrayFind(inHeaderArray, inHeaderList[2]);
 	var unzIndex = arrayFind(inHeaderArray, inHeaderList[17]);
 	var detIndex = arrayFind(inHeaderArray, inHeaderList[19]);
+	var chIndex = arrayFind(inHeaderArray, inHeaderList[12]);
+	var int1Index = arrayFind(inHeaderArray, inHeaderList[27]);
+	var int2Index = arrayFind(inHeaderArray, inHeaderList[28]);
 
 	// Complete output header with optional columns
 	if (ch == true && chi2Index != -1) outHeader3DList.push("\"chi2\"");
 	if (bgIndex != -1) outHeader3DList.push("\"offset [photon]\"");
-	if (detIndex != -1) outHeader3DList.push("\"detections\""); 
+	if (detIndex != -1) outHeader3DList.push("\"detections\"");
+	if (chIndex != -1) outHeader3DList.push("\"channel\"");
+	if (int1Index != -1) outHeader3DList.push("\"intensity1 [photon]\"");
+	if (int2Index != -1) outHeader3DList.push("\"intensity2 [photon]\"");
 
 	// will only use for 3D
 	var is3D = true;
@@ -132,11 +138,20 @@ function TranslateSMAPTS(inPath, outDir, ps, cf, rf, sX, sY, fz, cz, su, ch){
 
 		if (detIndex != -1) var detOut = (parseFloat(inCells[detIndex])).toFixed(0);
 
+		if (chIndex != -1) var chOut = (parseFloat(inCells[chIndex])).toFixed(0);
+
+		if (int1Index != -1) var int1Out = (parseFloat(inCells[int1Index])).toFixed(0);
+		if (int2Index != -1) var int2Out = (parseFloat(inCells[int2Index])).toFixed(0);
+
 		// Assemble output line
 		var outLineArray = [fOut, xOut, yOut, zOut, intOut, unxyOut, unzOut];
 		if (ch == true && chi2Index != -1) outLineArray.push(chi2Out);
 		if (bgIndex != -1) outLineArray.push(offOut);
 		if (detIndex != -1) outLineArray.push(detOut);
+		if (chIndex != -1) outLineArray.push(chOut);
+		if (int1Index != -1) outLineArray.push(int1Out);
+		if (int2Index != -1) outLineArray.push(int2Out);
+		
 		var outLine = makeLineFromArray(outLineArray, sep);
 
 		// Write new line
