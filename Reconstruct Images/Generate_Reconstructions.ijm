@@ -549,6 +549,7 @@ macro "Generate Reconstructions" {
 				}		
 				
 				// Save and close reconstruction
+				run("Set Scale...", "distance=1 known=" + SR_SIZE / 1000 + " unit=um");
 				OUT_PATH = OUTPUT_DIR + OUT_TITLE + ".tif";
 				save(OUT_PATH);
 				close();

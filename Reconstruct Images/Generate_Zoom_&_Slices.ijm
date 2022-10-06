@@ -62,7 +62,7 @@ macro "Generate Zooms & Slices" {
 	Z_LUT_DEF = "CRL_ZOLANDER"; // LUT for color-coded 3D, other good ones: Rainbow RGB, Jet, ametrine, ThunderSTORM
 	SLICES_DEF = false;
 	SLICE_THICK_DEF = 400; // 800 nm
-	SLICE_LONG_DEF = true;
+	SLICE_LONG_DEF = false;
 	SLICE_PROJ_A = newArray("None", "Maximum", "Sum");
 	SLICE_PROJ_DEF = "Sum"; // true
 	SLICE_COLOR_DEF = false;
@@ -182,7 +182,7 @@ macro "Generate Zooms & Slices" {
 	//Creation of the dialog box
 	Dialog.create("Generate zooms & slices: options 2");
 	Dialog.addCheckbox("Generate slices (only for line ROIs)", SLICES_DEF);
-	Dialog.addNumber("Slice thickness (0 for line ROI thickness", SLICE_THICK_DEF, 0, 4, "locs");
+	Dialog.addNumber("Slice thickness (0 for line ROI thickness)", SLICE_THICK_DEF, 0, 4, "nm");
 	Dialog.addCheckbox("Slice in both directions", SLICE_LONG_DEF);
 	Dialog.addChoice("Slice project", SLICE_PROJ_A, SLICE_PROJ_DEF);
 	Dialog.addCheckbox("Slice colorized", SLICE_COLOR_DEF);
@@ -562,6 +562,7 @@ for (z = 1; z < iCount + 1; z++) {
 				// Add scale of the tile
 				outIm = outProcess(OUT_TITLE);
 				zoomTitle = getTitle();
+				zoomTitle = replace(zoomTitle, ".tif", "");
 
 				if (ROILINE == true) {
 
