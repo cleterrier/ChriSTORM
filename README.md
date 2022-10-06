@@ -4,7 +4,7 @@
 ChriSTORM is a series of ImageJ scripts and macros that aim to complement the ThunderSTORM plugin for ImageJ:
 - Translate localization text files obtained from the Nikon N-STORM, Abbelight Neo software software or a variety or ogher software into ThunderSTORM localization files.
 - Batch process ThunderSTORM localization files: transformation, drift correction, filtering.
-- Batch generate image reconstructions from ThunderSTORM localization files (2D, 3D, with various options)
+- Batch generate image reconstructions from ThunderSTORM localization files (2D, 3D, with various options).
 
 ## Compatibility and Installation
 Installing ThundersTORM:
