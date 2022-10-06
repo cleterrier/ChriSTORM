@@ -23,7 +23,7 @@ macro "Generate Reconstructions" {
 	RESULTS_TITLE = "ThunderSTORM: results";
 	// Index of column containing Z coordinates in TS3D files
 	colZ = 3;
-	LUT_ARRAY = newArray("Rainbow RGB", "Jet", "Turbo", "ametrine", "ThunderSTORM", "ZOLA", "ZOLANDER", "3color-RMB", "3color-CGY", "2C Cyan-Green", "2C Yellow-Red", "2C Green-Cyan", "2C Red-Yellow");
+	LUT_ARRAY = newArray("Rainbow RGB", "Ext_Jet", "Ext_Turbo", "Ext_ametrine", "Ext_ThunderSTORM", "Ext_ZOLA", "CRL_ZOLANDER", "CRL_3color-RMB", "CRL_3color-CGY", "CRL_2C Cyan-Green", "CRL_2C Yellow-Red", "CRL_2C Green-Cyan", "CRL_2C Red-Yellow");
 
 // Default values for the Options Panel
 	CAM_SIZE_DEF = 160;
@@ -55,7 +55,7 @@ macro "Generate Reconstructions" {
 	Z_PROJ_A = newArray("None", "Maximum (32-bit or color)", "Sum (32-bit or color)", "Weighted sum (color)");
 	Z_PROJ_DEF = "Sum (32-bit or color)";
 	Z_COLOR_DEF = false;
-	Z_LUT_DEF = "ZOLANDER"; // LUT for color-coded 3D, other good ones: Rainbow RGB, Jet, ametrine, ThunderSTORM
+	Z_LUT_DEF = "CRL_ZOLANDER"; // LUT for color-coded 3D, other good ones: Rainbow RGB, Jet, ametrine, ThunderSTORM
 	
 	FILT_DEF = false;
 	FILT_RAD_DEF = 50;
@@ -362,7 +362,7 @@ macro "Generate Reconstructions" {
 			FILE_EXT = substring(FILE_NAME, lastIndexOf(FILE_NAME, "."), lengthOf(FILE_NAME));
 
 			//print("INPUT_PATH: " + FILE_PATH);
-			print("    Input file #" + FileCount + "/" + FileTotal + ": " + FILE_NAME + " (" + FILE_EXT + " file)");
+			print("   Input file #" + FileCount + "/" + FileTotal + ": " + FILE_NAME + " (" + FILE_EXT + " file)");
 
 			// Test if 3D
 			if (FILE_EXT == ".csv") {
@@ -383,7 +383,7 @@ macro "Generate Reconstructions" {
 				if (FILE_EXT == ".csv")
 					run("Import results", "append=false startingframe=1 rawimagestack= filepath=[" + FILE_PATH + "] livepreview=false fileformat=[CSV (comma separated)]");
 					nLocs = parseInt(eval("script", "importClass(Packages.cz.cuni.lf1.lge.ThunderSTORM.results.IJResultsTable); var rt = IJResultsTable.getResultsTable(); rows = rt.getRowCount();"));
-
+					print("\\Update:      Loc file opened");
 				// Optional Density filter (will not run on dummy image that have less than 100 locs)
 				if (FILT == true){	
 					if (nLocs>100) run("Show results table", "action=density neighbors=" + FILT_NUMB + " dimensions=" + FILT_DIM + " radius=" + FILT_RAD);

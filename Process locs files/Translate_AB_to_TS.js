@@ -1,5 +1,5 @@
-// Change_Header script by Christophe Leterrier
-// Calls F-ChangeHeader.js to change a ThunderSTORM csv file header into a PoCA file header
+// Translate Abbelight Neo csv to TS script by Christophe Leterrier
+// Calls F-TranslateAB-TS.js to translate an Abbelight Neo csv localization file into a ThunderSTORM file
 
 importClass(Packages.ij.io.OpenDialog)
 importClass(Packages.java.io.File)
@@ -7,10 +7,12 @@ importClass(Packages.ij.IJ);
 importClass(Packages.ij.gui.GenericDialog);
 
 // Default values
-var isBatchdef = 1;
+var isbatch_def = 1;
+var zfactor_def = 2; // calculate Z unceetainty by multiplying xy uncertainty with zfactor (as it's not calculated by Neo)
+var scale_def = 0.4; // scale uncertainties (as done by Ries lab for SMAP output, default is 0.4)
 
 // Name of the processing
-procName = "Translate DECODE to TS";
+procName = "Translate AB to TS";
 
 // Extensions of the input files
 inputExt = "csv";
@@ -19,13 +21,13 @@ inputExt = "csv";
 var routineFolder =  "NeuroCyto" + File.separator + "ChriSTORM" + File.separator + "Routines" + File.separator;
 
 // Name of the routine JS that will be called
-var routineJS = "F-ChangeHeader.js";
+var routineJS = "F-TranslateAB-TS.js";
 
 // Name of the output folder (added to the name of the input folder)
-var addFolder = "PoCA";
+var addFolder = "TS";
 
 // Choose file or folder dialog
-var od = new OpenDialog("Choose a ThunderSTORM csv results file", "");
+var od = new OpenDialog("Choose a Neo csv results file", "");
 var path = od.getPath(); // path of selected file
 var directory = od.getDirectory(); // path of containing folder
 var name = od.getFileName(); // name of delected file
@@ -42,11 +44,15 @@ IJ.log("Input name:" + name);
 
 // Options dialog
 var gd = new GenericDialog(procName + ": options");
-gd.addCheckbox("Batch mode", isBatchdef);
+gd.addCheckbox("Batch mode", isbatch_def);
+gd.addNumericField("Z uncertainty factor (1 for same as XY)", zfactor_def, 2,6, "X");
+gd.addNumericField("Uncertainty scaling (1 for none)", scale_def, 2, 6, "X");
 gd.showDialog();
-var isBatch = gd.getNextBoolean();
+var isbatch = gd.getNextBoolean();
+var zfactor = gd.getNextNumber();
+var scale = gd.getNextNumber();
 
-if (isBatch == 0) IJ.log("Processing a single file, path:" + path);
+if (isbatch == 0) IJ.log("Processing a single file, path:" + path);
 else IJ.log("Batch processing a folder, path:" + directory);
 
 if (gd.wasOKed()) {
@@ -61,9 +67,9 @@ if (gd.wasOKed()) {
 	IJ.log("Routine path:" + routinePath);
 	load(routinePath);
 
-	if (isBatch == 0) {
+	if (isbatch == 0) {
 		// Process the single file
-		changeHeader(path, directory);
+		TranslateABTS(path, directory, zfactor, scale);
 	}
 	else {
 		// Define input folder, define and create output folder
@@ -81,7 +87,7 @@ if (gd.wasOKed()) {
 		for (var f = 0; f < fileQueue.length; f++) {
 			inPath = fileQueue[f];
 			IJ.log("\n");
-			changeHeader(inPath, outDir);
+			TranslateABTS(inPath, outDir, zfactor, scale);
 		}
 	}
 

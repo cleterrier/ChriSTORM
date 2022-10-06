@@ -14,7 +14,7 @@ macro "Generate Zooms & Slices" {
 	// Titles of the Thunderstorm windows for catching them
 	RESULTS_TITLE = "ThunderSTORM: results";
 	RECON_TITLE = "ROIoutput";
-	LUT_ARRAY = newArray("Rainbow RGB", "Jet", "Turbo", "ametrine", "ThunderSTORM", "ZOLA", "ZOLANDER", "3color-RMB", "3color-CGY", "2C Cyan-Green", "2C Yellow-Red", "2C Green-Cyan", "2C Red-Yellow");
+	LUT_ARRAY = newArray("Rainbow RGB", "Ext_Jet", "Ext_Turbo", "Ext_ametrine", "Ext_ThunderSTORM", "Ext_ZOLA", "CRL_ZOLANDER", "CRL_3color-RMB", "CRL_3color-CGY", "CRL_2C Cyan-Green", "CRL_2C Yellow-Red", "CRL_2C Green-Cyan", "CRL_2C Red-Yellow");
 
 	// log
 	print("\n\n***** Generate Zooms & Slices started *****");
@@ -59,7 +59,7 @@ macro "Generate Zooms & Slices" {
 	Z_PROJ_A = newArray("None", "Maximum (32-bit or color)", "Sum (32-bit or color)", "Weighted sum (color)");
 	Z_PROJ_DEF = "Sum (32-bit or color)";
 	Z_COLOR_DEF = false;
-	Z_LUT_DEF = "ZOLANDER"; // LUT for color-coded 3D, other good ones: Rainbow RGB, Jet, ametrine, ThunderSTORM
+	Z_LUT_DEF = "CRL_ZOLANDER"; // LUT for color-coded 3D, other good ones: Rainbow RGB, Jet, ametrine, ThunderSTORM
 	SLICES_DEF = false;
 	SLICE_THICK_DEF = 400; // 800 nm
 	SLICE_LONG_DEF = true;
@@ -556,6 +556,7 @@ for (z = 1; z < iCount + 1; z++) {
 				// Launch the visualization to generate the tile
 				selectWindow(RESULTS_TITLE);
 				run("Visualization", VISU_STRING);
+				run("Remove Slice Labels");
 				rename("ROIoutput");
 
 				// Add scale of the tile
