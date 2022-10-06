@@ -1,28 +1,18 @@
 # ChriSTORM: ImageJ scripts and macros for processing ThunderSTORM images
 
+## Disclaimer: this readme is outdated, there are some differences in the lastest version
+
 ## Presentation
 ChriSTORM is a series of ImageJ scripts and macros that aim to complement the ThunderSTORM plugin for ImageJ:
-- Translate localization text files obtained from the Nikon N-STORM software into ThunderSTORM localization files.
-- Batch process ThunderSTORM localization files: drift correction, filtering.
-- Process a ThunderSTORM localization file in order to rotate or flip the resulting image.
-- Batch generate image reconstructions from ThunderSTORM localization files.
+- Translate localization text files obtained from the Nikon N-STORM, Abbelight Neo software software or a variety or ogher software into ThunderSTORM localization files.
+- Batch process ThunderSTORM localization files: transformation, drift correction, filtering.
+- Batch generate image reconstructions from ThunderSTORM localization files (2D, 3D, with various options).
 
 ## Compatibility and Installation
 Installing ThundersTORM:
-- ChriSTORM is used under OSX and Windows 7 inside a [Fiji install](http://fiji.sc/Downloads) or using an updated [ImageJ install](http://rsbweb.nih.gov/ij/download.html). Due to the current work around javascript compatibility for Java 8, the scripts will only run using Java 6.
-- To use ChriSTORM, you first have to [download the ThunderSTORM plugin](https://github.com/zitmen/thunderstorm/releases). ChriSTORM 1.2.1 has been tested with the latest dev-2016-09-10-b1.jar daily build. Install ThunderSTORM by renaming the .jar file into “Thunder_STORM.jar” and placing it in the ImageJ/Fiji “plugins” folder.
-
-The simplest way to use ChriSTORM is to use the NeuroCyto Lab [Fiji update site](https://www.evernote.com/l/AAIk_1e-n91KsplwdjvrCj3ighQUDYYAVD8) that includes ChriSTORM.
-
-You can alternatively use ChriSTORM in vanilla ImageJ by manually downloading and installing it:
-- Download the latest ChriSTORM folder as a [zip file from the releases section](https://github.com/cleterrier/ChriSTORM/releases).
-- Unzip the folder, rename it “ChriSTORM”
-- Create a "NeuroCyto Lab" folder in your ImageJ/Fiji “plugins” folder.
-- Place the "ChriSTORM" folder inside the "NeuroCyto Lab folder.
-The path to the macros should look like this:
-![](http://www.neurocytolab.org/up/Github/ChriSTORM_folder.png "ChriSTORM folder")
-- Move the “ThunderSTORM.lut” file from the ChriSTORM folder to the ImageJ/Fiji “luts” folder.
-- Restart ImageJ/Fiji.
+- ChriSTORM is used under OSX and Windows 10 inside a [Fiji install](http://fiji.sc/Downloads) or using an updated [ImageJ install](http://rsbweb.nih.gov/ij/download.html).
+- To use ChriSTORM, you first have to download the ThunderSTORM plugin. My advice is to use [kjamarten's variant of the plugin](https://github.com/kjamartens/thunderstorm/tree/master/Compiled%20plugin). Install ThunderSTORM by renaming the Thunder_STORM_FIJI.jar file into “Thunder_STORM.jar” and placing it in the ImageJ/Fiji “plugins” folder.
+- The simplest way to use ChriSTORM is to use the "NeuroCyto Lab" [Fiji update site](https://www.evernote.com/l/AAIk_1e-n91KsplwdjvrCj3ighQUDYYAVD8) that includes ChriSTORM. For some Z color-coding LUT, you'll need the "NeuroCyto LUTs" update site too.
 
 ## References
 If you use ChriSTORM in a publication, please cite:  
