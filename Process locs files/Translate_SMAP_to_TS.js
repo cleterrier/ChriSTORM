@@ -11,6 +11,7 @@ var isBatchdef = 0;
 var pxSizeDef = 160; //  pixel size on camera image in nm (default is 160 nm for NSTORM)
 var compFDef = 1; // compensate distortion from the 3D astigmatic lens (default for NSTORM X = 1.036875 * Y)
 var rotXYDef = false; // "rotate right" the coordinates to align default output of DECODE with default output of TS/SMAP (default true)
+var flipYDef = true; // flip Y coordinates (default true) - with the rotate 90° right, this aligns the default output of DECODE with the default output of TS/SMAP
 var sizeXDef = 256; // width of camera image in pixels (default is 256 for NSTORM);
 var sizeYDef = 256; // height of camera image in pixels (default is 256 for NSTORM);
 var flipZDef = true; // flip Z coordinates
@@ -54,7 +55,8 @@ var gd = new GenericDialog(procName + ": options");
 gd.addCheckbox("Batch mode", isBatchdef);
 gd.addNumericField("Camera pixel size", pxSizeDef, 1, 6, "nm");
 gd.addNumericField("Astigmatism compensation (1 for none)", compFDef, 6, 6, "X");
-gd.addCheckbox("Image rotation", rotXYDef);
+gd.addCheckbox("Rotate image right", rotXYDef);
+gd.addCheckbox("Flip Y coordinates", flipYDef);
 gd.addNumericField("   Camera image width", sizeXDef, 0, 6, "px");
 gd.addNumericField("   Camera image height", sizeYDef, 0, 6, "px");
 gd.addCheckbox("Z coordinates inversion", flipZDef);
@@ -66,6 +68,7 @@ var isBatch = gd.getNextBoolean();
 var pxSize = gd.getNextNumber();
 var compF = gd.getNextNumber();
 var rotXY = gd.getNextBoolean();
+var flipY = gd.getNextBoolean();
 var sizeX = gd.getNextNumber();
 var sizeY = gd.getNextNumber();
 var flipZ = gd.getNextBoolean();
@@ -90,7 +93,7 @@ if (gd.wasOKed()) {
 
 	if (isBatch == 0) {
 		// Process the single file
-		TranslateSMAPTS(path, directory, pxSize, compF, rotXY, sizeX, sizeY, flipZ, compZ, scaleU, chi);
+		TranslateSMAPTS(path, directory, pxSize, compF, rotXY, flipY, sizeX, sizeY, flipZ, compZ, scaleU, chi);
 	}
 	else {
 		// Define input folder, define and create output folder
@@ -108,7 +111,7 @@ if (gd.wasOKed()) {
 		for (var f = 0; f < fileQueue.length; f++) {
 			inPath = fileQueue[f];
 			IJ.log("\n");
-			TranslateSMAPTS(inPath, outDir, pxSize, compF, rotXY, sizeX, sizeY, flipZ, compZ, scaleU, chi);
+			TranslateSMAPTS(inPath, outDir, pxSize, compF, rotXY, flipY, sizeX, sizeY, flipZ, compZ, scaleU, chi);
 		}
 	}
 

@@ -15,6 +15,7 @@ importClass(Packages.java.lang.Double);
 // ps: pixel size on camera image in nm (default is 160 nm for NSTORM)
 // cf: compensate distortion from the 3D astigmatic lens (default for NSTORM X = 1.036875 * Y)
 // rf : "rotate right" the coordinates to align default output of DECODE with default output of TS/SMAP (boolean, default true)
+// fY: flip Y coodrindates. DECODE inverts X and Y so by default locs should be rotated 90° right + flipped Y (boolean, default true)
 // sX: width of camera image in pixels (default is 256 for NSTORM);
 // sY: height of camera image in pixels (default is 256 for NSTORM);
 // fz: flip Z coordinates
@@ -22,7 +23,7 @@ importClass(Packages.java.lang.Double);
 // su: scale uncertainties (as done by Ries lab for SMAP output, default is 0.4)
 // ch: include LogLikelyhood as chi2 column (default false)
 
-function TranslateSMAPTS(inPath, outDir, ps, cf, rf, sX, sY, fz, cz, su, ch){
+function TranslateSMAPTS(inPath, outDir, ps, cf, rf, fY, sX, sY, fz, cz, su, ch){
 
 	// Separators
 	var inSep = ","; // input separator
@@ -129,14 +130,23 @@ function TranslateSMAPTS(inPath, outDir, ps, cf, rf, sX, sY, fz, cz, su, ch){
 
 		var fOut = inCells[fIndex];
 
-		if (rf == true){ // this "rotates right" to align default output of DECODE with default output of TS/SMAP
-			var xOut = ((sX * ps) - parseFloat(inCells[yIndex])).toFixed(1);
+		if (rf == true && fY == true) { // this aligns the default output of DECODE with the default output of TS/SMAP
+			var xOut = (parseFloat(inCells[yIndex]) * cf).toFixed(1);
+			var yOut = (parseFloat(inCells[xIndex])).toFixed(1);
+		}			
+		else if (rf == true && fY == false){ 
+			var xOut = (((sX * ps) - parseFloat(inCells[yIndex])) * cf).toFixed(1);
 			var yOut = (parseFloat(inCells[xIndex])).toFixed(1);
 		}
-		else {
+		else if (rf == false && fY == true) {
 			var xOut = (parseFloat(inCells[xIndex]) * cf).toFixed(1);
-			var yOut = (parseFloat(inCells[yIndex])).toFixed(1);
+			var yOut = ((sY * ps)- parseFloat(inCells[yIndex])).toFixed(1);
 		}
+		else if (rf == false && fY == false) {
+			var xOut = (parseFloat(inCells[xIndex]) * cf).toFixed(1);
+			var yOut = parseFloat(inCells[yIndex]).toFixed(1);
+		}
+
 
 		var unxyOut = (su * parseFloat(inCells[unxyIndex])).toFixed(1);
 
