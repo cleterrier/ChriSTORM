@@ -131,13 +131,13 @@ if (gd.wasOKed()) {
 			rAngle[r] = roi.getAngle();
 //			var	rLine = r.getFloatPoints();
 			var sliceNumber = rm.getSliceNumber(rm.getName(r));
-			imName[r] = stk.getShortSliceLabel(sliceNumber);
-			locName[r] = imName[r] + ".csv";
+			imName[r] = stk.getSliceLabel(sliceNumber);
+			locName[r] = imName[r].replace(".tif", ".csv");
 		}
 
 		for (var f = 0; f < nroi; f++) {		
 			inPath = directory + File.separator + locName[f];
-			IJ.log("   rotating " + locName[f] + "by " + rAngle[f].toFixed(1) + " degrees");
+			IJ.log("   rotating " + locName[f] + " by " + rAngle[f].toFixed(1) + " degrees");
 			outAngle = Math.round(rAngle[f]*10)/10;
 			TSRotate(inPath, outDir, centerX, centerY, outAngle, fh, fv, fz);
 		}

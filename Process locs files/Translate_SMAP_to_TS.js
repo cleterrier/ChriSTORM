@@ -15,7 +15,7 @@ var flipYDef = true; // flip Y coordinates (default true) - with the rotate 90°
 var sizeXDef = 256; // width of camera image in pixels (default is 256 for NSTORM);
 var sizeYDef = 256; // height of camera image in pixels (default is 256 for NSTORM);
 var flipZDef = true; // flip Z coordinates
-var compZDef = 1; // compensate Z coordinates for index mismatch (default is 0.8)
+var compZDef = 0.8; // compensate Z coordinates for index mismatch (default is 0.8)
 var scaleUDef = 0.4; // scale uncertainties (as done by Ries lab for SMAP output, default is 0.4)
 var chiDef = false; // include LogLikelyhood as chi2 column
 

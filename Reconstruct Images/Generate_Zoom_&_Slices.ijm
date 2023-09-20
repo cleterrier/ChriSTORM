@@ -54,6 +54,7 @@ macro "Generate Zooms & Slices" {
 	Z_MIN_DEF = -800; // -500 nm
 	Z_MAX_DEF = 800; // +500 nm
 	Z_AUTO_DEF = false;
+	Z_NAME_DEF = false;
 	Z_SAT_DEF = 10; // restriction of 3D span on top and bottom (in nm)
 	Z_UN_DEF = 0; // usually 0
 	Z_PROJ_A = newArray("None", "Maximum (32-bit or color)", "Sum (32-bit or color)", "Weighted sum (color)");
@@ -134,6 +135,7 @@ macro "Generate Zooms & Slices" {
 	Dialog.addNumber("Z min", Z_MIN_DEF, 0, 4, "nm");
 	Dialog.addNumber("Z max", Z_MAX_DEF, 0, 4, "nm");
 	Dialog.addCheckbox("Z auto-range", Z_AUTO_DEF);
+	Dialog.addCheckbox("use Z range in name", Z_NAME_DEF);
 	Dialog.addNumber("Restrict Z-range by", Z_SAT_DEF, 0, 4, "nm");
 	Dialog.addNumber("Force Z uncertainty (0 to keep)", Z_UN_DEF, 0, 3, "nm");
 	Dialog.addChoice("Z project", Z_PROJ_A, Z_PROJ_DEF);
@@ -171,6 +173,7 @@ macro "Generate Zooms & Slices" {
 	Z_MIN = Dialog.getNumber();
 	Z_MAX = Dialog.getNumber();
 	Z_AUTO = Dialog.getCheckbox();
+	Z_NAME = Dialog.getCheckbox();
 	Z_SAT = Dialog.getNumber();
 	Z_UN = Dialog.getNumber();
 	Z_PROJ = Dialog.getChoice();
@@ -382,7 +385,8 @@ for (z = 1; z < iCount + 1; z++) {
 			ROI_PARAM = "Roi" + IJ.pad(START_ROI + r, 3);
 
 			// Get the ROI (already active if multi-ROI is false)
-			prevHeader = "dummy";
+			prevHeaderF = "dummy";
+
 			if (MULTI_ROI == true) {
 				selectImage(imID);
 				// get previous ROI header (to check if necessary to re-open localization file)
@@ -394,8 +398,9 @@ for (z = 1; z < iCount + 1; z++) {
 						if (stackType == "2C_zc")
 							Stack.setSlice(z);
 					}
-					if (nSlices > 1) prevHeader = Property.getSliceLabel;
-					else prevHeader = replace(imTitle, ".tif", "");
+					if (nSlices > 1) prevHeaderF = Property.getSliceLabel;
+					else prevHeaderF = replace(imTitle, ".tif", "");
+					prevHeader = replace(prevHeaderF, "_z(.*)_", "_"); // remove z span in name if needed
 				}
 				roiManager("select", r);
 			}
@@ -467,8 +472,9 @@ for (z = 1; z < iCount + 1; z++) {
 
 			//***** Get path to loc file *****
 			// Get image title
-			if (nSlices > 1) imHeader = Property.getSliceLabel;
-			else imHeader = replace(imTitle, ".tif", "");
+			if (nSlices > 1) imHeaderF = Property.getSliceLabel;
+			else imHeaderF = replace(imTitle, ".tif", "");
+			imHeader = replace(imHeaderF, "_z(.*)_", "_"); // remove z span in name if needed
 			LocFile = getLocs(imHeader, LocFolderPath);
 			print("        Image title: " + imHeader);
 			print("        Loc file: " + LocFile);
@@ -477,7 +483,7 @@ for (z = 1; z < iCount + 1; z++) {
 				run("Import results", "append=false startingframe=1 rawimagestack= filepath=[" + LocFile + "] livepreview=false fileformat=[CSV (comma separated)]");
 			// print(imHeader);
 			// print(prevHeader);
-			if (r > 0 && imHeader != prevHeader)
+			if (r > 0 && imHeaderF != prevHeaderF)
 				run("Import results", "append=false startingframe=1 rawimagestack= filepath=[" + LocFile + "] livepreview=false fileformat=[CSV (comma separated)]");
 
 			// Count the locs before filtering
@@ -525,6 +531,21 @@ for (z = 1; z < iCount + 1; z++) {
 				// XY part of the Visualization string
 				VISU_STRING_XY = "imleft=" + reconX + " imtop=" + reconY + " imwidth=" + reconW + " imheight=" + reconH + " renderer=[Normalized Gaussian] magnification=" + roiMagnif + " " + XYUN_STRING;
 
+				// Calculate Z range from name		
+				if (P3D == true && Z_NAME == true) {
+
+					Z_START = indexOf(imHeaderF, "_z(");
+					Z_PART1 = substring(imHeaderF, Z_START);
+					Z_STOP = indexOf(Z_PART1, ")_");
+					Z_PART2 = substring(Z_PART1, 3, Z_STOP);
+					Z_PARTS = split(Z_PART2, ",");
+					Z_MIN = Z_PARTS[0];
+					Z_MAX = Z_PARTS[1];
+
+					VISU_STRING_RANGE = " zrange=" + Z_MIN + ":" + Z_SPACE + ":" + Z_MAX;
+					print("        Z-range from name: Z_MIN = " + Z_MIN + " nm, Z_MAX = " + Z_MAX + " nm");
+				}
+				
 				// Calculate automatic Z range
 				if (P3D == true && Z_AUTO == true) {
 
